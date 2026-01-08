@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--dart-define-from-file=config/secrets.json"
+            ]
+        },
+        {
+            "name": "Profile",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main.dart",
+            "args": [
+                "--dart-define-from-file=config/secrets.json"
+            ]
+        },
+        {
+            "name": "Release",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main.dart",
+            "args": [
+                "--dart-define-from-file=config/secrets.json"
+            ]
+        }
+    ]
+}

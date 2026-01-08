@@ -1,0 +1,13 @@
+analyzer:
+  errors:
+    todo: ignore
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+
+linter:
+  rules:
+    - prefer_single_quotes
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - avoid_print
