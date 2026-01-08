@@ -1,0 +1,183 @@
+{
+  "aToZ": "A to Z",
+  "about": "About",
+  "active": "Active",
+  "addedToCastQueue": "Added to cast queue",
+  "alphabetical": "Alphabetical",
+  "appThemeColor": "App Theme Color",
+  "appearance": "Appearance",
+  "areYouSureYouWantToStopCasting": "Are you sure you want to stop casting this media?",
+  "audio": "Audio",
+  "audioAndSubtitles": "Audio & subtitles",
+  "auto": "Auto",
+  "availableDevices": "Available devices",
+  "avocado": "Avocado",
+  "blue": "Blue",
+  "blueGrey": "Blue grey",
+  "browseLibrary": "Browse Library",
+  "cancel": "Cancel",
+  "cast": "Cast",
+  "castManagement": "Cast management",
+  "casting": "Casting...",
+  "castingToDevice": "Casting to device",
+  "completed": "Completed",
+  "connectToYourServerToDownloadContent": "Connect to your server to download content for offline viewing.",
+  "connectedTo": "Connected to {deviceName}",
+  "@connectedTo": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "connectingTo": "Connecting to {deviceName}...",
+  "@connectingTo": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "continueText": "Continue",
+  "continueWatching": "Continue Watching",
+  "creativeCommonsContent": "Creative Commons Content",
+  "custom": "Custom",
+  "dateAdded": "Date Added",
+  "dateCreated": "Date Created",
+  "deepOrange": "Deep orange",
+  "deepPurple": "Deep purple",
+  "delete": "Delete",
+  "deleteDownload": "Delete download",
+  "deletedItem": "Deleted {name}",
+  "@deletedItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "demoMode": "Demo Mode",
+  "devTools": "Dev Tools",
+  "download": "Download",
+  "downloadCancelled": "Download cancelled",
+  "downloaded": "Downloaded",
+  "downloadSeason": "Download {seasonName}",
+  "@downloadSeason": {
+    "placeholders": {
+      "seasonName": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadStarted": "Download started",
+  "downloadedContentIsAvailableOffline": "Downloaded content is available offline.",
+  "downloadedContentOnly": "Downloaded content only",
+  "downloading": "Downloading",
+  "downloadingEpisode": "Downloading episode...",
+  "downloadingSeason": "Downloading season...",
+  "downloads": "Downloads",
+  "errorLoadingSeasons": "Error loading seasons",
+  "exitDemoMode": "Exit Demo Mode",
+  "exitOfflineMode": "Exit Offline Mode",
+  "failed": "Failed",
+  "failedToCastMedia": "Failed to cast media",
+  "featured": "Featured",
+  "full": "Full",
+  "green": "Green",
+  "home": "Home",
+  "httpWarningTitle": "Insecure Connection",
+  "httpWarningMessage": "You are connecting over HTTP, which means your credentials and data will be sent unencrypted. This is safe on a local network but risky over the internet.\n\nAre you sure you want to continue?",
+  "httpWarningContinue": "Connect Anyway",
+  "indigo": "Indigo",
+  "lightBlue": "Light blue",
+  "localNetworkAccess": "Local Network Access",
+  "login": "Login",
+  "loginFailedPleaseCheckYourCredentials": "Login failed. Please check your credentials and network connection.",
+  "manageServers": "Manage Servers",
+  "mediaType": "Media",
+  "menu": "Menu",
+  "movies": "Movies",
+  "moviesAndEpisodesYouDownloadWillAppearHere": "Movies and episodes you download will appear here.",
+  "newestFirst": "Newest First",
+  "next": "Next",
+  "noActiveDownloads": "No active downloads",
+  "noDownloadsYet": "No downloads yet",
+  "noEpisodesFound": "No episodes found",
+  "noItemsFound": "No {items} found.",
+  "@noItemsFound": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "noOfflineContent": "No offline content",
+  "noResultsFound": "No results found",
+  "noTracksAvailable": "No tracks available",
+  "off": "Off",
+  "offlineDownloads": "Offline Downloads",
+  "offlineMode": "Offline Mode",
+  "orAddNewServer": "Or add new server",
+  "orange": "Orange",
+  "overview": "Overview",
+  "password": "Password",
+  "pause": "Pause",
+  "paused": "Paused",
+  "pink": "Pink",
+  "play": "Play",
+  "playOffline": "Play Offline",
+  "playcado": "Playcado",
+  "pleaseCheckYourConnectionAndTryAgain": "Please check your connection and try again.",
+  "premiereDate": "Premiere Date",
+  "privacyPolicy": "Privacy Policy",
+  "purple": "Purple",
+  "queue": "Queue",
+  "queued": "Queued...",
+  "recentlyAddedMovies": "Recently Added Movies",
+  "recentlyAddedTv": "Recently Added TV",
+  "red": "Red",
+  "releaseDate": "Release Date",
+  "rememberCredentials": "Remember credentials",
+  "resume": "Resume",
+  "retry": "Retry",
+  "savedAccounts": "Saved Accounts",
+  "searchPlaceholder": "Search movies, tv, episodes...",
+  "seeAll": "See all",
+  "selected": "Selected",
+  "searchingForDevices": "Searching for devices...",
+  "selectAColorToCustomizeTheAppsLookAndFeel": "Select a color to customize the app's look and feel.",
+  "selectADevice": "Select a Device",
+  "serverUrlLabel": "Server URL (http://...)",
+  "settings": "Settings",
+  "skipIntro": "Skip Intro",
+  "sortTitle": "Sort {title}",
+  "@sortTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "stop": "Stop",
+  "stopCasting": "Stop casting",
+  "stopCastingQuestion": "Stop Casting?",
+  "subtitles": "Subtitles",
+  "teal": "Teal",
+  "termsOfService": "Terms of Service",
+  "toCastMoviesAndShowsToYourTv": "To cast movies and shows to your TV (Chromecast/Google Cast), Playcado needs permission to discover devices on your local network.",
+  "tv": "TV",
+  "tvShows": "TV Shows",
+  "typeToSearch": "Type to search your library",
+  "unableToLoadContent": "Unable to load content",
+  "unknown": "Unknown",
+  "unwatched": "Unwatched",
+  "upNext": "Up Next",
+  "user": "User",
+  "username": "Username",
+  "viewDetails": "View details",
+  "viewOfflineDownloads": "View offline downloads",
+  "watched": "Watched",
+  "weDoNotAccessYourPersonalData": "We do not access your personal data or track your browsing history.",
+  "welcomeToPlaycado": "Welcome to Playcado",
+  "yourModernLightweightClient": "Your modern, lightweight client for Jellyfin media servers."
+}

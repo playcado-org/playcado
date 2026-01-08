@@ -1,0 +1,82 @@
+name: Staging Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: staging-build
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-android-staging:
+    name: Build Android (staging)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Create secrets file
+        run: echo '${{ secrets.SECRETS_STAGING_JSON }}' > config/secrets_staging.json
+
+      - name: Build APK (staging)
+        run: |
+          flutter build apk --debug \
+            --flavor staging \
+            --target lib/main_staging.dart \
+            --dart-define-from-file=config/secrets_staging.json
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-staging-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-staging-debug.apk
+          retention-days: 14
+
+  build-ios-staging:
+    name: Build iOS (staging)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Create secrets file
+        run: echo '${{ secrets.SECRETS_STAGING_JSON }}' > config/secrets_staging.json
+
+      - name: Build iOS (no codesign, staging)
+        run: |
+          flutter build ios \
+            --flavor staging \
+            --target lib/main_staging.dart \
+            --no-codesign \
+            --dart-define-from-file=config/secrets_staging.json
