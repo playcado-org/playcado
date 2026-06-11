@@ -15,16 +15,3 @@ flutter_launcher_icons:
   ios: true
   image_path_ios: "assets/icon/icon.png"
   remove_alpha_ios: true
-
-  # Other Platforms
-  web:
-    generate: true
-    image_path: "assets/icon/icon.png"
-    background_color: "#E8F2D0"
-    theme_color: "#E8F2D0"
-  windows:
-    generate: true
-    image_path: "assets/icon/icon.png"
-  macos:
-    generate: true
-    image_path: "assets/icon/icon.png"

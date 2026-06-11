@@ -7,7 +7,7 @@ import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 
-export 'models/models.dart';
+export 'models/download_item.dart';
 
 class DownloadsRepository {
   DownloadsRepository({required MediaUrlService urlGenerator})

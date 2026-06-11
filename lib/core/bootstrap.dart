@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:playcado/app/app.dart';
+import 'package:playcado/app/view/app.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/services/cast_service.dart';
 import 'package:playcado/core/app_bloc_observer.dart';
-import 'package:playcado/core/app_flavor.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repos/library_repository.dart';
@@ -82,7 +81,7 @@ Future<void> bootstrap() async {
 
   final app = App(config: config);
 
-  final shouldInitializeSentry = !AppFlavor.isDev && Secrets.isSentryEnabled;
+  final shouldInitializeSentry = Secrets.isSentryEnabled;
 
   if (shouldInitializeSentry) {
     LoggerService.system.info('Starting app with Sentry');
@@ -99,15 +98,9 @@ Future<void> bootstrap() async {
       appRunner: () => runApp(SentryWidget(child: app)),
     );
   } else {
-    if (AppFlavor.isDev) {
-      LoggerService.system.info(
-        'Sentry disabled: Running in development mode',
-      );
-    } else if (!Secrets.isSentryEnabled) {
-      LoggerService.system.warning(
-        'Sentry disabled: SENTRY_DSN not provided in environment',
-      );
-    }
+    LoggerService.system.warning(
+      'Sentry disabled: SENTRY_DSN not provided in environment',
+    );
     runApp(app);
   }
 }

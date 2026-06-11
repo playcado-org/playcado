@@ -45,27 +45,6 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
-    
-    flavorDimensions += "flavor"
-
-    productFlavors {
-        create("dev") {
-            dimension = "flavor"
-            applicationId = "com.playcado.app.dev"
-            resValue("string", "app_name", "Playcado Dev")
-        }
-        create("staging") {
-            dimension = "flavor"
-            applicationId = "com.playcado.app.staging"
-            resValue("string", "app_name", "Playcado Staging")
-        }
-        create("prod") {
-            dimension = "flavor"
-            applicationId = "com.playcado.app"
-            resValue("string", "app_name", "Playcado")
-        }
-    }
-    
 
     buildTypes {
         getByName("debug") {

@@ -1,9 +1,6 @@
 name: Release Android
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       track:
@@ -45,7 +42,7 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Create secrets file
-        run: echo '${{ secrets.SECRETS_PROD_JSON }}' > config/secrets_prod.json
+        run: echo '${{ secrets.SECRETS_JSON }}' > config/secrets.json
 
       - name: Decode keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
@@ -62,23 +59,22 @@ jobs:
       - name: Build App Bundle
         run: |
           flutter build appbundle \
-            --flavor prod \
-            --target lib/main_prod.dart \
             --release \
             --obfuscate \
             --split-debug-info=build/symbols \
-            --dart-define-from-file=config/secrets_prod.json
+            --build-number=${{ github.run_number }} \
+            --dart-define-from-file=config/secrets.json
 
       - name: Upload App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-${{ github.ref_name }}
-          path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          name: android-release-${{ github.run_number }}
+          path: build/app/outputs/bundle/release/app-release.aab
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
-          name: android-symbols-${{ github.ref_name }}
+          name: android-symbols-${{ github.run_number }}
           path: build/symbols/
 
       - name: Upload to Google Play
@@ -86,7 +82,22 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.playcado.app
-          releaseFiles: build/app/outputs/bundle/prodRelease/app-prod-release.aab
-          track: ${{ inputs.track || 'internal' }}
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track }}
           status: completed
-          mappingFile: build/app/outputs/mapping/prodRelease/mapping.txt
+          mappingFile: build/app/outputs/mapping/release/mapping.txt
+
+      - name: Extract release notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          awk -v ver="[$VERSION]" \
+            '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
+            CHANGELOG.md > /tmp/release-notes.md || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          body_path: /tmp/release-notes.md
+          files: build/app/outputs/bundle/release/app-release.aab

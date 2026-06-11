@@ -2,8 +2,6 @@
 
 Playcado is a Jellyfin client built with Flutter.
 
-<img src="https://github.com/JchrisM12/playcado-dev/blob/main/demo/demo.gif" width="250" />      <img src="https://github.com/JchrisM12/playcado-dev/blob/main/demo/demo 2.gif" width="250" />
-
 
 ## Features
 
@@ -62,11 +60,9 @@ Playcado is a Jellyfin client built with Flutter.
    ```
 
 3. Configure secrets:
-   Copy the example secrets file and add your configuration:
+   Create a secrets file with your Sentry DSN:
    ```bash
-   mkdir -p config
-   cp config/secrets_dev.json.example config/secrets_dev.json
-   # Edit config/secrets_dev.json with your SENTRY_DSN
+   echo '{"SENTRY_DSN":"https://..."}' > config/secrets.json
    ```
 
 4. Generate serialized models:
@@ -74,28 +70,23 @@ Playcado is a Jellyfin client built with Flutter.
    dart run build_runner build --delete-conflicting-outputs
    ```
 
-5. Configure environment:
-   The project uses Flutter flavors and environment-mapped secrets via `--dart-define-from-file`.
-
 ## Development
 
 ### Running the App
-To run the development build with secrets:
 ```bash
-flutter run --flavor dev --dart-define-from-file=config/secrets_dev.json
+flutter run --dart-define-from-file=config/secrets.json
 ```
 
 ### Build Commands
-To build release versions for production:
 
 Android:
 ```bash
-flutter build appbundle --flavor prod --release --dart-define-from-file=config/secrets_prod.json
+flutter build appbundle --release --dart-define-from-file=config/secrets.json
 ```
 
 iOS:
 ```bash
-flutter build ios --flavor prod --release --dart-define-from-file=config/secrets_prod.json
+flutter build ios --release --dart-define-from-file=config/secrets.json
 ```
 
 ### Sort Arb Files

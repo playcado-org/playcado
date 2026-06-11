@@ -25,7 +25,7 @@ PODS:
     - Flutter
   - Protobuf (3.29.5)
   - Sentry/HybridSDK (8.58.0)
-  - sentry_flutter (9.16.0):
+  - sentry_flutter (9.16.1):
     - Flutter
     - FlutterMacOS
     - Sentry/HybridSDK (= 8.58.0)
@@ -103,11 +103,11 @@ SPEC CHECKSUMS:
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   Protobuf: 164aea2ae380c3951abdc3e195220c01d17400e0
   Sentry: d587a8fe91ca13503ecd69a1905f3e8a0fcf61be
-  sentry_flutter: 31101687061fb85211ebab09ce6eb8db4e9ba74f
+  sentry_flutter: 1fbec4ff50a6b08d7b22030bb8ec798e75afd71c
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
   wakelock_plus: e29112ab3ef0b318e58cfa5c32326458be66b556
 
-PODFILE CHECKSUM: 62bb8218bb8f65184467895a6223428ed163ca21
+PODFILE CHECKSUM: 1857a7cdb7dfafe45f2b0e9a9af44644190f7506
 
 COCOAPODS: 1.16.2
