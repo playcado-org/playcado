@@ -33,7 +33,7 @@ jobs:
         run: |
           VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
           echo "build_name=${VERSION%+*}" >> $GITHUB_OUTPUT
-          echo "build_number=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+          echo "build_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-java@v4
         with:
