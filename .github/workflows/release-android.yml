@@ -96,7 +96,7 @@ jobs:
           packageName: com.playcado.app
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: ${{ inputs.track }}
-          status: completed
+          status: draft
           mappingFile: build/app/outputs/mapping/release/mapping.txt
 
       - name: Extract release notes
