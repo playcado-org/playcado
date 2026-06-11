@@ -1,6 +1,6 @@
 # Playcado
 
-Playcado is a Jellyfin client built with Flutter.
+Playcado is a Jellyfin client for iOS and Android built with Flutter.
 
 
 ## Features
