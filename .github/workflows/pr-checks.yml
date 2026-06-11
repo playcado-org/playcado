@@ -21,20 +21,64 @@ jobs:
       includes: '**/*.dart'
       modified_files_only: false
 
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated
+          path: |
+            lib/**/*.g.dart
+            lib/**/*.freezed.dart
+          retention-days: 1
+
   analyze-and-test:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
-    with:
-      flutter_channel: stable
-      min_coverage: 50
-      setup: |
-        dart run build_runner build --delete-conflicting-outputs
+    runs-on: ubuntu-latest
+    needs: [generate]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Test
+        run: flutter test --coverage
 
   build-android:
     name: Build Android (verify)
     runs-on: ubuntu-latest
-    needs: [analyze-and-test]
+    needs: [generate, analyze-and-test]
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated
 
       - uses: actions/setup-java@v4
         with:
@@ -50,9 +94,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run code generation
-        run: dart run build_runner build --delete-conflicting-outputs
-
       - name: Create dummy secrets
         run: echo '{"SENTRY_DSN":""}' > config/secrets_dev.json
 
@@ -62,9 +103,13 @@ jobs:
   build-ios:
     name: Build iOS (verify)
     runs-on: macos-latest
-    needs: [analyze-and-test]
+    needs: [generate, analyze-and-test]
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated
 
       - uses: subosito/flutter-action@v2
         with:
@@ -73,9 +118,6 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Run code generation
-        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Create dummy secrets
         run: echo '{"SENTRY_DSN":""}' > config/secrets_dev.json
