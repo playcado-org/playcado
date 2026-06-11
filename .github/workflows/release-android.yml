@@ -67,6 +67,7 @@ jobs:
             --release \
             --obfuscate \
             --split-debug-info=build/symbols \
+            --build-number=$(( ${{ github.run_number }} + 14 )) \
             --dart-define-from-file=config/secrets_prod.json
 
       - name: Upload App Bundle artifact
@@ -90,3 +91,17 @@ jobs:
           track: ${{ inputs.track || 'internal' }}
           status: completed
           mappingFile: build/app/outputs/mapping/prodRelease/mapping.txt
+
+      - name: Extract release notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          awk -v ver="[$VERSION]" \
+            '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
+            CHANGELOG.md > /tmp/release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: /tmp/release-notes.md
+          files: build/app/outputs/bundle/prodRelease/app-prod-release.aab
