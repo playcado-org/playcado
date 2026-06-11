@@ -2,8 +2,6 @@
 
 Playcado is a Jellyfin client built with Flutter.
 
-<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTA0cGI0N251dWx0cHN5dXB0aGw1M2tueG1jYjFkcjQ3dDBycjgzdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/k4NpsjQ7AkmecpajEr/giphy.gif" width="250" />
-
 
 ## Features
 
