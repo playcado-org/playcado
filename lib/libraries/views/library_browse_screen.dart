@@ -66,9 +66,7 @@ class LibraryItemsGrid extends StatelessWidget {
             context.read<PaginatedMediaListBloc>().add(
               PaginatedMediaListItemsFetched(),
             );
-            await Future<void>.delayed(
-              const Duration(milliseconds: 500),
-            );
+            await Future<void>.delayed(const Duration(milliseconds: 500));
           },
           onRetry: () {
             context.read<PaginatedMediaListBloc>().add(

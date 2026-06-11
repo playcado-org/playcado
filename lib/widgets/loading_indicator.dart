@@ -3,11 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class LoadingIndicator extends StatefulWidget {
-  const LoadingIndicator({
-    super.key,
-    this.size = 40,
-    this.color,
-  });
+  const LoadingIndicator({super.key, this.size = 40, this.color});
   final double size;
   final Color? color;
 

@@ -118,9 +118,7 @@ class AppTheme {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.05),
-          ),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
       ),
 

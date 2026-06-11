@@ -85,18 +85,15 @@ Future<void> bootstrap() async {
 
   if (shouldInitializeSentry) {
     LoggerService.system.info('Starting app with Sentry');
-    await SentryFlutter.init(
-      (options) {
-        options
-          ..dsn = Secrets.sentryDsn
-          ..sendDefaultPii = false
-          ..enableLogs = false
-          ..tracesSampleRate = 0.2;
-        options.replay.sessionSampleRate = 0.0;
-        options.replay.onErrorSampleRate = 0.0;
-      },
-      appRunner: () => runApp(SentryWidget(child: app)),
-    );
+    await SentryFlutter.init((options) {
+      options
+        ..dsn = Secrets.sentryDsn
+        ..sendDefaultPii = false
+        ..enableLogs = false
+        ..tracesSampleRate = 0.2;
+      options.replay.sessionSampleRate = 0.0;
+      options.replay.onErrorSampleRate = 0.0;
+    }, appRunner: () => runApp(SentryWidget(child: app)));
   } else {
     LoggerService.system.warning(
       'Sentry disabled: SENTRY_DSN not provided in environment',

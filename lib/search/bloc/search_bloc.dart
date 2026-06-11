@@ -40,9 +40,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       emit(state.copyWith(items: StatusSuccess(items)));
     } on Exception catch (error) {
       LoggerService.api.severe('Failed to search media', error);
-      emit(
-        state.copyWith(items: const StatusError('Failed to search media')),
-      );
+      emit(state.copyWith(items: const StatusError('Failed to search media')));
     }
   }
 

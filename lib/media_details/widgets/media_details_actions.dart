@@ -47,9 +47,7 @@ class MediaDetailsActions extends StatelessWidget {
             .where((d) => d.id == item.id)
             .fold<DownloadItem?>(null, (prev, elem) => elem);
 
-        Widget downloadIcon = const PlaycadoIcon(
-          PlaycadoIcons.download,
-        );
+        Widget downloadIcon = const PlaycadoIcon(PlaycadoIcons.download);
         var downloadLabel = context.l10n.download;
         Color? downloadIconColor;
 
@@ -76,14 +74,10 @@ class MediaDetailsActions extends StatelessWidget {
               downloadLabel = context.l10n.downloaded;
               downloadIconColor = theme.colorScheme.primary;
             case DownloadStatus.paused:
-              downloadIcon = const PlaycadoIcon(
-                PlaycadoIcons.pauseCircle,
-              );
+              downloadIcon = const PlaycadoIcon(PlaycadoIcons.pauseCircle);
               downloadLabel = context.l10n.paused;
             case DownloadStatus.error:
-              downloadIcon = const PlaycadoIcon(
-                PlaycadoIcons.alert,
-              );
+              downloadIcon = const PlaycadoIcon(PlaycadoIcons.alert);
               downloadLabel = context.l10n.failed;
               downloadIconColor = theme.colorScheme.error;
           }

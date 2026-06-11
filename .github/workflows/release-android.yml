@@ -21,8 +21,19 @@ jobs:
   build-and-release:
     name: Build & Release Android
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+          echo "build_name=${VERSION%+*}" >> $GITHUB_OUTPUT
+          echo "build_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-java@v4
         with:
@@ -62,19 +73,20 @@ jobs:
             --release \
             --obfuscate \
             --split-debug-info=build/symbols \
-            --build-number=${{ github.run_number }} \
+            --build-name=${{ steps.version.outputs.build_name }} \
+            --build-number=${{ steps.version.outputs.build_number }} \
             --dart-define-from-file=config/secrets.json
 
       - name: Upload App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-${{ github.run_number }}
+          name: android-release-${{ steps.version.outputs.build_name }}
           path: build/app/outputs/bundle/release/app-release.aab
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
-          name: android-symbols-${{ github.run_number }}
+          name: android-symbols-${{ steps.version.outputs.build_name }}
           path: build/symbols/
 
       - name: Upload to Google Play
@@ -89,15 +101,14 @@ jobs:
 
       - name: Extract release notes
         run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          awk -v ver="[$VERSION]" \
+          awk -v ver="[${{ steps.version.outputs.build_name }}]" \
             '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
             CHANGELOG.md > /tmp/release-notes.md || true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v${{ steps.version.outputs.build_name }}
           body_path: /tmp/release-notes.md
           files: build/app/outputs/bundle/release/app-release.aab

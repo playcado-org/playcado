@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
@@ -69,7 +70,7 @@ class _HomeContent extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () => _refresh(context),
       child: CustomScrollView(
-        cacheExtent: 1000,
+        scrollCacheExtent: const ScrollCacheExtent.pixels(1000),
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           _HomeAppBar(),
@@ -292,20 +293,14 @@ class _MediaCarousel extends StatelessWidget {
           child: InkWell(
             onTap: onSeeAll,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   Text(
                     title,
-                    style:
-                        Theme.of(
-                          context,
-                        ).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const Spacer(),
                   if (onSeeAll != null)

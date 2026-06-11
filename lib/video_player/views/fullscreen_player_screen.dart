@@ -34,9 +34,7 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
 
   @override
   void dispose() {
-    unawaited(
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge),
-    );
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     unawaited(
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
     );

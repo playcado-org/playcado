@@ -64,9 +64,7 @@ class ServerManagementScreen extends StatelessWidget {
                                 icon: const PlaycadoIcon(
                                   PlaycadoIcons.download,
                                 ),
-                                label: Text(
-                                  context.l10n.viewOfflineDownloads,
-                                ),
+                                label: Text(context.l10n.viewOfflineDownloads),
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,

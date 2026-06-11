@@ -41,9 +41,7 @@ class MediaDetailsTitle extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant,
-                  ),
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(

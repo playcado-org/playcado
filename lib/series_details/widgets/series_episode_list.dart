@@ -64,9 +64,7 @@ class SeriesEpisodeList extends StatelessWidget {
                         );
                       }
                     },
-                    items: seasons.map<DropdownMenuItem<String>>((
-                      season,
-                    ) {
+                    items: seasons.map<DropdownMenuItem<String>>((season) {
                       return DropdownMenuItem<String>(
                         value: season.id,
                         child: Text(season.name),

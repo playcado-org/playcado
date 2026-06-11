@@ -16,9 +16,9 @@ class TvShowsScreen extends StatelessWidget {
     final repo = context.read<LibraryRepository>();
 
     return BlocProvider<PaginatedMediaListBloc>(
-      create: (context) => PaginatedMediaListBloc(
-        fetcher: repo.getTvShows,
-      )..add(PaginatedMediaListItemsFetched()),
+      create: (context) =>
+          PaginatedMediaListBloc(fetcher: repo.getTvShows)
+            ..add(PaginatedMediaListItemsFetched()),
       child: const Scaffold(body: TvShowsGrid()),
     );
   }

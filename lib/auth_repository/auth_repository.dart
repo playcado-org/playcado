@@ -40,9 +40,7 @@ class AuthRepository {
     required String password,
     bool rememberCredentials = false,
   }) async {
-    LoggerService.auth.info(
-      'Starting login on server: $serverUrl',
-    );
+    LoggerService.auth.info('Starting login on server: $serverUrl');
 
     final trimmedUrl = serverUrl.trim();
     final hadNoScheme =
@@ -58,9 +56,7 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       if (hadNoScheme && _isConnectionError(e)) {
-        LoggerService.auth.info(
-          'HTTPS connection failed, retrying with HTTP',
-        );
+        LoggerService.auth.info('HTTPS connection failed, retrying with HTTP');
         try {
           return await _attemptLogin(
             effectiveServerUrl: 'http://$trimmedUrl',
@@ -87,9 +83,7 @@ class AuthRepository {
     required String password,
     required bool rememberCredentials,
   }) async {
-    final newClient = JellyfinDart(
-      basePathOverride: effectiveServerUrl,
-    );
+    final newClient = JellyfinDart(basePathOverride: effectiveServerUrl);
 
     final deviceId = 'playcado-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -125,12 +119,7 @@ class AuthRepository {
         accessToken: token,
       );
 
-      _jellyfinClientService.setClient(
-        newClient,
-        credentials,
-        token,
-        deviceId,
-      );
+      _jellyfinClientService.setClient(newClient, credentials, token, deviceId);
 
       _currentUser = User(
         id: userId,
@@ -175,9 +164,7 @@ class AuthRepository {
         effectiveServerUrl = 'https://$effectiveServerUrl';
       }
 
-      final newClient = JellyfinDart(
-        basePathOverride: effectiveServerUrl,
-      );
+      final newClient = JellyfinDart(basePathOverride: effectiveServerUrl);
       final deviceId = 'playcado-${DateTime.now().millisecondsSinceEpoch}';
 
       newClient
@@ -229,10 +216,7 @@ class AuthRepository {
       await _secureStorage.clearCredentials();
       throw Exception('Token verification failed — token may be expired');
     } on Exception catch (e) {
-      LoggerService.auth.severe(
-        'Token login failed',
-        e,
-      );
+      LoggerService.auth.severe('Token login failed', e);
       _clearSession();
 
       if (e is DioException &&

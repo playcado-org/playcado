@@ -25,31 +25,25 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchItems(
-          userId: currentUserId,
-          startIndex: startIndex,
-          limit: limit,
-          includeItemTypes: [BaseItemKind.movie],
-          recursive: true,
-          sortBy: [_parseSortBy(sortBy)],
-          sortOrder: [
-            if (sortOrder == 'Ascending')
-              SortOrder.ascending
-            else
-              SortOrder.descending,
-          ],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-          ],
-        );
-        LoggerService.api.info('Fetched ${items.length} movies');
-        return items;
-      },
-      label: 'getMovies',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchItems(
+        userId: currentUserId,
+        startIndex: startIndex,
+        limit: limit,
+        includeItemTypes: [BaseItemKind.movie],
+        recursive: true,
+        sortBy: [_parseSortBy(sortBy)],
+        sortOrder: [
+          if (sortOrder == 'Ascending')
+            SortOrder.ascending
+          else
+            SortOrder.descending,
+        ],
+        fields: [ItemFields.overview, ItemFields.mediaSources],
+      );
+      LoggerService.api.info('Fetched ${items.length} movies');
+      return items;
+    }, label: 'getMovies');
   }
 
   Future<MediaItem> getItem(String id) async {
@@ -58,26 +52,23 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchItems(
-          userId: currentUserId,
-          ids: [id],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.people,
-            ItemFields.chapters,
-            ItemFields.childCount,
-          ],
-        );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchItems(
+        userId: currentUserId,
+        ids: [id],
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.people,
+          ItemFields.chapters,
+          ItemFields.childCount,
+        ],
+      );
 
-        final item = items.firstOrNull;
-        if (item == null) throw Exception('Item not found');
-        return item;
-      },
-      label: 'getItem($id)',
-    );
+      final item = items.firstOrNull;
+      if (item == null) throw Exception('Item not found');
+      return item;
+    }, label: 'getItem($id)');
   }
 
   Future<List<MediaItem>> getTvShows({
@@ -94,32 +85,29 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchItems(
-          userId: currentUserId,
-          startIndex: startIndex,
-          limit: limit,
-          includeItemTypes: [BaseItemKind.series],
-          recursive: true,
-          sortBy: [_parseSortBy(sortBy)],
-          sortOrder: [
-            if (sortOrder == 'Ascending')
-              SortOrder.ascending
-            else
-              SortOrder.descending,
-          ],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.childCount,
-          ],
-        );
-        LoggerService.api.info('Fetched ${items.length} TV shows');
-        return items;
-      },
-      label: 'getTvShows',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchItems(
+        userId: currentUserId,
+        startIndex: startIndex,
+        limit: limit,
+        includeItemTypes: [BaseItemKind.series],
+        recursive: true,
+        sortBy: [_parseSortBy(sortBy)],
+        sortOrder: [
+          if (sortOrder == 'Ascending')
+            SortOrder.ascending
+          else
+            SortOrder.descending,
+        ],
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.childCount,
+        ],
+      );
+      LoggerService.api.info('Fetched ${items.length} TV shows');
+      return items;
+    }, label: 'getTvShows');
   }
 
   Future<List<MediaItem>> getLatestTvShows() async {
@@ -129,23 +117,20 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchLatestMedia(
-          userId: currentUserId,
-          limit: 20,
-          includeItemTypes: [BaseItemKind.series],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.childCount,
-          ],
-        );
-        LoggerService.api.info('Fetched ${items.length} latest TV shows');
-        return items;
-      },
-      label: 'getLatestTvShows',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchLatestMedia(
+        userId: currentUserId,
+        limit: 20,
+        includeItemTypes: [BaseItemKind.series],
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.childCount,
+        ],
+      );
+      LoggerService.api.info('Fetched ${items.length} latest TV shows');
+      return items;
+    }, label: 'getLatestTvShows');
   }
 
   Future<List<MediaItem>> getLatestMovies() async {
@@ -155,23 +140,20 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchLatestMedia(
-          userId: currentUserId,
-          limit: 20,
-          includeItemTypes: [BaseItemKind.movie],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.childCount,
-          ],
-        );
-        LoggerService.api.info('Fetched ${items.length} latest movies');
-        return items;
-      },
-      label: 'getLatestMovies',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchLatestMedia(
+        userId: currentUserId,
+        limit: 20,
+        includeItemTypes: [BaseItemKind.movie],
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.childCount,
+        ],
+      );
+      LoggerService.api.info('Fetched ${items.length} latest movies');
+      return items;
+    }, label: 'getLatestMovies');
   }
 
   Future<List<MediaItem>> getResumeItems() async {
@@ -181,28 +163,25 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchItems(
-          userId: currentUserId,
-          limit: 20,
-          recursive: true,
-          filters: [ItemFilter.isResumable],
-          sortBy: [ItemSortBy.datePlayed],
-          sortOrder: [SortOrder.descending],
-          includeItemTypes: [BaseItemKind.movie, BaseItemKind.episode],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.people,
-            ItemFields.chapters,
-          ],
-        );
-        LoggerService.api.info('Fetched ${items.length} resume items');
-        return items;
-      },
-      label: 'getResumeItems',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchItems(
+        userId: currentUserId,
+        limit: 20,
+        recursive: true,
+        filters: [ItemFilter.isResumable],
+        sortBy: [ItemSortBy.datePlayed],
+        sortOrder: [SortOrder.descending],
+        includeItemTypes: [BaseItemKind.movie, BaseItemKind.episode],
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.people,
+          ItemFields.chapters,
+        ],
+      );
+      LoggerService.api.info('Fetched ${items.length} resume items');
+      return items;
+    }, label: 'getResumeItems');
   }
 
   Future<List<MediaItem>> getNextUpItems() async {
@@ -212,41 +191,38 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchNextUp(
-          userId: currentUserId,
-          limit: 20,
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.people,
-            ItemFields.chapters,
-            ItemFields.childCount,
-          ],
-        );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchNextUp(
+        userId: currentUserId,
+        limit: 20,
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.people,
+          ItemFields.chapters,
+          ItemFields.childCount,
+        ],
+      );
 
-        LoggerService.api.info('Fetched ${items.length} next up items');
+      LoggerService.api.info('Fetched ${items.length} next up items');
 
-        final uniqueSeriesMap = <String, MediaItem>{};
-        for (final item in items) {
-          if (item.seriesId != null && item.seriesName != null) {
-            final seriesId = item.seriesId!;
-            if (!uniqueSeriesMap.containsKey(seriesId)) {
-              uniqueSeriesMap[seriesId] = item;
-            }
-          } else {
-            final id = item.id;
-            if (!uniqueSeriesMap.containsKey(id)) {
-              uniqueSeriesMap[id] = item;
-            }
+      final uniqueSeriesMap = <String, MediaItem>{};
+      for (final item in items) {
+        if (item.seriesId != null && item.seriesName != null) {
+          final seriesId = item.seriesId!;
+          if (!uniqueSeriesMap.containsKey(seriesId)) {
+            uniqueSeriesMap[seriesId] = item;
+          }
+        } else {
+          final id = item.id;
+          if (!uniqueSeriesMap.containsKey(id)) {
+            uniqueSeriesMap[id] = item;
           }
         }
+      }
 
-        return uniqueSeriesMap.values.toList();
-      },
-      label: 'getNextUpItems',
-    );
+      return uniqueSeriesMap.values.toList();
+    }, label: 'getNextUpItems');
   }
 
   Future<MediaItem?> getNextEpisode(String seriesId) async {
@@ -308,18 +284,15 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchSeasons(
-          userId: currentUserId,
-          seriesId: seriesId,
-          fields: [ItemFields.overview],
-        );
-        LoggerService.api.info('Fetched ${items.length} seasons');
-        return items;
-      },
-      label: 'getSeasons($seriesId)',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchSeasons(
+        userId: currentUserId,
+        seriesId: seriesId,
+        fields: [ItemFields.overview],
+      );
+      LoggerService.api.info('Fetched ${items.length} seasons');
+      return items;
+    }, label: 'getSeasons($seriesId)');
   }
 
   Future<List<MediaItem>> getEpisodes({
@@ -334,24 +307,21 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchEpisodes(
-          userId: currentUserId,
-          seriesId: seriesId,
-          seasonId: seasonId,
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.people,
-            ItemFields.chapters,
-          ],
-        );
-        LoggerService.api.info('Fetched ${items.length} episodes');
-        return items;
-      },
-      label: 'getEpisodes($seasonId)',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchEpisodes(
+        userId: currentUserId,
+        seriesId: seriesId,
+        seasonId: seasonId,
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.people,
+          ItemFields.chapters,
+        ],
+      );
+      LoggerService.api.info('Fetched ${items.length} episodes');
+      return items;
+    }, label: 'getEpisodes($seasonId)');
   }
 
   Future<List<MediaItem>> getLibraries() async {
@@ -361,14 +331,11 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchViews(userId: currentUserId);
-        LoggerService.api.info('Fetched ${items.length} libraries');
-        return items;
-      },
-      label: 'getLibraries',
-    );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchViews(userId: currentUserId);
+      LoggerService.api.info('Fetched ${items.length} libraries');
+      return items;
+    }, label: 'getLibraries');
   }
 
   Future<List<MediaItem>> getLibraryItems({
@@ -387,44 +354,41 @@ class LibraryRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final items = await _dataSource.fetchItems(
-          userId: currentUserId,
-          parentId: parentId,
-          startIndex: startIndex,
-          limit: limit,
-          recursive: true,
-          sortBy: [_parseSortBy(sortBy)],
-          sortOrder: [
-            if (sortOrder == 'Ascending')
-              SortOrder.ascending
-            else
-              SortOrder.descending,
-          ],
-          fields: [
-            ItemFields.overview,
-            ItemFields.mediaSources,
-            ItemFields.childCount,
-          ],
-        );
+    return retryWithBackoff(() async {
+      final items = await _dataSource.fetchItems(
+        userId: currentUserId,
+        parentId: parentId,
+        startIndex: startIndex,
+        limit: limit,
+        recursive: true,
+        sortBy: [_parseSortBy(sortBy)],
+        sortOrder: [
+          if (sortOrder == 'Ascending')
+            SortOrder.ascending
+          else
+            SortOrder.descending,
+        ],
+        fields: [
+          ItemFields.overview,
+          ItemFields.mediaSources,
+          ItemFields.childCount,
+        ],
+      );
 
-        final filteredItems = items
-            .where(
-              (item) =>
-                  item.type != MediaItemType.folder &&
-                  item.type != MediaItemType.collectionFolder,
-            )
-            .toList();
+      final filteredItems = items
+          .where(
+            (item) =>
+                item.type != MediaItemType.folder &&
+                item.type != MediaItemType.collectionFolder,
+          )
+          .toList();
 
-        LoggerService.api.info(
-          'Fetched ${items.length} items from library '
-          '$parentId (filtered to ${filteredItems.length})',
-        );
-        return filteredItems;
-      },
-      label: 'getLibraryItems($parentId)',
-    );
+      LoggerService.api.info(
+        'Fetched ${items.length} items from library '
+        '$parentId (filtered to ${filteredItems.length})',
+      );
+      return filteredItems;
+    }, label: 'getLibraryItems($parentId)');
   }
 
   ItemSortBy _parseSortBy(String sortBy) {
