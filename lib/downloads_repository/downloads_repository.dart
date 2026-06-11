@@ -77,11 +77,7 @@ class DownloadsRepository {
         }
       }
     } on Exception catch (e, s) {
-      LoggerService.downloads.severe(
-        'DownloadsRepository init failed',
-        e,
-        s,
-      );
+      LoggerService.downloads.severe('DownloadsRepository init failed', e, s);
     }
     _emit();
   }

@@ -19,54 +19,51 @@ class SearchRepository {
       throw Exception('Unable to get current user');
     }
 
-    return retryWithBackoff(
-      () async {
-        final results = await Future.wait([
-          _dataSource.fetchItems(
-            userId: userId,
-            searchTerm: query,
-            limit: 50,
-            recursive: true,
-            includeItemTypes: [BaseItemKind.movie, BaseItemKind.series],
-            fields: [ItemFields.overview, ItemFields.mediaSources],
-          ),
-          _dataSource.fetchItems(
-            userId: userId,
-            searchTerm: query,
-            limit: 50,
-            recursive: true,
-            includeItemTypes: [BaseItemKind.episode],
-            fields: [ItemFields.overview, ItemFields.mediaSources],
-          ),
-        ]);
+    return retryWithBackoff(() async {
+      final results = await Future.wait([
+        _dataSource.fetchItems(
+          userId: userId,
+          searchTerm: query,
+          limit: 50,
+          recursive: true,
+          includeItemTypes: [BaseItemKind.movie, BaseItemKind.series],
+          fields: [ItemFields.overview, ItemFields.mediaSources],
+        ),
+        _dataSource.fetchItems(
+          userId: userId,
+          searchTerm: query,
+          limit: 50,
+          recursive: true,
+          includeItemTypes: [BaseItemKind.episode],
+          fields: [ItemFields.overview, ItemFields.mediaSources],
+        ),
+      ]);
 
-        final items = [...results[0], ...results[1]]
-          ..sort((a, b) {
-            int priority(MediaItemType? type) {
-              switch (type) {
-                case MediaItemType.movie:
-                  return 0;
-                case MediaItemType.series:
-                  return 1;
-                case MediaItemType.episode:
-                  return 2;
-                case MediaItemType.season:
-                case MediaItemType.collectionFolder:
-                case MediaItemType.folder:
-                case MediaItemType.photo:
-                case MediaItemType.video:
-                case MediaItemType.other:
-                case null:
-                  return 3;
-              }
+      final items = [...results[0], ...results[1]]
+        ..sort((a, b) {
+          int priority(MediaItemType? type) {
+            switch (type) {
+              case MediaItemType.movie:
+                return 0;
+              case MediaItemType.series:
+                return 1;
+              case MediaItemType.episode:
+                return 2;
+              case MediaItemType.season:
+              case MediaItemType.collectionFolder:
+              case MediaItemType.folder:
+              case MediaItemType.photo:
+              case MediaItemType.video:
+              case MediaItemType.other:
+              case null:
+                return 3;
             }
+          }
 
-            return priority(a.type).compareTo(priority(b.type));
-          });
+          return priority(a.type).compareTo(priority(b.type));
+        });
 
-        return items;
-      },
-      label: 'searchMedia($query)',
-    );
+      return items;
+    }, label: 'searchMedia($query)');
   }
 }

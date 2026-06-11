@@ -104,9 +104,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       );
 
       try {
-        final streamUrl = await _playbackRepository.getCastUrl(
-          event.item.id,
-        );
+        final streamUrl = await _playbackRepository.getCastUrl(event.item.id);
         final imageUrl = _urlGenerator.getImageUrl(event.item.id);
 
         await _castService.loadMedia(

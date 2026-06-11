@@ -99,9 +99,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       accessToken: 'demo_token',
     );
     _authRepository.setDemoUser(demoUser);
-    emit(
-      state.copyWith(isDemoMode: true, user: const StatusSuccess(demoUser)),
-    );
+    emit(state.copyWith(isDemoMode: true, user: const StatusSuccess(demoUser)));
   }
 
   Future<void> _onAuthRemoveAccountRequested(

@@ -25,9 +25,14 @@ jobs:
           java-version: 17
           cache: gradle
 
+      - name: Get Flutter version from .fvmrc
+        id: fvmrc
+        run: echo "version=$(jq -r '.flutter' .fvmrc)" >> $GITHUB_OUTPUT
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: ${{ steps.fvmrc.outputs.version }}
           cache: true
 
       - name: Install dependencies
@@ -48,5 +53,3 @@ jobs:
       - name: Build Android (debug)
         run: flutter build apk --debug --dart-define-from-file=config/secrets.json
 
-      - name: Build iOS (debug, no codesign)
-        run: flutter build ios --no-codesign --dart-define-from-file=config/secrets.json

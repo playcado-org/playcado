@@ -233,9 +233,7 @@ class CastService {
 
     final uri = Uri.parse(castItem.streamUrl);
 
-    LoggerService.castService.info(
-      'Preparing to cast media item',
-    );
+    LoggerService.castService.info('Preparing to cast media item');
 
     var releaseDate = DateTime.now();
     if (castItem.mediaItem.productionYear != null) {

@@ -38,14 +38,10 @@ class LibrariesBloc extends Bloc<LibrariesEvent, LibrariesState> {
             type == 'music';
       }).toList();
 
-      emit(
-        state.copyWith(libraries: StatusSuccess(supportedLibraries)),
-      );
+      emit(state.copyWith(libraries: StatusSuccess(supportedLibraries)));
     } on Exception catch (error) {
       LoggerService.api.severe('Failed to load libraries', error);
-      emit(
-        state.copyWith(libraries: StatusError(error.toString())),
-      );
+      emit(state.copyWith(libraries: StatusError(error.toString())));
     }
   }
 }

@@ -24,12 +24,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         continueWatching: StatusLoading(
           previousValue: state.continueWatching.value,
         ),
-        nextUp: StatusLoading(
-          previousValue: state.nextUp.value,
-        ),
-        latestMovies: StatusLoading(
-          previousValue: state.latestMovies.value,
-        ),
+        nextUp: StatusLoading(previousValue: state.nextUp.value),
+        latestMovies: StatusLoading(previousValue: state.latestMovies.value),
         latestTv: StatusLoading(previousValue: state.latestTv.value),
       ),
     );

@@ -36,9 +36,7 @@ class DownloadsStartRequested extends DownloadsEvent {
 }
 
 class DownloadsRequested extends DownloadsEvent {
-  DownloadsRequested({
-    required this.item,
-  });
+  DownloadsRequested({required this.item});
   final MediaItem item;
 
   @override

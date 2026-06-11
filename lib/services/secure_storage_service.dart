@@ -20,9 +20,7 @@ class SecureStorageService {
   // --- Active Session Management ---
 
   Future<void> storeCredentials(ServerCredentials credentials) async {
-    LoggerService.secureStorage.info(
-      'Storing active credentials',
-    );
+    LoggerService.secureStorage.info('Storing active credentials');
     try {
       await _storage.write(key: _serverNameKey, value: credentials.serverName);
       await _storage.write(key: _usernameKey, value: credentials.username);

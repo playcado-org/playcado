@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/core/extensions.dart';
@@ -135,7 +136,7 @@ class _PaginatedMediaGridState extends State<PaginatedMediaGrid> {
       onRefresh: widget.onRefresh,
       child: CustomScrollView(
         controller: _scrollController,
-        cacheExtent: 300,
+        scrollCacheExtent: const ScrollCacheExtent.pixels(300),
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           _buildSliverAppBar(context),

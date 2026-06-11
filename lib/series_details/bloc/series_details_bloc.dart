@@ -58,10 +58,7 @@ class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
       seriesMetadata = await _libraryRepository.getItem(seriesId);
       seasons = await _libraryRepository.getSeasons(seriesId);
     } on Exception catch (error) {
-      LoggerService.media.severe(
-        'Failed to initialize series details',
-        error,
-      );
+      LoggerService.media.severe('Failed to initialize series details', error);
       emit(
         state.copyWith(
           series: StatusError(error.toString()),

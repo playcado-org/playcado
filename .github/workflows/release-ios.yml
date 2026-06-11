@@ -19,8 +19,17 @@ jobs:
   build-and-release:
     name: Build & Release iOS
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | sed 's/version: //')
+          echo "build_name=${VERSION%+*}" >> $GITHUB_OUTPUT
+          echo "build_number=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
 
       - uses: subosito/flutter-action@v2
         with:
@@ -65,20 +74,21 @@ jobs:
             --release \
             --obfuscate \
             --split-debug-info=build/symbols \
-            --build-number=${{ github.run_number }} \
+            --build-name=${{ steps.version.outputs.build_name }} \
+            --build-number=${{ steps.version.outputs.build_number }} \
             --dart-define-from-file=config/secrets.json \
             --export-options-plist=ios/ExportOptions.plist
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-release-${{ github.run_number }}
+          name: ios-release-${{ steps.version.outputs.build_name }}
           path: build/ios/ipa/*.ipa
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
         with:
-          name: ios-symbols-${{ github.run_number }}
+          name: ios-symbols-${{ steps.version.outputs.build_name }}
           path: build/symbols/
 
       - name: Upload to TestFlight
@@ -96,6 +106,20 @@ jobs:
             --file build/ios/ipa/*.ipa \
             --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+
+      - name: Extract release notes
+        run: |
+          awk -v ver="[${{ steps.version.outputs.build_name }}]" \
+            '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
+            CHANGELOG.md > /tmp/release-notes.md || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v${{ steps.version.outputs.build_name }}
+          body_path: /tmp/release-notes.md
+          files: build/ios/ipa/*.ipa
 
       - name: Clean up keychain
         if: always()
