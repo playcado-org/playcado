@@ -2,7 +2,6 @@
 
 <!-- Briefly describe the change and why it's needed -->
 
-Closes #(issue)
 
 ## Type of change
 
@@ -12,19 +11,16 @@ Closes #(issue)
 - [ ] CI / Build
 - [ ] Documentation
 
-## How has this been tested?
+## How to test?
 
-<!-- Describe the tests you ran or the steps to verify -->
+<!-- Steps for another developer to verify the change -->
 
-- [ ] Existing tests pass
-- [ ] New tests added
 
-## Screenshots (if UI change)
+## Screenshots
 
 <!-- Add screenshots or a video demonstrating the change -->
 
 ## Checklist
 
-- [ ] Code follows project style
 - [ ] `flutter analyze` passes with no new issues
 - [ ] No new warnings or errors
