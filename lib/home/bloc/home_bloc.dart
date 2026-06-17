@@ -30,48 +30,37 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       ),
     );
 
-    List<MediaItem>? resumeItems;
-    List<MediaItem>? nextUpItems;
-    List<MediaItem>? latestMovies;
-    List<MediaItem>? latestTv;
-    String? resumeErr;
-    String? nextUpErr;
-    String? moviesErr;
-    String? tvErr;
+    Future<({dynamic value, String? error})> fetch(
+      Future<List<MediaItem>> Function() call,
+    ) async {
+      try {
+        return (value: await call(), error: null);
+      } on Exception catch (e) {
+        return (value: null, error: e.toString());
+      }
+    }
 
-    try {
-      resumeItems = await _libraryRepository.getResumeItems();
-    } on Exception catch (e) {
-      resumeErr = e.toString();
-    }
-    try {
-      nextUpItems = await _libraryRepository.getNextUpItems();
-    } on Exception catch (e) {
-      nextUpErr = e.toString();
-    }
-    try {
-      latestMovies = await _libraryRepository.getLatestMovies();
-    } on Exception catch (e) {
-      moviesErr = e.toString();
-    }
-    try {
-      latestTv = await _libraryRepository.getLatestTvShows();
-    } on Exception catch (e) {
-      tvErr = e.toString();
-    }
+    final results = await Future.wait([
+      fetch(_libraryRepository.getResumeItems),
+      fetch(_libraryRepository.getNextUpItems),
+      fetch(_libraryRepository.getLatestMovies),
+      fetch(_libraryRepository.getLatestTvShows),
+    ]);
 
     emit(
       state.copyWith(
-        continueWatching: resumeErr != null
-            ? StatusError(resumeErr)
-            : StatusSuccess(resumeItems!),
-        nextUp: nextUpErr != null
-            ? StatusError(nextUpErr)
-            : StatusSuccess(nextUpItems!),
-        latestMovies: moviesErr != null
-            ? StatusError(moviesErr)
-            : StatusSuccess(latestMovies!),
-        latestTv: tvErr != null ? StatusError(tvErr) : StatusSuccess(latestTv!),
+        continueWatching: results[0].error != null
+            ? StatusError(results[0].error!)
+            : StatusSuccess<List<MediaItem>>(results[0].value as List<MediaItem>),
+        nextUp: results[1].error != null
+            ? StatusError(results[1].error!)
+            : StatusSuccess<List<MediaItem>>(results[1].value as List<MediaItem>),
+        latestMovies: results[2].error != null
+            ? StatusError(results[2].error!)
+            : StatusSuccess<List<MediaItem>>(results[2].value as List<MediaItem>),
+        latestTv: results[3].error != null
+            ? StatusError(results[3].error!)
+            : StatusSuccess<List<MediaItem>>(results[3].value as List<MediaItem>),
       ),
     );
   }
