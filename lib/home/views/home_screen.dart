@@ -340,7 +340,9 @@ class _MediaCarousel extends StatelessWidget {
               itemExtent: itemWidth + 12,
               itemCount: isLoading ? 5 : items?.length ?? 0,
               itemBuilder: (context, index) {
-                final item = items?[index];
+                final item = items != null && index < items!.length
+                    ? items![index]
+                    : null;
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: MediaPoster(
