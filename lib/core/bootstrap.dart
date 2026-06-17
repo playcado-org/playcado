@@ -64,7 +64,11 @@ Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize MediaKit for video playback
-  MediaKit.ensureInitialized();
+  try {
+    MediaKit.ensureInitialized();
+  } catch (_) {
+    // Already initialized (e.g. during hot-restart)
+  }
 
   // Initialize logging service
   LoggerService.initializeLogging();
