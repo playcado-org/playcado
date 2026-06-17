@@ -45,8 +45,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# FVM Version Cache
-.fvm/
+# FVM - ignore machine-specific symlinks, keep config
+.fvm/flutter_sdk
+.fvm/versions/
 
 sentry.properties
 upload-keystore.jks
