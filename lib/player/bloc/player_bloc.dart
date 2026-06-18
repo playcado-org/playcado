@@ -421,10 +421,11 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerTrackSelected event,
     Emitter<PlayerState> emit,
   ) async {
+    if (_activeService == null) return;
     if (event.type == TrackType.audio) {
-      await _localService.setAudioTrack(event.index);
+      await _activeService!.setAudioTrack(event.index);
     } else {
-      await _localService.setSubtitleTrack(event.index);
+      await _activeService!.setSubtitleTrack(event.index);
     }
   }
 

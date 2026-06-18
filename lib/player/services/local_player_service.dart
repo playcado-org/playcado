@@ -110,6 +110,7 @@ class LocalPlayerService implements PlayerService {
   @override
   Future<void> seek(Duration position) async => _player.seek(position);
 
+  @override
   Future<void> setAudioTrack(int index) async {
     final tracks = _player.state.tracks.audio;
     if (index >= 0 && index < tracks.length) {
@@ -117,6 +118,7 @@ class LocalPlayerService implements PlayerService {
     }
   }
 
+  @override
   Future<void> setSubtitleTrack(int index) async {
     final tracks = _player.state.tracks.subtitle;
     if (index >= 0 && index < tracks.length) {
