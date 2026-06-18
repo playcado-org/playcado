@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/player/engine/local_player_engine.dart';
+import 'package:playcado/player/services/local_playback_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class TrackSelectionSheet extends StatefulWidget {
   const TrackSelectionSheet({required this.engine, super.key});
-  final LocalPlayerEngine engine;
+  final LocalPlaybackService engine;
 
   @override
   State<TrackSelectionSheet> createState() => _TrackSelectionSheetState();

@@ -2,21 +2,21 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
-import 'package:playcado/player/engine/player_engine.dart';
+import 'package:playcado/player/services/playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/services/logger_service.dart';
 
-class CastPlayerEngine implements PlayerEngine {
-  CastPlayerEngine();
+class CastPlaybackService implements PlaybackService {
+  CastPlaybackService();
 
   final GoogleCastRemoteMediaClientPlatformInterface _remoteMediaClient =
       GoogleCastRemoteMediaClient.instance;
   final GoogleCastSessionManagerPlatformInterface _sessionManager =
       GoogleCastSessionManager.instance;
 
-  final StreamController<PlayerEngineState> _stateController =
-      StreamController<PlayerEngineState>.broadcast();
-  PlayerEngineState _currentState = const PlayerEngineState();
+  final StreamController<PlaybackServiceState> _stateController =
+      StreamController<PlaybackServiceState>.broadcast();
+  PlaybackServiceState _currentState = const PlaybackServiceState();
   StreamSubscription<GoggleCastMediaStatus?>? _mediaStatusSub;
 
   bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
@@ -25,10 +25,10 @@ class CastPlayerEngine implements PlayerEngine {
       _sessionManager.connectionState == GoogleCastConnectState.connected;
 
   @override
-  Stream<PlayerEngineState> get stateStream => _stateController.stream;
+  Stream<PlaybackServiceState> get stateStream => _stateController.stream;
 
   @override
-  PlayerEngineState get currentState => _currentState;
+  PlaybackServiceState get currentState => _currentState;
 
   @override
   Object? get nativeViewAttachment => null;

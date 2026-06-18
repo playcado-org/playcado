@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:playcado/player/models/playable_media.dart';
 
-class PlayerEngineState extends Equatable {
-  const PlayerEngineState({
+class PlaybackServiceState extends Equatable {
+  const PlaybackServiceState({
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.isPlaying = false,
@@ -18,14 +18,14 @@ class PlayerEngineState extends Equatable {
   final bool isBuffering;
   final bool isCompleted;
 
-  PlayerEngineState copyWith({
+  PlaybackServiceState copyWith({
     Duration? position,
     Duration? duration,
     bool? isPlaying,
     bool? isBuffering,
     bool? isCompleted,
   }) {
-    return PlayerEngineState(
+    return PlaybackServiceState(
       position: position ?? this.position,
       duration: duration ?? this.duration,
       isPlaying: isPlaying ?? this.isPlaying,
@@ -44,10 +44,10 @@ class PlayerEngineState extends Equatable {
   ];
 }
 
-abstract class PlayerEngine {
-  Stream<PlayerEngineState> get stateStream;
+abstract class PlaybackService {
+  Stream<PlaybackServiceState> get stateStream;
 
-  PlayerEngineState get currentState;
+  PlaybackServiceState get currentState;
 
   Future<void> load(PlayableMedia media);
 

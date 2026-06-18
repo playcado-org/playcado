@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/player/engine/local_player_engine.dart';
+import 'package:playcado/player/services/local_playback_service.dart';
 import 'package:playcado/player/widgets/track_selection_sheet.dart';
 import 'package:playcado/player/widgets/video_slider.dart';
 import 'package:playcado/widgets/widgets.dart';
@@ -233,7 +233,7 @@ class _TopButtons extends StatelessWidget {
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   showDragHandle: true,
                   builder: (context) => TrackSelectionSheet(
-                    engine: context.read<LocalPlayerEngine>(),
+                    engine: context.read<LocalPlaybackService>(),
                   ),
                 ),
               );

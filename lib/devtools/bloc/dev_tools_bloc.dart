@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
-import 'package:playcado/player/engine/cast_player_engine.dart';
+import 'package:playcado/player/services/cast_playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
@@ -17,7 +17,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   DevToolsBloc({
     required PreferencesService preferencesService,
     required CastDeviceManager castDeviceManager,
-    required CastPlayerEngine castPlayerEngine,
+    required CastPlaybackService castPlayerEngine,
     required DownloadsRepository downloadsRepository,
     required SecureStorageService secureStorage,
   }) : _preferencesService = preferencesService,
@@ -36,7 +36,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   }
   final PreferencesService _preferencesService;
   final CastDeviceManager _castDeviceManager;
-  final CastPlayerEngine _castPlayerEngine;
+  final CastPlaybackService _castPlayerEngine;
   StreamSubscription<GoogleCastSession?>? _castSubscription;
   final DownloadsRepository _downloadsRepository;
   final SecureStorageService _secureStorage;

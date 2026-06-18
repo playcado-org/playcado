@@ -11,8 +11,8 @@ import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/player/engine/local_player_engine.dart';
-import 'package:playcado/player/engine/cast_player_engine.dart';
+import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/services/cast_playback_service.dart';
 import 'package:playcado/player/repos/player_tracker.dart';
 import 'package:playcado/search/repos/search_repository.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
@@ -49,8 +49,8 @@ class BootstrapConfig {
   final SearchRepository searchRepository;
   final MediaUrlService mediaUrlService;
   final CastDeviceManager castDeviceManager;
-  final LocalPlayerEngine localPlayerEngine;
-  final CastPlayerEngine castPlayerEngine;
+  final LocalPlaybackService localPlayerEngine;
+  final CastPlaybackService castPlayerEngine;
   final PreferencesService preferencesService;
   final SecureStorageService secureStorageService;
   final bool isFirstRun;
@@ -128,8 +128,8 @@ Future<BootstrapConfig> _initializeServices() async {
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
   final castDeviceManager = CastDeviceManager();
-  final localPlayerEngine = LocalPlayerEngine();
-  final castPlayerEngine = CastPlayerEngine();
+  final localPlayerEngine = LocalPlaybackService();
+  final castPlayerEngine = CastPlaybackService();
   final preferencesService = PreferencesService();
 
   // Initialize Cast service early

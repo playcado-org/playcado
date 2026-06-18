@@ -3,22 +3,22 @@ import 'dart:async';
 import 'package:audio_session/audio_session.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:playcado/player/engine/player_engine.dart';
+import 'package:playcado/player/services/playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/player/models/track_info.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-class LocalPlayerEngine implements PlayerEngine {
-  LocalPlayerEngine() {
+class LocalPlaybackService implements PlaybackService {
+  LocalPlaybackService() {
     _init();
   }
 
   late final Player _player;
   late final VideoController _controller;
-  final StreamController<PlayerEngineState> _stateController =
-      StreamController<PlayerEngineState>.broadcast();
-  PlayerEngineState _currentState = const PlayerEngineState();
+  final StreamController<PlaybackServiceState> _stateController =
+      StreamController<PlaybackServiceState>.broadcast();
+  PlaybackServiceState _currentState = const PlaybackServiceState();
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<bool>? _playingSub;
   StreamSubscription<bool>? _bufferingSub;
@@ -26,10 +26,10 @@ class LocalPlayerEngine implements PlayerEngine {
   StreamSubscription<bool>? _completedSub;
 
   @override
-  Stream<PlayerEngineState> get stateStream => _stateController.stream;
+  Stream<PlaybackServiceState> get stateStream => _stateController.stream;
 
   @override
-  PlayerEngineState get currentState => _currentState;
+  PlaybackServiceState get currentState => _currentState;
 
   @override
   Object? get nativeViewAttachment => _controller;

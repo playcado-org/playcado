@@ -7,9 +7,9 @@ import 'package:jellyfin_dart/jellyfin_dart.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/player/engine/cast_player_engine.dart';
-import 'package:playcado/player/engine/local_player_engine.dart';
-import 'package:playcado/player/engine/player_engine.dart';
+import 'package:playcado/player/services/cast_playback_service.dart';
+import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/services/playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/player/repos/player_tracker.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
@@ -21,7 +21,7 @@ part 'player_state.dart';
 
 class _EngineStateUpdated extends PlayerEvent {
   const _EngineStateUpdated(this.engineState);
-  final PlayerEngineState engineState;
+  final PlaybackServiceState engineState;
 
   @override
   List<Object?> get props => [engineState];
@@ -29,8 +29,8 @@ class _EngineStateUpdated extends PlayerEvent {
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   PlayerBloc({
-    required LocalPlayerEngine localEngine,
-    required CastPlayerEngine castEngine,
+    required LocalPlaybackService localEngine,
+    required CastPlaybackService castEngine,
     required CastDeviceManager castDeviceManager,
     required PlayerTracker playerTracker,
     required MediaUrlService urlGenerator,
@@ -58,22 +58,22 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     _initCastListeners();
   }
 
-  final LocalPlayerEngine _localEngine;
-  final CastPlayerEngine _castEngine;
+  final LocalPlaybackService _localEngine;
+  final CastPlaybackService _castEngine;
   final CastDeviceManager _castDeviceManager;
   final PlayerTracker _playerTracker;
   final MediaUrlService _urlGenerator;
   final MediaRemoteDataSource _dataSource;
   final JellyfinClientService _jellyfinClientService;
 
-  PlayerEngine? _activeEngine;
-  StreamSubscription<PlayerEngineState>? _engineSub;
+  PlaybackService? _activeEngine;
+  StreamSubscription<PlaybackServiceState>? _engineSub;
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
   DateTime _lastProgressReport = DateTime.now();
   bool _isLocalMedia = false;
   bool _wasCasting = false;
 
-  PlayerEngine get _engine {
+  PlaybackService get _engine {
     if (_activeEngine == null) throw StateError('No active engine');
     return _activeEngine!;
   }
@@ -88,7 +88,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     });
   }
 
-  void _subscribeToEngine(PlayerEngine engine) {
+  void _subscribeToEngine(PlaybackService engine) {
     _engineSub?.cancel();
     _engineSub = engine.stateStream.listen((engineState) {
       if (isClosed) return;
@@ -133,7 +133,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     }
   }
 
-  PlayerStatus _determineStatus(PlayerEngineState engineState) {
+  PlayerStatus _determineStatus(PlaybackServiceState engineState) {
     if (state.status == PlayerStatus.loading) {
       if (!engineState.isBuffering && engineState.position > Duration.zero) {
         return PlayerStatus.playing;
