@@ -11,7 +11,7 @@ import 'package:playcado/player/services/cast_playback_service.dart';
 import 'package:playcado/player/services/local_playback_service.dart';
 import 'package:playcado/player/services/playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
-import 'package:playcado/player/repos/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';

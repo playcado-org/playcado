@@ -9,7 +9,7 @@ import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/home/bloc/home_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/library_repository.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';

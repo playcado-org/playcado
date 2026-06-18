@@ -6,7 +6,7 @@ import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
 import 'package:playcado/search/bloc/search_bloc.dart';
-import 'package:playcado/search/repos/search_repository.dart';
+import 'package:playcado/search/repositories/search_repository.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class SearchScreen extends StatelessWidget {
