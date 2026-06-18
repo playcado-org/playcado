@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/views/video_player.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/views/player.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 /// Displays the media details header
@@ -20,7 +20,7 @@ class MediaDetailsHeader extends StatelessWidget {
   final MediaItem item;
   final bool isItemPlaying;
   final MediaItem? playingItem;
-  final VideoPlayerState playerState;
+  final PlayerState playerState;
   final String heroTag;
 
   @override
@@ -55,7 +55,7 @@ class MediaDetailsHeader extends StatelessWidget {
                   top: MediaQuery.of(context).padding.top,
                 ),
                 height: videoHeight,
-                child: VideoPlayer(
+                child: Player(
                   item: playingItem!,
                   localPath: playerState.localPath,
                 ),

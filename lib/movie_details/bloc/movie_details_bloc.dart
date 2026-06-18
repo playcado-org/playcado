@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/player/repos/player_tracker.dart';
 import 'package:playcado/services/logger_service.dart';
 
 part 'movie_details_event.dart';
@@ -12,7 +12,7 @@ part 'movie_details_state.dart';
 class MovieDetailsBloc extends Bloc<MovieDetailsEvent, MovieDetailsState> {
   MovieDetailsBloc({
     required LibraryRepository libraryRepository,
-    required PlaybackTracker playbackTracker,
+    required PlayerTracker playbackTracker,
   }) : _libraryRepository = libraryRepository,
        _playbackTracker = playbackTracker,
        super(const MovieDetailsState()) {
@@ -21,7 +21,7 @@ class MovieDetailsBloc extends Bloc<MovieDetailsEvent, MovieDetailsState> {
     on<UpdateMoviePlaybackProgress>(_onUpdateMoviePlaybackProgress);
   }
   final LibraryRepository _libraryRepository;
-  final PlaybackTracker _playbackTracker;
+  final PlayerTracker _playbackTracker;
 
   Future<void> _onFetchMovieDetails(
     FetchMovieDetails event,

@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
-import 'package:playcado/playback/engine/cast_playback_engine.dart';
-import 'package:playcado/playback/models/playable_media.dart';
+import 'package:playcado/player/engine/cast_player_engine.dart';
+import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 
@@ -17,12 +17,12 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   DevToolsBloc({
     required PreferencesService preferencesService,
     required CastDeviceManager castDeviceManager,
-    required CastPlaybackEngine castPlaybackEngine,
+    required CastPlayerEngine castPlayerEngine,
     required DownloadsRepository downloadsRepository,
     required SecureStorageService secureStorage,
   }) : _preferencesService = preferencesService,
        _castDeviceManager = castDeviceManager,
-       _castPlaybackEngine = castPlaybackEngine,
+       _castPlayerEngine = castPlayerEngine,
        _downloadsRepository = downloadsRepository,
        _secureStorage = secureStorage,
        super(const DevToolsState()) {
@@ -36,7 +36,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   }
   final PreferencesService _preferencesService;
   final CastDeviceManager _castDeviceManager;
-  final CastPlaybackEngine _castPlaybackEngine;
+  final CastPlayerEngine _castPlayerEngine;
   StreamSubscription<GoogleCastSession?>? _castSubscription;
   final DownloadsRepository _downloadsRepository;
   final SecureStorageService _secureStorage;
@@ -56,7 +56,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
         'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
     try {
-      await _castPlaybackEngine.load(
+      await _castPlayerEngine.load(
         const PlayableMedia(
           id: 'test',
           title: 'TEST VIDEO (Big Buck Bunny)',

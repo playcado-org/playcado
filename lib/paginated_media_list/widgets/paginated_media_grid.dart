@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class PaginatedMediaGrid extends StatefulWidget {
@@ -126,7 +126,7 @@ class _PaginatedMediaGridState extends State<PaginatedMediaGrid> {
 
     final items = widget.items ?? [];
 
-    final playerActive = context.select<VideoPlayerBloc, bool>(
+    final playerActive = context.select<PlayerBloc, bool>(
       (bloc) => bloc.state.isActive,
     );
     final bottomPadding =

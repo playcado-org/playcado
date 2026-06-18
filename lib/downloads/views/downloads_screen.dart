@@ -10,7 +10,7 @@ import 'package:playcado/core/formatters.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class DownloadsScreen extends StatelessWidget {
@@ -77,7 +77,7 @@ class _ActiveDownloadsList extends StatelessWidget {
       );
     }
 
-    final playerActive = context.select<VideoPlayerBloc, bool>(
+    final playerActive = context.select<PlayerBloc, bool>(
       (b) => b.state.isActive,
     );
     final bottomPadding =
@@ -303,7 +303,7 @@ class _CompletedDownloadsList extends StatelessWidget {
       );
     }
 
-    final playerActive = context.select<VideoPlayerBloc, bool>(
+    final playerActive = context.select<PlayerBloc, bool>(
       (b) => b.state.isActive,
     );
     final bottomPadding =

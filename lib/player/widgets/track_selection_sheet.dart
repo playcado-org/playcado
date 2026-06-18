@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
-import 'package:playcado/playback/engine/local_playback_engine.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/engine/local_player_engine.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class TrackSelectionSheet extends StatefulWidget {
   const TrackSelectionSheet({required this.engine, super.key});
-  final LocalPlaybackEngine engine;
+  final LocalPlayerEngine engine;
 
   @override
   State<TrackSelectionSheet> createState() => _TrackSelectionSheetState();
@@ -44,7 +44,7 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
                     audioTracks,
                     currentAudio,
                     (index) {
-                      context.read<VideoPlayerBloc>().add(
+                      context.read<PlayerBloc>().add(
                         PlayerTrackSelected(
                           type: TrackType.audio,
                           index: index,
@@ -64,7 +64,7 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
                     subtitleTracks,
                     currentSubtitle,
                     (index) {
-                      context.read<VideoPlayerBloc>().add(
+                      context.read<PlayerBloc>().add(
                         PlayerTrackSelected(
                           type: TrackType.subtitle,
                           index: index,

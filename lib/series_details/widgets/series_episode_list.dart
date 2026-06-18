@@ -6,7 +6,7 @@ import 'package:playcado/downloads/widgets/media_download_button.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/series_details/bloc/series_details_bloc.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class SeriesEpisodeList extends StatelessWidget {
@@ -143,7 +143,7 @@ class _EpisodeTile extends StatelessWidget {
       isLandscape: true,
     );
 
-    return BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+    return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, playerState) {
         final isPlaying =
             playerState.mediaItem?.id == episode.id && playerState.isActive;

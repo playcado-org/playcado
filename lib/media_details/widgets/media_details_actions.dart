@@ -9,7 +9,7 @@ import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
 import 'package:playcado/downloads_repository/models/download_item.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class MediaDetailsActions extends StatelessWidget {
@@ -37,7 +37,7 @@ class MediaDetailsActions extends StatelessWidget {
       return const _ActionButtonShimmer();
     }
 
-    final isCasting = context.select<VideoPlayerBloc, bool>(
+    final isCasting = context.select<PlayerBloc, bool>(
       (b) => b.state.isCasting,
     );
 

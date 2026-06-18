@@ -2,8 +2,8 @@ import 'package:jellyfin_dart/jellyfin_dart.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/services/logger_service.dart';
 
-class PlaybackTracker {
-  PlaybackTracker({required MediaRemoteDataSource dataSource})
+class PlayerTracker {
+  PlayerTracker({required MediaRemoteDataSource dataSource})
     : _dataSource = dataSource;
 
   final MediaRemoteDataSource _dataSource;

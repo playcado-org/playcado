@@ -15,9 +15,9 @@ import 'package:playcado/media/data/demo_remote_data_source.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repos/library_repository.dart';
 import 'package:playcado/onboarding/bloc/onboarding_cubit.dart';
-import 'package:playcado/playback/engine/cast_playback_engine.dart';
-import 'package:playcado/playback/engine/local_playback_engine.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/player/engine/cast_player_engine.dart';
+import 'package:playcado/player/engine/local_player_engine.dart';
+import 'package:playcado/player/repos/player_tracker.dart';
 import 'package:playcado/search/repos/search_repository.dart';
 import 'package:playcado/services/media_url/demo_url_service.dart';
 import 'package:playcado/services/media_url/jellyfin_url_service.dart';
@@ -26,7 +26,7 @@ import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 import 'package:playcado/theme/app_theme.dart';
 import 'package:playcado/theme/bloc/theme_bloc.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 
 class App extends StatelessWidget {
   const App({required this.config, super.key});
@@ -44,11 +44,11 @@ class App extends StatelessWidget {
         RepositoryProvider<CastDeviceManager>.value(
           value: config.castDeviceManager,
         ),
-        RepositoryProvider<LocalPlaybackEngine>.value(
-          value: config.localPlaybackEngine,
+        RepositoryProvider<LocalPlayerEngine>.value(
+          value: config.localPlayerEngine,
         ),
-        RepositoryProvider<CastPlaybackEngine>.value(
-          value: config.castPlaybackEngine,
+        RepositoryProvider<CastPlayerEngine>.value(
+          value: config.castPlayerEngine,
         ),
         RepositoryProvider<SecureStorageService>.value(
           value: config.secureStorageService,
@@ -99,9 +99,9 @@ class App extends StatelessWidget {
                   create: (context) =>
                       LibraryRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<PlaybackTracker>(
+                RepositoryProvider<PlayerTracker>(
                   create: (context) =>
-                      PlaybackTracker(dataSource: remoteDataSource),
+                      PlayerTracker(dataSource: remoteDataSource),
                 ),
                 RepositoryProvider<SearchRepository>(
                   create: (context) =>
@@ -124,11 +124,11 @@ class App extends StatelessWidget {
                     ),
                   ),
                   BlocProvider(
-                    create: (context) => VideoPlayerBloc(
-                      localEngine: context.read<LocalPlaybackEngine>(),
-                      castEngine: context.read<CastPlaybackEngine>(),
+                    create: (context) => PlayerBloc(
+                      localEngine: context.read<LocalPlayerEngine>(),
+                      castEngine: context.read<CastPlayerEngine>(),
                       castDeviceManager: context.read<CastDeviceManager>(),
-                      playbackTracker: context.read<PlaybackTracker>(),
+                      playerTracker: context.read<PlayerTracker>(),
                       urlGenerator: context.read<MediaUrlService>(),
                       dataSource: remoteDataSource,
                       jellyfinClientService: config.jellyfinClientService,

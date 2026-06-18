@@ -6,11 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/widgets/video_controls_overlay.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/widgets/video_controls_overlay.dart';
 
-class VideoPlayer extends StatefulWidget {
-  const VideoPlayer({
+class Player extends StatefulWidget {
+  const Player({
     required this.item,
     super.key,
     this.localPath,
@@ -21,10 +21,10 @@ class VideoPlayer extends StatefulWidget {
   final bool isFullscreen;
 
   @override
-  State<VideoPlayer> createState() => _VideoPlayerState();
+  State<Player> createState() => _PlayerState();
 }
 
-class _VideoPlayerState extends State<VideoPlayer> {
+class _PlayerState extends State<Player> {
   Future<void> _handleFullscreenToggle() async {
     if (widget.isFullscreen) {
       if (context.canPop()) {
@@ -37,7 +37,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+    return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
         final title = state.mediaItem?.name ?? widget.item.name;
         final attachment = state.nativeViewAttachment;

@@ -1,10 +1,10 @@
-part of 'video_player_bloc.dart';
+part of 'player_bloc.dart';
 
-enum VideoPlayerStatus { initial, loading, playing, paused, stopped, error }
+enum PlayerStatus { initial, loading, playing, paused, stopped, error }
 
-class VideoPlayerState extends Equatable {
-  const VideoPlayerState({
-    this.status = VideoPlayerStatus.initial,
+class PlayerState extends Equatable {
+  const PlayerState({
+    this.status = PlayerStatus.initial,
     this.mediaItem,
     this.localPath,
     this.isLocalMedia = false,
@@ -16,7 +16,7 @@ class VideoPlayerState extends Equatable {
     this.nativeViewAttachment,
   });
 
-  final VideoPlayerStatus status;
+  final PlayerStatus status;
   final MediaItem? mediaItem;
   final String? localPath;
   final bool isLocalMedia;
@@ -27,8 +27,8 @@ class VideoPlayerState extends Equatable {
   final bool showSkipIntro;
   final Object? nativeViewAttachment;
 
-  VideoPlayerState copyWith({
-    VideoPlayerStatus? status,
+  PlayerState copyWith({
+    PlayerStatus? status,
     MediaItem? mediaItem,
     String? localPath,
     bool? isLocalMedia,
@@ -39,7 +39,7 @@ class VideoPlayerState extends Equatable {
     bool? showSkipIntro,
     Object? nativeViewAttachment,
   }) {
-    return VideoPlayerState(
+    return PlayerState(
       status: status ?? this.status,
       mediaItem: mediaItem ?? this.mediaItem,
       localPath: localPath ?? this.localPath,
@@ -54,9 +54,9 @@ class VideoPlayerState extends Equatable {
   }
 
   bool get isActive =>
-      status == VideoPlayerStatus.playing ||
-      status == VideoPlayerStatus.paused ||
-      status == VideoPlayerStatus.loading;
+      status == PlayerStatus.playing ||
+      status == PlayerStatus.paused ||
+      status == PlayerStatus.loading;
 
   bool containsItem(MediaItem displayItem) {
     final item = mediaItem;
@@ -87,7 +87,7 @@ class VideoPlayerState extends Equatable {
     nativeViewAttachment,
   ];
 
-  bool isPositionOnlyChange(VideoPlayerState other) {
+  bool isPositionOnlyChange(PlayerState other) {
     return status == other.status &&
         mediaItem == other.mediaItem &&
         localPath == other.localPath &&

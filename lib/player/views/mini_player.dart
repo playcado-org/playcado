@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/media/models/media_item.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class MiniPlayer extends StatelessWidget {
@@ -17,7 +17,7 @@ class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (isActive, item, status, isCasting) = context
-        .select<VideoPlayerBloc, (bool, MediaItem?, VideoPlayerStatus, bool)>(
+        .select<PlayerBloc, (bool, MediaItem?, PlayerStatus, bool)>(
           (bloc) => (
             bloc.state.isActive,
             bloc.state.mediaItem,
@@ -30,14 +30,11 @@ class MiniPlayer extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Hide MiniPlayer if we are viewing the details
-    // of the currently playing item
     if (currentRoutePath == AppRouter.detailsPath &&
         currentRouteExtra is Map<String, dynamic>) {
       final extra = currentRouteExtra! as Map<String, dynamic>;
       final displayedItem = extra['item'] as MediaItem;
 
-      // We use item.id comparison here directly for efficiency
       if (item.id == displayedItem.id ||
           (displayedItem.type == MediaItemType.series &&
               item.seriesId == displayedItem.id)) {
@@ -46,8 +43,8 @@ class MiniPlayer extends StatelessWidget {
     }
 
     final isPlaying =
-        status == VideoPlayerStatus.playing ||
-        status == VideoPlayerStatus.loading;
+        status == PlayerStatus.playing ||
+        status == PlayerStatus.loading;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -85,7 +82,6 @@ class MiniPlayer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                // Thumbnail
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: PlaycadoNetworkImage(
@@ -101,7 +97,6 @@ class MiniPlayer extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                // Info
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -142,18 +137,17 @@ class MiniPlayer extends StatelessWidget {
                   ),
                 ),
 
-                // Controls
                 IconButton(
                   icon: PlaycadoIcon(
                     isPlaying ? PlaycadoIcons.pause : PlaycadoIcons.play,
                   ),
                   onPressed: () {
                     if (isPlaying) {
-                      context.read<VideoPlayerBloc>().add(
+                      context.read<PlayerBloc>().add(
                         PlayerPauseRequested(),
                       );
                     } else {
-                      context.read<VideoPlayerBloc>().add(
+                      context.read<PlayerBloc>().add(
                         PlayerResumeRequested(),
                       );
                     }
@@ -162,7 +156,7 @@ class MiniPlayer extends StatelessWidget {
                 IconButton(
                   icon: const PlaycadoIcon(PlaycadoIcons.close),
                   onPressed: () {
-                    context.read<VideoPlayerBloc>().add(PlayerStopRequested());
+                    context.read<PlayerBloc>().add(PlayerStopRequested());
                   },
                 ),
               ],

@@ -11,9 +11,9 @@ import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/playback/engine/local_playback_engine.dart';
-import 'package:playcado/playback/engine/cast_playback_engine.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/player/engine/local_player_engine.dart';
+import 'package:playcado/player/engine/cast_player_engine.dart';
+import 'package:playcado/player/repos/player_tracker.dart';
 import 'package:playcado/search/repos/search_repository.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
@@ -29,12 +29,12 @@ class BootstrapConfig {
     required this.jellyfinClientService,
     required this.authRepository,
     required this.libraryRepository,
-    required this.playbackTracker,
+    required this.playerTracker,
     required this.searchRepository,
     required this.mediaUrlService,
     required this.castDeviceManager,
-    required this.localPlaybackEngine,
-    required this.castPlaybackEngine,
+    required this.localPlayerEngine,
+    required this.castPlayerEngine,
     required this.preferencesService,
     required this.secureStorageService,
     required this.isFirstRun,
@@ -45,12 +45,12 @@ class BootstrapConfig {
   final JellyfinClientService jellyfinClientService;
   final AuthRepository authRepository;
   final LibraryRepository libraryRepository;
-  final PlaybackTracker playbackTracker;
+  final PlayerTracker playerTracker;
   final SearchRepository searchRepository;
   final MediaUrlService mediaUrlService;
   final CastDeviceManager castDeviceManager;
-  final LocalPlaybackEngine localPlaybackEngine;
-  final CastPlaybackEngine castPlaybackEngine;
+  final LocalPlayerEngine localPlayerEngine;
+  final CastPlayerEngine castPlayerEngine;
   final PreferencesService preferencesService;
   final SecureStorageService secureStorageService;
   final bool isFirstRun;
@@ -124,12 +124,12 @@ Future<BootstrapConfig> _initializeServices() async {
   final mediaUrlService = JellyfinUrlService(jellyfinClientService);
 
   final libraryRepository = LibraryRepository(dataSource: remoteDataSource);
-  final playbackTracker = PlaybackTracker(dataSource: remoteDataSource);
+  final playerTracker = PlayerTracker(dataSource: remoteDataSource);
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
   final castDeviceManager = CastDeviceManager();
-  final localPlaybackEngine = LocalPlaybackEngine();
-  final castPlaybackEngine = CastPlaybackEngine();
+  final localPlayerEngine = LocalPlayerEngine();
+  final castPlayerEngine = CastPlayerEngine();
   final preferencesService = PreferencesService();
 
   // Initialize Cast service early
@@ -150,12 +150,12 @@ Future<BootstrapConfig> _initializeServices() async {
     jellyfinClientService: jellyfinClientService,
     authRepository: authRepository,
     libraryRepository: libraryRepository,
-    playbackTracker: playbackTracker,
+    playerTracker: playerTracker,
     searchRepository: searchRepository,
     mediaUrlService: mediaUrlService,
     castDeviceManager: castDeviceManager,
-    localPlaybackEngine: localPlaybackEngine,
-    castPlaybackEngine: castPlaybackEngine,
+    localPlayerEngine: localPlayerEngine,
+    castPlayerEngine: castPlayerEngine,
     preferencesService: preferencesService,
     secureStorageService: secureStorage,
     isFirstRun: isFirstRun,
