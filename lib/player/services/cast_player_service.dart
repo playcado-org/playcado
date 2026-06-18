@@ -130,6 +130,12 @@ class CastPlayerService implements PlayerService {
   }
 
   @override
+  Future<void> setAudioTrack(int index) async {}
+
+  @override
+  Future<void> setSubtitleTrack(int index) async {}
+
+  @override
   Future<void> stop() async {
     if (!_isSupportedPlatform) return;
     _updateState(isPlaying: false);

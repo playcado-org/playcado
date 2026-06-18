@@ -20,6 +20,10 @@ abstract class PlayerService {
 
   Future<void> seek(Duration position);
 
+  Future<void> setAudioTrack(int index);
+
+  Future<void> setSubtitleTrack(int index);
+
   Future<void> stop();
 }
 
