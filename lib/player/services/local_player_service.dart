@@ -89,16 +89,22 @@ class LocalPlayerService implements PlayerService {
     LoggerService.player.info('LocalPlayerService loading: ${media.title}');
     await WakelockPlus.enable();
 
-    await _player.open(
-      Media(media.streamUrl, httpHeaders: media.httpHeaders),
-      play: false,
-    );
+    _currentState = const PlayerServiceState();
+
+    await _player.open(Media(media.streamUrl, httpHeaders: media.httpHeaders));
 
     if (media.startPosition > Duration.zero) {
       await _player.stream.duration.firstWhere((d) => d > Duration.zero);
       await _player.seek(media.startPosition);
+      // On some Android devices (MTK) the codec is released and recreated
+      // during startup, which discards the seek above.  If position resets
+      // near 0, re-apply the seek once.
+      await _player.stream.position
+          .firstWhere((pos) => pos < const Duration(seconds: 3))
+          .timeout(const Duration(seconds: 5))
+          .then((_) => _player.seek(media.startPosition))
+          .catchError((_) {});
     }
-    await _player.play();
   }
 
   @override
