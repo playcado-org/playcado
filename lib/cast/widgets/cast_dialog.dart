@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:go_router/go_router.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
@@ -21,16 +21,16 @@ class CastDeviceListDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final castDeviceManager = context.read<CastDeviceManager>();
+    final castDeviceService = context.read<CastDeviceService>();
     final playerBloc = context.read<PlayerBloc>();
 
     return StreamBuilder<GoogleCastSession?>(
-      stream: castDeviceManager.currentSessionStream,
-      initialData: castDeviceManager.currentSession,
+      stream: castDeviceService.currentSessionStream,
+      initialData: castDeviceService.currentSession,
       builder: (context, sessionSnapshot) {
         final currentSession = sessionSnapshot.data;
         final isConnected =
-            castDeviceManager.isConnected ||
+            castDeviceService.isConnected ||
             currentSession?.connectionState == GoogleCastConnectState.connected;
         final connectedDevice = currentSession?.device;
 
@@ -45,7 +45,7 @@ class CastDeviceListDialog extends StatelessWidget {
           content: SizedBox(
             width: double.maxFinite,
             child: StreamBuilder<List<GoogleCastDevice>>(
-              stream: castDeviceManager.devicesStream,
+              stream: castDeviceService.devicesStream,
               initialData: const [],
               builder: (context, snapshot) {
                 final devices = snapshot.data ?? [];
@@ -101,7 +101,7 @@ class CastDeviceListDialog extends StatelessWidget {
                             );
                           }
 
-                          unawaited(castDeviceManager.connect(device));
+                          unawaited(castDeviceService.connect(device));
 
                           SnackbarHelper.showInfo(
                             context,
@@ -120,7 +120,7 @@ class CastDeviceListDialog extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   context.pop();
-                  unawaited(castDeviceManager.disconnect());
+                  unawaited(castDeviceService.disconnect());
                 },
                 child: Text(
                   context.l10n.stopCasting,

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/widgets/cast_dialog.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
 import 'package:playcado/downloads_repository/models/download_item.dart';

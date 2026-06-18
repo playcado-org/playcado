@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
@@ -41,8 +41,8 @@ class App extends StatelessWidget {
           value: config.preferencesService,
         ),
         RepositoryProvider<AuthRepository>.value(value: config.authRepository),
-        RepositoryProvider<CastDeviceManager>.value(
-          value: config.castDeviceManager,
+        RepositoryProvider<CastDeviceService>.value(
+          value: config.castDeviceService,
         ),
         RepositoryProvider<LocalPlayerService>.value(
           value: config.localPlayerService,
@@ -126,8 +126,8 @@ class App extends StatelessWidget {
                   BlocProvider(
                     create: (context) => PlayerBloc(
                       localService: context.read<LocalPlayerService>(),
-                      castService: context.read<CastPlayerService>(),
-                      castDeviceManager: context.read<CastDeviceManager>(),
+                      castPlayerService: context.read<CastPlayerService>(),
+                      castDeviceService: context.read<CastDeviceService>(),
                       playerTracker: context.read<PlayerTracker>(),
                       urlGenerator: context.read<MediaUrlService>(),
                       dataSource: remoteDataSource,

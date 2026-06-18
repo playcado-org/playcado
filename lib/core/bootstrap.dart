@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:playcado/app/view/app.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
@@ -27,7 +27,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 class BootstrapConfig {
   const BootstrapConfig({
     required this.authRepository,
-    required this.castDeviceManager,
+    required this.castDeviceService,
     required this.castPlayerService,
     this.initialThemeColor,
     this.initialUser,
@@ -43,7 +43,7 @@ class BootstrapConfig {
   });
 
   final AuthRepository authRepository;
-  final CastDeviceManager castDeviceManager;
+  final CastDeviceService castDeviceService;
   final CastPlayerService castPlayerService;
   final Color? initialThemeColor;
   final User? initialUser;
@@ -127,13 +127,13 @@ Future<BootstrapConfig> _initializeServices() async {
   final playerTracker = PlayerTracker(dataSource: remoteDataSource);
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
-  final castDeviceManager = CastDeviceManager();
+  final castDeviceService = CastDeviceService();
   final localPlayerService = LocalPlayerService();
   final castPlayerService = CastPlayerService();
   final preferencesService = PreferencesService();
 
   // Initialize Cast service early
-  await castDeviceManager.initialize();
+  await castDeviceService.initialize();
 
   // Load app preferences
   final isFirstRun = await preferencesService.isFirstRun();
@@ -148,7 +148,7 @@ Future<BootstrapConfig> _initializeServices() async {
 
   return BootstrapConfig(
     authRepository: authRepository,
-    castDeviceManager: castDeviceManager,
+    castDeviceService: castDeviceService,
     castPlayerService: castPlayerService,
     initialThemeColor: savedThemeColor,
     initialUser: initialUser,

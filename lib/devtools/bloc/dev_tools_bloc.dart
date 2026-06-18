@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
@@ -15,12 +15,12 @@ part 'dev_tools_state.dart';
 
 class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   DevToolsBloc({
-    required CastDeviceManager castDeviceManager,
+    required CastDeviceService castDeviceService,
     required CastPlayerService castPlayerService,
     required DownloadsRepository downloadsRepository,
     required PreferencesService preferencesService,
     required SecureStorageService secureStorage,
-  }) : _castDeviceManager = castDeviceManager,
+  }) : _castDeviceService = castDeviceService,
        _castPlayerService = castPlayerService,
        _downloadsRepository = downloadsRepository,
        _preferencesService = preferencesService,
@@ -35,7 +35,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
     on<DevToolsInitialized>(_onInitialized);
   }
 
-  final CastDeviceManager _castDeviceManager;
+  final CastDeviceService _castDeviceService;
   final CastPlayerService _castPlayerService;
   StreamSubscription<GoogleCastSession?>? _castSubscription;
   final DownloadsRepository _downloadsRepository;
@@ -158,16 +158,16 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
     DevToolsDisconnectCastRequested event,
     Emitter<DevToolsState> emit,
   ) async {
-    await _castDeviceManager.disconnect();
+    await _castDeviceService.disconnect();
   }
 
   void _onInitialized(DevToolsInitialized event, Emitter<DevToolsState> emit) {
-    final isConnected = _castDeviceManager.isConnected;
+    final isConnected = _castDeviceService.isConnected;
     emit(state.copyWith(isCastConnected: isConnected));
 
     unawaited(_castSubscription?.cancel());
-    _castSubscription = _castDeviceManager.currentSessionStream.listen((_) {
-      final connected = _castDeviceManager.isConnected;
+    _castSubscription = _castDeviceService.currentSessionStream.listen((_) {
+      final connected = _castDeviceService.isConnected;
       add(DevToolsCastSessionUpdated(isConnected: connected));
     });
   }
