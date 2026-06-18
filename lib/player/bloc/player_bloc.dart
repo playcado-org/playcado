@@ -236,6 +236,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     ServiceStateUpdated event,
     Emitter<PlayerState> emit,
   ) {
+    if (_activeService == null) return;
     final serviceState = event.serviceState;
     final item = state.mediaItem;
     var showSkip = false;
@@ -410,6 +411,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerTogglePlayPauseRequested event,
     Emitter<PlayerState> emit,
   ) async {
+    if (_activeService == null) return;
     if (state.status == PlayerStatus.playing) {
       add(PlayerPauseRequested());
     } else {
