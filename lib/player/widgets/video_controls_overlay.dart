@@ -46,8 +46,7 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
     _hideTimer = Timer(const Duration(seconds: 4), () {
       if (mounted) {
         final isPlaying =
-            context.read<PlayerBloc>().state.status ==
-            PlayerStatus.playing;
+            context.read<PlayerBloc>().state.status == PlayerStatus.playing;
         if (isPlaying) {
           setState(() => _visible = false);
         }
