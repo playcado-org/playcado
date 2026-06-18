@@ -265,7 +265,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         isBuffering: serviceState.isBuffering,
         showSkipIntro: showSkip,
         status: newStatus,
-        nativeViewAttachment: _activeService?.nativeViewAttachment,
+        playerView: _activeService?.playerView,
       ),
     );
 
@@ -402,7 +402,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         position: finalPosition,
         showSkipIntro: false,
         isCasting: false,
-        nativeViewAttachment: null,
+        playerView: null,
       ),
     );
   }

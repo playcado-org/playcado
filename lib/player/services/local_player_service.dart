@@ -54,7 +54,7 @@ class LocalPlayerService implements PlayerService {
   }
 
   @override
-  Object? get nativeViewAttachment => _controller;
+  PlayerView? get playerView => LocalPlayerView(_controller);
 
   @override
   Stream<PlayerServiceState> get stateStream => _stateController.stream;
