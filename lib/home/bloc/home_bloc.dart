@@ -51,16 +51,24 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       state.copyWith(
         continueWatching: results[0].error != null
             ? StatusError(results[0].error!)
-            : StatusSuccess<List<MediaItem>>(results[0].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[0].value as List<MediaItem>,
+              ),
         nextUp: results[1].error != null
             ? StatusError(results[1].error!)
-            : StatusSuccess<List<MediaItem>>(results[1].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[1].value as List<MediaItem>,
+              ),
         latestMovies: results[2].error != null
             ? StatusError(results[2].error!)
-            : StatusSuccess<List<MediaItem>>(results[2].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[2].value as List<MediaItem>,
+              ),
         latestTv: results[3].error != null
             ? StatusError(results[3].error!)
-            : StatusSuccess<List<MediaItem>>(results[3].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[3].value as List<MediaItem>,
+              ),
       ),
     );
   }

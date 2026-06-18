@@ -6,12 +6,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:playcado/app/view/app.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/services/cast_service.dart';
+import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/media/repos/playback_repository.dart';
+import 'package:playcado/playback/engine/local_playback_engine.dart';
+import 'package:playcado/playback/engine/cast_playback_engine.dart';
+import 'package:playcado/playback/repos/playback_tracker.dart';
 import 'package:playcado/search/repos/search_repository.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
@@ -19,7 +21,6 @@ import 'package:playcado/services/media_url/jellyfin_url_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
-import 'package:playcado/video_player/services/player_service.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// Configuration data returned from bootstrap initialization.
@@ -28,11 +29,12 @@ class BootstrapConfig {
     required this.jellyfinClientService,
     required this.authRepository,
     required this.libraryRepository,
-    required this.playbackRepository,
+    required this.playbackTracker,
     required this.searchRepository,
     required this.mediaUrlService,
-    required this.castService,
-    required this.playerService,
+    required this.castDeviceManager,
+    required this.localPlaybackEngine,
+    required this.castPlaybackEngine,
     required this.preferencesService,
     required this.secureStorageService,
     required this.isFirstRun,
@@ -43,11 +45,12 @@ class BootstrapConfig {
   final JellyfinClientService jellyfinClientService;
   final AuthRepository authRepository;
   final LibraryRepository libraryRepository;
-  final PlaybackRepository playbackRepository;
+  final PlaybackTracker playbackTracker;
   final SearchRepository searchRepository;
   final MediaUrlService mediaUrlService;
-  final CastService castService;
-  final PlayerService playerService;
+  final CastDeviceManager castDeviceManager;
+  final LocalPlaybackEngine localPlaybackEngine;
+  final CastPlaybackEngine castPlaybackEngine;
   final PreferencesService preferencesService;
   final SecureStorageService secureStorageService;
   final bool isFirstRun;
@@ -121,18 +124,16 @@ Future<BootstrapConfig> _initializeServices() async {
   final mediaUrlService = JellyfinUrlService(jellyfinClientService);
 
   final libraryRepository = LibraryRepository(dataSource: remoteDataSource);
-  final playbackRepository = PlaybackRepository(
-    dataSource: remoteDataSource,
-    urlGenerator: mediaUrlService,
-  );
+  final playbackTracker = PlaybackTracker(dataSource: remoteDataSource);
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
-  final castService = CastService();
-  final playerService = PlayerService();
+  final castDeviceManager = CastDeviceManager();
+  final localPlaybackEngine = LocalPlaybackEngine();
+  final castPlaybackEngine = CastPlaybackEngine();
   final preferencesService = PreferencesService();
 
   // Initialize Cast service early
-  await castService.initialize();
+  await castDeviceManager.initialize();
 
   // Load app preferences
   final isFirstRun = await preferencesService.isFirstRun();
@@ -149,11 +150,12 @@ Future<BootstrapConfig> _initializeServices() async {
     jellyfinClientService: jellyfinClientService,
     authRepository: authRepository,
     libraryRepository: libraryRepository,
-    playbackRepository: playbackRepository,
+    playbackTracker: playbackTracker,
     searchRepository: searchRepository,
     mediaUrlService: mediaUrlService,
-    castService: castService,
-    playerService: playerService,
+    castDeviceManager: castDeviceManager,
+    localPlaybackEngine: localPlaybackEngine,
+    castPlaybackEngine: castPlaybackEngine,
     preferencesService: preferencesService,
     secureStorageService: secureStorage,
     isFirstRun: isFirstRun,

@@ -7,9 +7,7 @@ class AppBlocObserver extends BlocObserver {
   @override
   void onEvent(Bloc<dynamic, dynamic> bloc, Object? event) {
     super.onEvent(bloc, event);
-    if (event is! PlayerPositionUpdated) {
-      LoggerService.bloc.info('EVENT  [${bloc.runtimeType}] $event');
-    }
+    LoggerService.bloc.info('EVENT  [${bloc.runtimeType}] $event');
   }
 
   @override

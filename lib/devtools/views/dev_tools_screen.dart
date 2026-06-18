@@ -7,6 +7,7 @@ import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/cast/cast.dart';
 import 'package:playcado/devtools/bloc/dev_tools_bloc.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/playback/engine/cast_playback_engine.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 import 'package:playcado/widgets/snackbar_helper.dart';
@@ -19,7 +20,8 @@ class DevToolsScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => DevToolsBloc(
         preferencesService: context.read<PreferencesService>(),
-        castService: context.read<CastService>(),
+        castDeviceManager: context.read<CastDeviceManager>(),
+        castPlaybackEngine: context.read<CastPlaybackEngine>(),
         downloadsRepository: context.read<DownloadsRepository>(),
         secureStorage: context.read<SecureStorageService>(),
       )..add(DevToolsInitialized()),

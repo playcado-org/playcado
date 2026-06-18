@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/services/player_service.dart';
 import 'package:playcado/video_player/widgets/cast_control_view.dart';
 import 'package:playcado/video_player/widgets/video_controls_overlay.dart';
 import 'package:playcado/widgets/loading_indicator.dart';
@@ -56,20 +55,20 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
             return const LoadingIndicator();
           }
 
-          final controller = context.read<PlayerService>().controller;
-          final player = context.read<PlayerService>().player;
+          final attachment = state.nativeViewAttachment;
 
           return Stack(
             fit: StackFit.expand,
             children: [
               Center(
-                child: Video(
-                  controller: controller,
-                  controls: NoVideoControls as VideoControlsBuilder?,
-                ),
+                child: attachment is VideoController
+                    ? Video(
+                        controller: attachment,
+                        controls: NoVideoControls as VideoControlsBuilder?,
+                      )
+                    : const SizedBox.shrink(),
               ),
               VideoControlsOverlay(
-                player: player,
                 title: item.name,
                 isFullscreen: true,
                 onFullscreenToggle: () {

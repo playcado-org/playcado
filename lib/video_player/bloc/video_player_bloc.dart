@@ -3,83 +3,240 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:jellyfin_dart/jellyfin_dart.dart';
+import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/playback_repository.dart';
+import 'package:playcado/playback/engine/cast_playback_engine.dart';
+import 'package:playcado/playback/engine/local_playback_engine.dart';
+import 'package:playcado/playback/engine/playback_engine.dart';
+import 'package:playcado/playback/models/playable_media.dart';
+import 'package:playcado/playback/repos/playback_tracker.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
-import 'package:playcado/video_player/services/player_service.dart';
 
 part 'video_player_event.dart';
 part 'video_player_state.dart';
 
+class _EngineStateUpdated extends VideoPlayerEvent {
+  const _EngineStateUpdated(this.engineState);
+  final PlaybackEngineState engineState;
+
+  @override
+  List<Object?> get props => [engineState];
+}
+
 class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
   VideoPlayerBloc({
-    required PlaybackRepository playbackRepository,
+    required LocalPlaybackEngine localEngine,
+    required CastPlaybackEngine castEngine,
+    required CastDeviceManager castDeviceManager,
+    required PlaybackTracker playbackTracker,
     required MediaUrlService urlGenerator,
-    required PlayerService playerService,
-    required CastService castService,
+    required MediaRemoteDataSource dataSource,
     required JellyfinClientService jellyfinClientService,
-  }) : _playbackRepository = playbackRepository,
+  }) : _localEngine = localEngine,
+       _castEngine = castEngine,
+       _castDeviceManager = castDeviceManager,
+       _playbackTracker = playbackTracker,
        _urlGenerator = urlGenerator,
-       _playerService = playerService,
-       _castService = castService,
+       _dataSource = dataSource,
        _jellyfinClientService = jellyfinClientService,
        super(const VideoPlayerState()) {
     on<PlayerPlayRequested>(_onPlayRequested);
     on<PlayerStopRequested>(_onStopRequested);
     on<PlayerPauseRequested>(_onPauseRequested);
     on<PlayerResumeRequested>(_onResumeRequested);
-    on<PlayerPositionUpdated>(_onPositionUpdated);
-    on<PlayerStatusUpdated>(_onStatusUpdated);
+    on<PlayerSeekRequested>(_onSeekRequested);
+    on<PlayerTogglePlayPauseRequested>(_onTogglePlayPause);
     on<PlayerCastRequested>(_onCastRequested);
     on<PlayerSkipIntroRequested>(_onSkipIntroRequested);
+    on<PlayerTrackSelected>(_onTrackSelected);
+    on<_EngineStateUpdated>(_onInternalEngineStateUpdated);
 
-    _initListeners();
+    _initCastListeners();
   }
-  final PlaybackRepository _playbackRepository;
+
+  final LocalPlaybackEngine _localEngine;
+  final CastPlaybackEngine _castEngine;
+  final CastDeviceManager _castDeviceManager;
+  final PlaybackTracker _playbackTracker;
   final MediaUrlService _urlGenerator;
-  final PlayerService _playerService;
-  final CastService _castService;
+  final MediaRemoteDataSource _dataSource;
   final JellyfinClientService _jellyfinClientService;
 
-  StreamSubscription<Duration>? _playerSub;
-  StreamSubscription<bool>? _playerStatusSub;
+  PlaybackEngine? _activeEngine;
+  StreamSubscription<PlaybackEngineState>? _engineSub;
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
-  StreamSubscription<GoggleCastMediaStatus?>? _castMediaStatusSub;
   DateTime _lastProgressReport = DateTime.now();
+  bool _isLocalMedia = false;
+  bool _wasCasting = false;
 
-  void _initListeners() {
-    _playerSub = _playerService.player.stream.position.listen((position) {
-      if (state.status == VideoPlayerStatus.playing) {
-        add(PlayerPositionUpdated(position));
-      }
-    });
+  PlaybackEngine get _engine {
+    if (_activeEngine == null) throw StateError('No active engine');
+    return _activeEngine!;
+  }
 
-    _playerStatusSub = _playerService.player.stream.playing.listen((isPlaying) {
-      add(PlayerStatusUpdated(isPlaying: isPlaying));
-    });
-
-    _castSessionSub = _castService.currentSessionStream.listen((session) {
-      final connState = session?.connectionState;
-      final isActive =
-          connState == GoogleCastConnectState.connected ||
-          connState == GoogleCastConnectState.connecting;
-
-      if (!isActive && state.isCasting) {
+  void _initCastListeners() {
+    _castSessionSub = _castDeviceManager.currentSessionStream.listen((_) {
+      final connected = _castDeviceManager.isConnected;
+      if (!connected && _wasCasting) {
         add(PlayerStopRequested());
       }
+      _wasCasting = connected;
     });
+  }
 
-    _castMediaStatusSub = _castService.mediaStatusStream.listen((status) {
-      if (state.isCasting && status != null) {
-        final isPlaying =
-            status.playerState == CastMediaPlayerState.playing ||
-            status.playerState == CastMediaPlayerState.buffering;
-        add(PlayerStatusUpdated(isPlaying: isPlaying));
-      }
+  void _subscribeToEngine(PlaybackEngine engine) {
+    _engineSub?.cancel();
+    _engineSub = engine.stateStream.listen((engineState) {
+      if (isClosed) return;
+      add(_EngineStateUpdated(engineState));
     });
+  }
+
+  void _onInternalEngineStateUpdated(
+    _EngineStateUpdated event,
+    Emitter<VideoPlayerState> emit,
+  ) {
+    final engineState = event.engineState;
+    final item = state.mediaItem;
+    var showSkip = false;
+
+    if (item != null) {
+      final introStart = item.introStartTicks;
+      final introEnd = item.introEndTicks;
+      if (introStart != null && introEnd != null) {
+        final currentTicks = engineState.position.inMicroseconds * 10;
+        if (currentTicks >= introStart && currentTicks < introEnd) {
+          showSkip = true;
+        }
+      }
+    }
+
+    final newStatus = _determineStatus(engineState);
+
+    emit(
+      state.copyWith(
+        position: engineState.position,
+        duration: engineState.duration,
+        isBuffering: engineState.isBuffering,
+        showSkipIntro: showSkip,
+        status: newStatus,
+        nativeViewAttachment: _activeEngine?.nativeViewAttachment,
+      ),
+    );
+
+    if (newStatus == VideoPlayerStatus.playing) {
+      _handleProgressReporting(engineState.position);
+    }
+  }
+
+  VideoPlayerStatus _determineStatus(PlaybackEngineState engineState) {
+    if (state.status == VideoPlayerStatus.loading) {
+      if (!engineState.isBuffering && engineState.position > Duration.zero) {
+        return VideoPlayerStatus.playing;
+      }
+      return VideoPlayerStatus.loading;
+    }
+    if (engineState.isCompleted) {
+      return VideoPlayerStatus.stopped;
+    }
+    if (engineState.isPlaying) {
+      return VideoPlayerStatus.playing;
+    }
+    if (state.status == VideoPlayerStatus.playing && !engineState.isPlaying) {
+      return VideoPlayerStatus.paused;
+    }
+    return state.status;
+  }
+
+  Future<void> _handleProgressReporting(Duration position) async {
+    if (_isLocalMedia ||
+        state.mediaItem == null ||
+        state.isCasting ||
+        state.status != VideoPlayerStatus.playing) {
+      return;
+    }
+
+    if (DateTime.now().difference(_lastProgressReport).inSeconds > 10) {
+      _lastProgressReport = DateTime.now();
+      final ticks = position.inMicroseconds * 10;
+      await _playbackTracker.reportPlaybackProgress(
+        itemId: state.mediaItem!.id,
+        positionTicks: ticks,
+      );
+    }
+  }
+
+  Future<PlayableMedia> _buildPlayableMedia(
+    MediaItem item, {
+    String? localPath,
+    bool forCast = false,
+  }) async {
+    final startTicks = item.playbackPositionTicks ?? 0;
+    final startPosition = startTicks > 0
+        ? Duration(microseconds: startTicks ~/ 10)
+        : Duration.zero;
+
+    if (forCast) {
+      String? mediaSourceId = item.mediaSourceId;
+      if (mediaSourceId == null) {
+        final userId = await _dataSource.getCurrentUserId();
+        if (userId != null) {
+          final items = await _dataSource.fetchItems(
+            userId: userId,
+            ids: [item.id],
+            fields: [ItemFields.mediaSources],
+          );
+          if (items.isNotEmpty) {
+            mediaSourceId = items.first.mediaSourceId;
+          }
+        }
+      }
+
+      final streamUrl = _urlGenerator.generateTranscodeUrl(
+        itemId: item.id,
+        mediaSourceId: mediaSourceId ?? item.id,
+      );
+
+      return PlayableMedia(
+        id: item.id,
+        title: item.name,
+        subtitle: item.displaySubtitle,
+        streamUrl: streamUrl,
+        posterUrl: _urlGenerator.getImageUrl(item.id),
+        startPosition: startPosition,
+      );
+    }
+
+    String source;
+    Map<String, String>? headers;
+
+    if (localPath != null) {
+      source = localPath;
+    } else {
+      source = _urlGenerator.getStreamUrl(item.id);
+      headers = {
+        'X-Emby-Authorization':
+            'MediaBrowser Client="Playcado", '
+            'Device="Flutter", '
+            'DeviceId="${_jellyfinClientService.deviceId}", '
+            'Version="1.0.0", '
+            'Token="${_jellyfinClientService.accessToken}"',
+      };
+    }
+
+    return PlayableMedia(
+      id: item.id,
+      title: item.name,
+      subtitle: item.displaySubtitle,
+      streamUrl: source,
+      posterUrl: _urlGenerator.getImageUrl(item.id),
+      httpHeaders: headers,
+      startPosition: startPosition,
+    );
   }
 
   Future<void> _onPlayRequested(
@@ -88,12 +245,9 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
   ) async {
     LoggerService.player.info('Play requested for ${event.item.name}');
 
-    final startTicks = event.item.playbackPositionTicks ?? 0;
-    final startPosition = startTicks > 0
-        ? Duration(microseconds: startTicks ~/ 10)
-        : null;
+    final useCast = _castDeviceManager.isConnected;
 
-    if (_castService.isConnected) {
+    if (useCast) {
       emit(
         state.copyWith(
           status: VideoPlayerStatus.loading,
@@ -102,21 +256,16 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
           isLocalMedia: false,
         ),
       );
+      _isLocalMedia = false;
 
       try {
-        final streamUrl = await _playbackRepository.getCastUrl(event.item.id);
-        final imageUrl = _urlGenerator.getImageUrl(event.item.id);
-
-        await _castService.loadMedia(
-          CastItem(
-            mediaItem: event.item,
-            streamUrl: streamUrl,
-            imageUrl: imageUrl,
-          ),
-          playPosition: startPosition,
+        final playableMedia = await _buildPlayableMedia(
+          event.item,
+          forCast: true,
         );
-
-        emit(state.copyWith(status: VideoPlayerStatus.playing));
+        _activeEngine = _castEngine;
+        _subscribeToEngine(_castEngine);
+        await _castEngine.load(playableMedia);
       } on Exception catch (e) {
         LoggerService.player.severe('Failed to start cast playback', e);
         emit(state.copyWith(status: VideoPlayerStatus.error));
@@ -133,35 +282,21 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
         isCasting: false,
       ),
     );
+    _isLocalMedia = event.localPath != null;
 
     if (event.localPath == null) {
-      unawaited(_playbackRepository.reportPlaybackStart(event.item.id));
+      unawaited(_playbackTracker.reportPlaybackStart(event.item.id));
     }
 
     try {
-      String source;
-      Map<String, String>? headers;
-
-      if (event.localPath != null) {
-        source = event.localPath!;
-      } else {
-        source = _playbackRepository.getStreamUrl(event.item.id);
-        headers = {
-          'X-Emby-Authorization':
-              'MediaBrowser Client="Playcado", '
-              'Device="Flutter", '
-              'DeviceId="${_jellyfinClientService.deviceId}", '
-              'Version="1.0.0", '
-              'Token="${_jellyfinClientService.accessToken}"',
-        };
-      }
-
-      await _playerService.playMedia(
-        source,
-        headers: headers,
-        startPosition: startPosition,
+      final playableMedia = await _buildPlayableMedia(
+        event.item,
+        localPath: event.localPath,
+        forCast: false,
       );
-      emit(state.copyWith(status: VideoPlayerStatus.playing));
+      _activeEngine = _localEngine;
+      _subscribeToEngine(_localEngine);
+      await _localEngine.load(playableMedia);
     } on Exception catch (e) {
       LoggerService.player.severe('Failed to play media', e);
       emit(state.copyWith(status: VideoPlayerStatus.error));
@@ -172,34 +307,31 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     PlayerStopRequested event,
     Emitter<VideoPlayerState> emit,
   ) async {
-    // 1. Capture the final position before stopping the service
-    final finalPosition = state.isCasting
-        ? state.position
-        : _playerService.player.state.position;
-
+    final finalPosition = state.position;
     final item = state.mediaItem;
 
-    if (state.isCasting) {
-      await _castService.stop();
-    } else {
-      await _playerService.stop();
-
-      if (item != null && !state.isLocalMedia) {
-        await _playbackRepository.reportPlaybackStopped(
-          itemId: item.id,
-          positionTicks: finalPosition.inMicroseconds * 10,
-        );
-      }
+    if (_activeEngine != null) {
+      await _activeEngine!.stop();
+      _activeEngine = null;
     }
 
-    // 2. Emit stopped status but KEEP the item and the final position
-    // This allows the UI listener to see what stopped and where it ended.
+    await _engineSub?.cancel();
+    _engineSub = null;
+
+    if (item != null && !_isLocalMedia) {
+      await _playbackTracker.reportPlaybackStopped(
+        itemId: item.id,
+        positionTicks: finalPosition.inMicroseconds * 10,
+      );
+    }
+
     emit(
       state.copyWith(
         status: VideoPlayerStatus.stopped,
         position: finalPosition,
         showSkipIntro: false,
         isCasting: false,
+        nativeViewAttachment: null,
       ),
     );
   }
@@ -208,11 +340,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     PlayerPauseRequested event,
     Emitter<VideoPlayerState> emit,
   ) async {
-    if (state.isCasting) {
-      await _castService.pause();
-    } else {
-      await _playerService.pause();
-    }
+    await _engine.pause();
     emit(state.copyWith(status: VideoPlayerStatus.paused));
   }
 
@@ -220,48 +348,67 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     PlayerResumeRequested event,
     Emitter<VideoPlayerState> emit,
   ) async {
-    if (state.isCasting) {
-      await _castService.play();
-    } else {
-      await _playerService.play();
-    }
+    await _engine.play();
     emit(state.copyWith(status: VideoPlayerStatus.playing));
   }
 
-  Future<void> _onPositionUpdated(
-    PlayerPositionUpdated event,
+  Future<void> _onSeekRequested(
+    PlayerSeekRequested event,
     Emitter<VideoPlayerState> emit,
   ) async {
-    final item = state.mediaItem;
-    var showSkip = false;
+    await _engine.seek(event.position);
+  }
 
-    final introStart = item?.introStartTicks;
-    final introEnd = item?.introEndTicks;
-    if (introStart != null && introEnd != null) {
-      final currentTicks = event.position.inMicroseconds * 10;
-      if (currentTicks >= introStart && currentTicks < introEnd) {
-        showSkip = true;
+  Future<void> _onTogglePlayPause(
+    PlayerTogglePlayPauseRequested event,
+    Emitter<VideoPlayerState> emit,
+  ) async {
+    if (state.status == VideoPlayerStatus.playing) {
+      add(PlayerPauseRequested());
+    } else {
+      add(PlayerResumeRequested());
+    }
+  }
+
+  Future<void> _onCastRequested(
+    PlayerCastRequested event,
+    Emitter<VideoPlayerState> emit,
+  ) async {
+    LoggerService.player.info('Cast requested for ${event.item.name}');
+
+    if (_activeEngine != null && !state.isCasting) {
+      await _activeEngine!.stop();
+    }
+
+    emit(
+      state.copyWith(
+        status: VideoPlayerStatus.loading,
+        mediaItem: event.item,
+        isCasting: true,
+        isLocalMedia: false,
+      ),
+    );
+    _isLocalMedia = false;
+
+    try {
+      if (!_castDeviceManager.isConnected) {
+        final connected = await _castDeviceManager.waitUntilConnected();
+        if (!connected) {
+          emit(state.copyWith(status: VideoPlayerStatus.error));
+          return;
+        }
       }
-    }
 
-    if (state.showSkipIntro != showSkip || state.position != event.position) {
-      emit(state.copyWith(showSkipIntro: showSkip, position: event.position));
-    }
-
-    if (state.isLocalMedia ||
-        item == null ||
-        state.isCasting ||
-        state.status != VideoPlayerStatus.playing) {
-      return;
-    }
-
-    if (DateTime.now().difference(_lastProgressReport).inSeconds > 10) {
-      _lastProgressReport = DateTime.now();
-      final ticks = event.position.inMicroseconds * 10;
-      await _playbackRepository.reportPlaybackProgress(
-        itemId: item.id,
-        positionTicks: ticks,
+      final playableMedia = await _buildPlayableMedia(
+        event.item,
+        forCast: true,
       );
+      _activeEngine = _castEngine;
+      _subscribeToEngine(_castEngine);
+      await _castEngine.load(playableMedia);
+    } on Exception catch (e) {
+      LoggerService.player.severe('Failed to cast media', e);
+      emit(state.copyWith(status: VideoPlayerStatus.error));
     }
   }
 
@@ -273,88 +420,29 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     final introEndTicks = item?.introEndTicks;
     if (item != null && introEndTicks != null) {
       final endDuration = Duration(microseconds: introEndTicks ~/ 10);
-      if (state.isCasting) {
-        await _castService.seek(endDuration);
-      } else {
-        await _playerService.player.seek(endDuration);
-      }
+      await _engine.seek(endDuration);
       emit(state.copyWith(showSkipIntro: false));
     }
   }
 
-  void _onStatusUpdated(
-    PlayerStatusUpdated event,
-    Emitter<VideoPlayerState> emit,
-  ) {
-    if (state.status != VideoPlayerStatus.stopped && !state.isCasting) {
-      emit(
-        state.copyWith(
-          status: event.isPlaying
-              ? VideoPlayerStatus.playing
-              : VideoPlayerStatus.paused,
-        ),
-      );
-    }
-  }
-
-  Future<void> _onCastRequested(
-    PlayerCastRequested event,
+  Future<void> _onTrackSelected(
+    PlayerTrackSelected event,
     Emitter<VideoPlayerState> emit,
   ) async {
-    LoggerService.player.info('Cast requested for ${event.item.name}');
-
-    if (state.isActive && !state.isCasting) {
-      await _playerService.stop();
-    }
-
-    emit(
-      state.copyWith(
-        status: VideoPlayerStatus.loading,
-        mediaItem: event.item,
-        isCasting: true,
-        isLocalMedia: false,
-      ),
-    );
-
-    try {
-      if (!_castService.isConnected) {
-        final connected = await _castService.waitUntilConnected();
-        if (!connected) {
-          emit(state.copyWith(status: VideoPlayerStatus.error));
-          return;
-        }
-      }
-
-      final startTicks = event.item.playbackPositionTicks ?? 0;
-      final startPosition = startTicks > 0
-          ? Duration(microseconds: startTicks ~/ 10)
-          : null;
-
-      final streamUrl = await _playbackRepository.getCastUrl(event.item.id);
-      final imageUrl = _urlGenerator.getImageUrl(event.item.id);
-
-      await _castService.loadMedia(
-        CastItem(
-          mediaItem: event.item,
-          streamUrl: streamUrl,
-          imageUrl: imageUrl,
-        ),
-        playPosition: startPosition,
-      );
-      emit(state.copyWith(status: VideoPlayerStatus.playing));
-    } on Exception catch (e) {
-      LoggerService.player.severe('Failed to cast media', e);
-      emit(state.copyWith(status: VideoPlayerStatus.error));
+    if (event.type == TrackType.audio) {
+      await _localEngine.setAudioTrack(event.index);
+    } else {
+      await _localEngine.setSubtitleTrack(event.index);
     }
   }
 
   @override
   Future<void> close() {
-    unawaited(_playerSub?.cancel());
-    unawaited(_playerStatusSub?.cancel());
+    unawaited(_engineSub?.cancel());
     unawaited(_castSessionSub?.cancel());
-    unawaited(_castMediaStatusSub?.cancel());
-    unawaited(_playerService.stop());
+    if (_activeEngine != null) {
+      unawaited(_activeEngine!.stop());
+    }
     return super.close();
   }
 }

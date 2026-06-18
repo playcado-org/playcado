@@ -9,6 +9,7 @@ abstract class VideoPlayerEvent extends Equatable {
 
 class PlayerPlayRequested extends VideoPlayerEvent {
   const PlayerPlayRequested({required this.item, this.localPath});
+
   final MediaItem item;
   final String? localPath;
 
@@ -22,24 +23,20 @@ class PlayerPauseRequested extends VideoPlayerEvent {}
 
 class PlayerResumeRequested extends VideoPlayerEvent {}
 
-class PlayerPositionUpdated extends VideoPlayerEvent {
-  const PlayerPositionUpdated(this.position);
+class PlayerSeekRequested extends VideoPlayerEvent {
+  const PlayerSeekRequested(this.position);
+
   final Duration position;
 
   @override
   List<Object?> get props => [position];
 }
 
-class PlayerStatusUpdated extends VideoPlayerEvent {
-  const PlayerStatusUpdated({required this.isPlaying});
-  final bool isPlaying;
-
-  @override
-  List<Object?> get props => [isPlaying];
-}
+class PlayerTogglePlayPauseRequested extends VideoPlayerEvent {}
 
 class PlayerCastRequested extends VideoPlayerEvent {
   const PlayerCastRequested({required this.item});
+
   final MediaItem item;
 
   @override
@@ -47,3 +44,15 @@ class PlayerCastRequested extends VideoPlayerEvent {
 }
 
 class PlayerSkipIntroRequested extends VideoPlayerEvent {}
+
+enum TrackType { audio, subtitle }
+
+class PlayerTrackSelected extends VideoPlayerEvent {
+  const PlayerTrackSelected({required this.type, required this.index});
+
+  final TrackType type;
+  final int index;
+
+  @override
+  List<Object?> get props => [type, index];
+}
