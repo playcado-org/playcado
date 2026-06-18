@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
+import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/services/logger_service.dart';
 
 part 'series_details_event.dart';
@@ -13,7 +13,7 @@ part 'series_details_state.dart';
 class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
   SeriesDetailsBloc({
     required LibraryRepository libraryRepository,
-    required PlaybackTracker playbackTracker,
+    required PlayerTracker playbackTracker,
   }) : _libraryRepository = libraryRepository,
        _playbackTracker = playbackTracker,
        super(const SeriesDetailsState()) {
@@ -30,7 +30,7 @@ class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
     on<UpdateLocalPlaybackProgress>(_onUpdateLocalPlaybackProgress);
   }
   final LibraryRepository _libraryRepository;
-  final PlaybackTracker _playbackTracker;
+  final PlayerTracker _playbackTracker;
 
   Future<void> _onSeriesDetailsStarted(
     SeriesDetailsStarted event,

@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/widgets/cast_control_view.dart';
-import 'package:playcado/video_player/widgets/video_controls_overlay.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/widgets/cast_control_view.dart';
+import 'package:playcado/player/widgets/video_controls_overlay.dart';
 import 'package:playcado/widgets/loading_indicator.dart';
 
 class FullscreenPlayerScreen extends StatefulWidget {
@@ -44,7 +44,7 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+      body: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
           if (state.isCasting) {
             return CastControlView(item: state.mediaItem);

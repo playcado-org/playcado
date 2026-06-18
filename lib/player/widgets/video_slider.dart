@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/formatters.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 
 class VideoSlider extends StatelessWidget {
   const VideoSlider({
@@ -14,7 +14,7 @@ class VideoSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+    return BlocBuilder<PlayerBloc, PlayerState>(
       buildWhen: (prev, curr) =>
           prev.position != curr.position || prev.duration != curr.duration,
       builder: (context, state) {
@@ -53,7 +53,7 @@ class VideoSlider extends StatelessWidget {
                   max: max > 0 ? max : 1.0,
                   onChanged: (newValue) {
                     onInteractionStart?.call();
-                    context.read<VideoPlayerBloc>().add(
+                    context.read<PlayerBloc>().add(
                       PlayerSeekRequested(
                         Duration(milliseconds: newValue.toInt()),
                       ),

@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
+import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/movie_details/bloc/movie_details_bloc.dart';
 import 'package:playcado/movie_details/widgets/movie_action_row.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 
 class MovieDetailsPage extends StatefulWidget {
   const MovieDetailsPage({
@@ -28,7 +28,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
   late ScrollController _scrollController;
 
   void _onPlay(BuildContext context, MediaItem item, String? localPath) {
-    context.read<VideoPlayerBloc>().add(
+    context.read<PlayerBloc>().add(
       PlayerPlayRequested(item: item, localPath: localPath),
     );
   }
@@ -51,7 +51,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     _scrollController = ScrollController();
     _detailsBloc = MovieDetailsBloc(
       libraryRepository: context.read<LibraryRepository>(),
-      playbackTracker: context.read<PlaybackTracker>(),
+      playbackTracker: context.read<PlayerTracker>(),
     )..add(FetchMovieDetails(widget.item.id));
   }
 
@@ -66,7 +66,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _detailsBloc,
-      child: BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+      child: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, playerState) {
           return BlocBuilder<MovieDetailsBloc, MovieDetailsState>(
             builder: (context, detailsState) {
@@ -83,15 +83,15 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
               return MultiBlocListener(
                 listeners: [
-                  BlocListener<VideoPlayerBloc, VideoPlayerState>(
+                  BlocListener<PlayerBloc, PlayerState>(
                     listenWhen: (previous, current) {
                       final startedLoading =
-                          previous.status != VideoPlayerStatus.loading &&
-                          current.status == VideoPlayerStatus.loading;
+                          previous.status != PlayerStatus.loading &&
+                          current.status == PlayerStatus.loading;
                       final startedPlaying =
-                          previous.status != VideoPlayerStatus.loading &&
-                          previous.status != VideoPlayerStatus.playing &&
-                          current.status == VideoPlayerStatus.playing;
+                          previous.status != PlayerStatus.loading &&
+                          previous.status != PlayerStatus.playing &&
+                          current.status == PlayerStatus.playing;
                       final itemChanged =
                           previous.mediaItem?.id != current.mediaItem?.id;
 
@@ -105,10 +105,10 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                       _scrollToTop();
                     },
                   ),
-                  BlocListener<VideoPlayerBloc, VideoPlayerState>(
+                  BlocListener<PlayerBloc, PlayerState>(
                     listenWhen: (prev, curr) =>
-                        prev.status != VideoPlayerStatus.stopped &&
-                        curr.status == VideoPlayerStatus.stopped,
+                        prev.status != PlayerStatus.stopped &&
+                        curr.status == PlayerStatus.stopped,
                     listener: (context, state) {
                       final lastItem = state.mediaItem;
                       if (lastItem != null && lastItem.id == movieItem.id) {

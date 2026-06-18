@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/search/repos/search_repository.dart';
+import 'package:playcado/search/repositories/search_repository.dart';
 import 'package:playcado/services/logger_service.dart';
 
 part 'search_event.dart';

@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/library_repository.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';

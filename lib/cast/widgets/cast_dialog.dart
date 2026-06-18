@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class CastDeviceListDialog extends StatelessWidget {
@@ -22,7 +22,7 @@ class CastDeviceListDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final castDeviceManager = context.read<CastDeviceManager>();
-    final playerBloc = context.read<VideoPlayerBloc>();
+    final playerBloc = context.read<PlayerBloc>();
 
     return StreamBuilder<GoogleCastSession?>(
       stream: castDeviceManager.currentSessionStream,

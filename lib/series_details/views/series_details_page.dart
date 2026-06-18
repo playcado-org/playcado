@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
+import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/series_details/bloc/series_details_bloc.dart';
 import 'package:playcado/series_details/widgets/series_action_row.dart';
 import 'package:playcado/series_details/widgets/series_episode_list.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 
 class SeriesDetailsPage extends StatefulWidget {
   const SeriesDetailsPage({
@@ -34,7 +34,7 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
     _scrollController = ScrollController();
     _detailsBloc = SeriesDetailsBloc(
       libraryRepository: context.read<LibraryRepository>(),
-      playbackTracker: context.read<PlaybackTracker>(),
+      playbackTracker: context.read<PlayerTracker>(),
     );
 
     _detailsBloc.add(SeriesDetailsStarted(item: widget.item));
@@ -48,7 +48,7 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
   }
 
   void _onPlay(BuildContext context, MediaItem item, String? localPath) {
-    context.read<VideoPlayerBloc>().add(
+    context.read<PlayerBloc>().add(
       PlayerPlayRequested(item: item, localPath: localPath),
     );
   }
@@ -69,7 +69,7 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _detailsBloc,
-      child: BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+      child: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, playerState) {
           return BlocBuilder<SeriesDetailsBloc, SeriesDetailsState>(
             builder: (context, detailsState) {
@@ -93,15 +93,15 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
 
               return MultiBlocListener(
                 listeners: [
-                  BlocListener<VideoPlayerBloc, VideoPlayerState>(
+                  BlocListener<PlayerBloc, PlayerState>(
                     listenWhen: (previous, current) {
                       final startedLoading =
-                          previous.status != VideoPlayerStatus.loading &&
-                          current.status == VideoPlayerStatus.loading;
+                          previous.status != PlayerStatus.loading &&
+                          current.status == PlayerStatus.loading;
                       final startedPlaying =
-                          previous.status != VideoPlayerStatus.loading &&
-                          previous.status != VideoPlayerStatus.playing &&
-                          current.status == VideoPlayerStatus.playing;
+                          previous.status != PlayerStatus.loading &&
+                          previous.status != PlayerStatus.playing &&
+                          current.status == PlayerStatus.playing;
                       final itemChanged =
                           previous.mediaItem?.id != current.mediaItem?.id;
 
@@ -115,10 +115,10 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
                       _scrollToTop();
                     },
                   ),
-                  BlocListener<VideoPlayerBloc, VideoPlayerState>(
+                  BlocListener<PlayerBloc, PlayerState>(
                     listenWhen: (prev, curr) =>
-                        prev.status != VideoPlayerStatus.stopped &&
-                        curr.status == VideoPlayerStatus.stopped,
+                        prev.status != PlayerStatus.stopped &&
+                        curr.status == PlayerStatus.stopped,
                     listener: (context, state) {
                       final lastItem = state.mediaItem;
                       if (lastItem != null) {

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/playback/engine/local_playback_engine.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/widgets/track_selection_sheet.dart';
-import 'package:playcado/video_player/widgets/video_slider.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/widgets/track_selection_sheet.dart';
+import 'package:playcado/player/widgets/video_slider.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class VideoControlsOverlay extends StatefulWidget {
@@ -46,8 +46,8 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
     _hideTimer = Timer(const Duration(seconds: 4), () {
       if (mounted) {
         final isPlaying =
-            context.read<VideoPlayerBloc>().state.status ==
-            VideoPlayerStatus.playing;
+            context.read<PlayerBloc>().state.status ==
+            PlayerStatus.playing;
         if (isPlaying) {
           setState(() => _visible = false);
         }
@@ -80,13 +80,13 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
         final seekAmount = isLeft
             ? const Duration(seconds: -10)
             : const Duration(seconds: 10);
-        final currentPos = context.read<VideoPlayerBloc>().state.position;
-        context.read<VideoPlayerBloc>().add(
+        final currentPos = context.read<PlayerBloc>().state.position;
+        context.read<PlayerBloc>().add(
           PlayerSeekRequested(currentPos + seekAmount),
         );
         _onInteraction();
       },
-      child: BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+      child: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
           return Stack(
             children: [
@@ -120,7 +120,7 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
                   right: 24,
                   child: FilledButton.icon(
                     onPressed: () {
-                      context.read<VideoPlayerBloc>().add(
+                      context.read<PlayerBloc>().add(
                         PlayerSkipIntroRequested(),
                       );
                     },
@@ -147,7 +147,7 @@ class _CenterControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+    return BlocBuilder<PlayerBloc, PlayerState>(
       buildWhen: (prev, curr) =>
           prev.isBuffering != curr.isBuffering || prev.status != curr.status,
       builder: (context, state) {
@@ -163,8 +163,8 @@ class _CenterControls extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.8),
               icon: const PlaycadoIcon(PlaycadoIcons.replay10, size: 36),
               onPressed: () {
-                final pos = context.read<VideoPlayerBloc>().state.position;
-                context.read<VideoPlayerBloc>().add(
+                final pos = context.read<PlayerBloc>().state.position;
+                context.read<PlayerBloc>().add(
                   PlayerSeekRequested(pos - const Duration(seconds: 10)),
                 );
                 onAction();
@@ -174,13 +174,13 @@ class _CenterControls extends StatelessWidget {
             IconButton(
               color: Colors.white,
               icon: PlaycadoIcon(
-                state.status == VideoPlayerStatus.playing
+                state.status == PlayerStatus.playing
                     ? PlaycadoIcons.pause
                     : PlaycadoIcons.play,
                 size: 48,
               ),
               onPressed: () {
-                context.read<VideoPlayerBloc>().add(
+                context.read<PlayerBloc>().add(
                   PlayerTogglePlayPauseRequested(),
                 );
                 onAction();
@@ -191,8 +191,8 @@ class _CenterControls extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.8),
               icon: const PlaycadoIcon(PlaycadoIcons.forward10, size: 36),
               onPressed: () {
-                final pos = context.read<VideoPlayerBloc>().state.position;
-                context.read<VideoPlayerBloc>().add(
+                final pos = context.read<PlayerBloc>().state.position;
+                context.read<PlayerBloc>().add(
                   PlayerSeekRequested(pos + const Duration(seconds: 10)),
                 );
                 onAction();
@@ -233,7 +233,7 @@ class _TopButtons extends StatelessWidget {
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   showDragHandle: true,
                   builder: (context) => TrackSelectionSheet(
-                    engine: context.read<LocalPlaybackEngine>(),
+                    engine: context.read<LocalPlaybackService>(),
                   ),
                 ),
               );

@@ -2,45 +2,40 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
-import 'package:playcado/playback/engine/playback_engine.dart';
-import 'package:playcado/playback/models/playable_media.dart';
+import 'package:playcado/player/services/playback_service.dart';
+import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/services/logger_service.dart';
 
-/// Plays media on a remote Google Cast device.
-///
-/// Delegates playback control to [GoogleCastRemoteMediaClient] and
-/// mirrors the Cast device's media status into [PlaybackEngineState] updates.
-class CastPlaybackEngine implements PlaybackEngine {
-  CastPlaybackEngine();
+class CastPlaybackService implements PlaybackService {
+  CastPlaybackService();
 
   final GoogleCastRemoteMediaClientPlatformInterface _remoteMediaClient =
       GoogleCastRemoteMediaClient.instance;
   final GoogleCastSessionManagerPlatformInterface _sessionManager =
       GoogleCastSessionManager.instance;
 
-  final StreamController<PlaybackEngineState> _stateController =
-      StreamController<PlaybackEngineState>.broadcast();
-  PlaybackEngineState _currentState = const PlaybackEngineState();
+  final StreamController<PlaybackServiceState> _stateController =
+      StreamController<PlaybackServiceState>.broadcast();
+  PlaybackServiceState _currentState = const PlaybackServiceState();
   StreamSubscription<GoggleCastMediaStatus?>? _mediaStatusSub;
 
   bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
 
-  /// Whether a Cast session is currently connected.
   bool get isConnected =>
       _sessionManager.connectionState == GoogleCastConnectState.connected;
 
   @override
-  Stream<PlaybackEngineState> get stateStream => _stateController.stream;
+  Stream<PlaybackServiceState> get stateStream => _stateController.stream;
 
   @override
-  PlaybackEngineState get currentState => _currentState;
+  PlaybackServiceState get currentState => _currentState;
 
   @override
   Object? get nativeViewAttachment => null;
 
   @override
   Future<void> load(PlayableMedia media) async {
-    LoggerService.player.info('CastPlaybackEngine loading: ${media.title}');
+    LoggerService.player.info('CastPlayerEngine loading: ${media.title}');
     _updateState(isBuffering: true);
 
     _mediaStatusSub?.cancel();
@@ -146,7 +141,6 @@ class CastPlaybackEngine implements PlaybackEngine {
     await _stateController.close();
   }
 
-  /// Merges new values into [_currentState] and emits on [_stateController].
   void _updateState({
     Duration? position,
     Duration? duration,

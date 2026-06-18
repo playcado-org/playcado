@@ -7,43 +7,43 @@ import 'package:jellyfin_dart/jellyfin_dart.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/playback/engine/cast_playback_engine.dart';
-import 'package:playcado/playback/engine/local_playback_engine.dart';
-import 'package:playcado/playback/engine/playback_engine.dart';
-import 'package:playcado/playback/models/playable_media.dart';
-import 'package:playcado/playback/repos/playback_tracker.dart';
+import 'package:playcado/player/services/cast_playback_service.dart';
+import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/services/playback_service.dart';
+import 'package:playcado/player/models/playable_media.dart';
+import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 
-part 'video_player_event.dart';
-part 'video_player_state.dart';
+part 'player_event.dart';
+part 'player_state.dart';
 
-class _EngineStateUpdated extends VideoPlayerEvent {
+class _EngineStateUpdated extends PlayerEvent {
   const _EngineStateUpdated(this.engineState);
-  final PlaybackEngineState engineState;
+  final PlaybackServiceState engineState;
 
   @override
   List<Object?> get props => [engineState];
 }
 
-class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
-  VideoPlayerBloc({
-    required LocalPlaybackEngine localEngine,
-    required CastPlaybackEngine castEngine,
+class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
+  PlayerBloc({
+    required LocalPlaybackService localEngine,
+    required CastPlaybackService castEngine,
     required CastDeviceManager castDeviceManager,
-    required PlaybackTracker playbackTracker,
+    required PlayerTracker playerTracker,
     required MediaUrlService urlGenerator,
     required MediaRemoteDataSource dataSource,
     required JellyfinClientService jellyfinClientService,
   }) : _localEngine = localEngine,
        _castEngine = castEngine,
        _castDeviceManager = castDeviceManager,
-       _playbackTracker = playbackTracker,
+       _playerTracker = playerTracker,
        _urlGenerator = urlGenerator,
        _dataSource = dataSource,
        _jellyfinClientService = jellyfinClientService,
-       super(const VideoPlayerState()) {
+       super(const PlayerState()) {
     on<PlayerPlayRequested>(_onPlayRequested);
     on<PlayerStopRequested>(_onStopRequested);
     on<PlayerPauseRequested>(_onPauseRequested);
@@ -58,22 +58,22 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     _initCastListeners();
   }
 
-  final LocalPlaybackEngine _localEngine;
-  final CastPlaybackEngine _castEngine;
+  final LocalPlaybackService _localEngine;
+  final CastPlaybackService _castEngine;
   final CastDeviceManager _castDeviceManager;
-  final PlaybackTracker _playbackTracker;
+  final PlayerTracker _playerTracker;
   final MediaUrlService _urlGenerator;
   final MediaRemoteDataSource _dataSource;
   final JellyfinClientService _jellyfinClientService;
 
-  PlaybackEngine? _activeEngine;
-  StreamSubscription<PlaybackEngineState>? _engineSub;
+  PlaybackService? _activeEngine;
+  StreamSubscription<PlaybackServiceState>? _engineSub;
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
   DateTime _lastProgressReport = DateTime.now();
   bool _isLocalMedia = false;
   bool _wasCasting = false;
 
-  PlaybackEngine get _engine {
+  PlaybackService get _engine {
     if (_activeEngine == null) throw StateError('No active engine');
     return _activeEngine!;
   }
@@ -88,7 +88,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     });
   }
 
-  void _subscribeToEngine(PlaybackEngine engine) {
+  void _subscribeToEngine(PlaybackService engine) {
     _engineSub?.cancel();
     _engineSub = engine.stateStream.listen((engineState) {
       if (isClosed) return;
@@ -98,7 +98,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
   void _onInternalEngineStateUpdated(
     _EngineStateUpdated event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) {
     final engineState = event.engineState;
     final item = state.mediaItem;
@@ -128,26 +128,26 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       ),
     );
 
-    if (newStatus == VideoPlayerStatus.playing) {
+    if (newStatus == PlayerStatus.playing) {
       _handleProgressReporting(engineState.position);
     }
   }
 
-  VideoPlayerStatus _determineStatus(PlaybackEngineState engineState) {
-    if (state.status == VideoPlayerStatus.loading) {
+  PlayerStatus _determineStatus(PlaybackServiceState engineState) {
+    if (state.status == PlayerStatus.loading) {
       if (!engineState.isBuffering && engineState.position > Duration.zero) {
-        return VideoPlayerStatus.playing;
+        return PlayerStatus.playing;
       }
-      return VideoPlayerStatus.loading;
+      return PlayerStatus.loading;
     }
     if (engineState.isCompleted) {
-      return VideoPlayerStatus.stopped;
+      return PlayerStatus.stopped;
     }
     if (engineState.isPlaying) {
-      return VideoPlayerStatus.playing;
+      return PlayerStatus.playing;
     }
-    if (state.status == VideoPlayerStatus.playing && !engineState.isPlaying) {
-      return VideoPlayerStatus.paused;
+    if (state.status == PlayerStatus.playing && !engineState.isPlaying) {
+      return PlayerStatus.paused;
     }
     return state.status;
   }
@@ -156,14 +156,14 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     if (_isLocalMedia ||
         state.mediaItem == null ||
         state.isCasting ||
-        state.status != VideoPlayerStatus.playing) {
+        state.status != PlayerStatus.playing) {
       return;
     }
 
     if (DateTime.now().difference(_lastProgressReport).inSeconds > 10) {
       _lastProgressReport = DateTime.now();
       final ticks = position.inMicroseconds * 10;
-      await _playbackTracker.reportPlaybackProgress(
+      await _playerTracker.reportPlaybackProgress(
         itemId: state.mediaItem!.id,
         positionTicks: ticks,
       );
@@ -241,7 +241,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
   Future<void> _onPlayRequested(
     PlayerPlayRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     LoggerService.player.info('Play requested for ${event.item.name}');
 
@@ -250,7 +250,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     if (useCast) {
       emit(
         state.copyWith(
-          status: VideoPlayerStatus.loading,
+          status: PlayerStatus.loading,
           mediaItem: event.item,
           isCasting: true,
           isLocalMedia: false,
@@ -268,14 +268,14 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
         await _castEngine.load(playableMedia);
       } on Exception catch (e) {
         LoggerService.player.severe('Failed to start cast playback', e);
-        emit(state.copyWith(status: VideoPlayerStatus.error));
+        emit(state.copyWith(status: PlayerStatus.error));
       }
       return;
     }
 
     emit(
       state.copyWith(
-        status: VideoPlayerStatus.loading,
+        status: PlayerStatus.loading,
         mediaItem: event.item,
         localPath: event.localPath,
         isLocalMedia: event.localPath != null,
@@ -285,7 +285,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     _isLocalMedia = event.localPath != null;
 
     if (event.localPath == null) {
-      unawaited(_playbackTracker.reportPlaybackStart(event.item.id));
+      unawaited(_playerTracker.reportPlaybackStart(event.item.id));
     }
 
     try {
@@ -299,13 +299,13 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       await _localEngine.load(playableMedia);
     } on Exception catch (e) {
       LoggerService.player.severe('Failed to play media', e);
-      emit(state.copyWith(status: VideoPlayerStatus.error));
+      emit(state.copyWith(status: PlayerStatus.error));
     }
   }
 
   Future<void> _onStopRequested(
     PlayerStopRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     final finalPosition = state.position;
     final item = state.mediaItem;
@@ -319,7 +319,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     _engineSub = null;
 
     if (item != null && !_isLocalMedia) {
-      await _playbackTracker.reportPlaybackStopped(
+      await _playerTracker.reportPlaybackStopped(
         itemId: item.id,
         positionTicks: finalPosition.inMicroseconds * 10,
       );
@@ -327,7 +327,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
     emit(
       state.copyWith(
-        status: VideoPlayerStatus.stopped,
+        status: PlayerStatus.stopped,
         position: finalPosition,
         showSkipIntro: false,
         isCasting: false,
@@ -338,32 +338,32 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
   Future<void> _onPauseRequested(
     PlayerPauseRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     await _engine.pause();
-    emit(state.copyWith(status: VideoPlayerStatus.paused));
+    emit(state.copyWith(status: PlayerStatus.paused));
   }
 
   Future<void> _onResumeRequested(
     PlayerResumeRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     await _engine.play();
-    emit(state.copyWith(status: VideoPlayerStatus.playing));
+    emit(state.copyWith(status: PlayerStatus.playing));
   }
 
   Future<void> _onSeekRequested(
     PlayerSeekRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     await _engine.seek(event.position);
   }
 
   Future<void> _onTogglePlayPause(
     PlayerTogglePlayPauseRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
-    if (state.status == VideoPlayerStatus.playing) {
+    if (state.status == PlayerStatus.playing) {
       add(PlayerPauseRequested());
     } else {
       add(PlayerResumeRequested());
@@ -372,7 +372,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
   Future<void> _onCastRequested(
     PlayerCastRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     LoggerService.player.info('Cast requested for ${event.item.name}');
 
@@ -382,7 +382,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
     emit(
       state.copyWith(
-        status: VideoPlayerStatus.loading,
+        status: PlayerStatus.loading,
         mediaItem: event.item,
         isCasting: true,
         isLocalMedia: false,
@@ -394,7 +394,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       if (!_castDeviceManager.isConnected) {
         final connected = await _castDeviceManager.waitUntilConnected();
         if (!connected) {
-          emit(state.copyWith(status: VideoPlayerStatus.error));
+          emit(state.copyWith(status: PlayerStatus.error));
           return;
         }
       }
@@ -408,13 +408,13 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       await _castEngine.load(playableMedia);
     } on Exception catch (e) {
       LoggerService.player.severe('Failed to cast media', e);
-      emit(state.copyWith(status: VideoPlayerStatus.error));
+      emit(state.copyWith(status: PlayerStatus.error));
     }
   }
 
   Future<void> _onSkipIntroRequested(
     PlayerSkipIntroRequested event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     final item = state.mediaItem;
     final introEndTicks = item?.introEndTicks;
@@ -427,7 +427,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
 
   Future<void> _onTrackSelected(
     PlayerTrackSelected event,
-    Emitter<VideoPlayerState> emit,
+    Emitter<PlayerState> emit,
   ) async {
     if (event.type == TrackType.audio) {
       await _localEngine.setAudioTrack(event.index);
