@@ -17,9 +17,9 @@ class DevToolsCastSessionUpdated extends DevToolsEvent {
 
 class DevToolsCastTestVideoRequested extends DevToolsEvent {}
 
-class DevToolsClearPreferencesServiceRequested extends DevToolsEvent {}
-
 class DevToolsClearDownloadsDataRequested extends DevToolsEvent {}
+
+class DevToolsClearPreferencesServiceRequested extends DevToolsEvent {}
 
 class DevToolsClearSecureStorageRequested extends DevToolsEvent {}
 

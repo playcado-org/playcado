@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
@@ -13,10 +13,13 @@ import 'package:playcado/l10n/app_localizations.dart';
 import 'package:playcado/libraries/bloc/libraries_bloc.dart';
 import 'package:playcado/media/data/demo_remote_data_source.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
-import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/media/repos/playback_repository.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/onboarding/bloc/onboarding_cubit.dart';
-import 'package:playcado/search/repos/search_repository.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
+import 'package:playcado/search/repositories/search_repository.dart';
 import 'package:playcado/services/media_url/demo_url_service.dart';
 import 'package:playcado/services/media_url/jellyfin_url_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
@@ -24,8 +27,6 @@ import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 import 'package:playcado/theme/app_theme.dart';
 import 'package:playcado/theme/bloc/theme_bloc.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/services/player_service.dart';
 
 class App extends StatelessWidget {
   const App({required this.config, super.key});
@@ -40,8 +41,15 @@ class App extends StatelessWidget {
           value: config.preferencesService,
         ),
         RepositoryProvider<AuthRepository>.value(value: config.authRepository),
-        RepositoryProvider<CastService>.value(value: config.castService),
-        RepositoryProvider<PlayerService>.value(value: config.playerService),
+        RepositoryProvider<CastDeviceService>.value(
+          value: config.castDeviceService,
+        ),
+        RepositoryProvider<LocalPlayerService>.value(
+          value: config.localPlayerService,
+        ),
+        RepositoryProvider<CastPlayerService>.value(
+          value: config.castPlayerService,
+        ),
         RepositoryProvider<SecureStorageService>.value(
           value: config.secureStorageService,
         ),
@@ -91,11 +99,9 @@ class App extends StatelessWidget {
                   create: (context) =>
                       LibraryRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<PlaybackRepository>(
-                  create: (context) => PlaybackRepository(
-                    dataSource: remoteDataSource,
-                    urlGenerator: mediaUrlService,
-                  ),
+                RepositoryProvider<PlayerTrackerRepository>(
+                  create: (context) =>
+                      PlayerTrackerRepository(dataSource: remoteDataSource),
                 ),
                 RepositoryProvider<SearchRepository>(
                   create: (context) =>
@@ -118,11 +124,13 @@ class App extends StatelessWidget {
                     ),
                   ),
                   BlocProvider(
-                    create: (context) => VideoPlayerBloc(
-                      playbackRepository: context.read<PlaybackRepository>(),
+                    create: (context) => PlayerBloc(
+                      localService: context.read<LocalPlayerService>(),
+                      castPlayerService: context.read<CastPlayerService>(),
+                      castDeviceService: context.read<CastDeviceService>(),
+                      playerTracker: context.read<PlayerTrackerRepository>(),
                       urlGenerator: context.read<MediaUrlService>(),
-                      playerService: context.read<PlayerService>(),
-                      castService: context.read<CastService>(),
+                      dataSource: remoteDataSource,
                       jellyfinClientService: config.jellyfinClientService,
                     ),
                   ),

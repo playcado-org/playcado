@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/services/player_service.dart';
-import 'package:playcado/video_player/widgets/cast_control_view.dart';
-import 'package:playcado/video_player/widgets/video_controls_overlay.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/services/player_service.dart';
+import 'package:playcado/player/widgets/cast_control_view.dart';
+import 'package:playcado/player/widgets/video_controls_overlay.dart';
 import 'package:playcado/widgets/loading_indicator.dart';
 
 class FullscreenPlayerScreen extends StatefulWidget {
@@ -45,39 +45,35 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+      body: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
           if (state.isCasting) {
             return CastControlView(item: state.mediaItem);
           }
 
-          final item = state.mediaItem;
-          if (item == null) {
-            return const LoadingIndicator();
+          switch (state.playerView) {
+            case LocalPlayerView(:final controller):
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  Center(
+                    child: Video(
+                      controller: controller as VideoController,
+                      controls: NoVideoControls as VideoControlsBuilder?,
+                    ),
+                  ),
+                  VideoControlsOverlay(
+                    title: state.mediaItem?.name ?? '',
+                    isFullscreen: true,
+                    onFullscreenToggle: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              );
+            case CastPlayerView():
+              return CastControlView(item: state.mediaItem);
+            case null:
+              return const LoadingIndicator();
           }
-
-          final controller = context.read<PlayerService>().controller;
-          final player = context.read<PlayerService>().player;
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Video(
-                  controller: controller,
-                  controls: NoVideoControls as VideoControlsBuilder?,
-                ),
-              ),
-              VideoControlsOverlay(
-                player: player,
-                title: item.name,
-                isFullscreen: true,
-                onFullscreenToggle: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
         },
       ),
     );

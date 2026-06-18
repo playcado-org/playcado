@@ -2,23 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/widgets/track_selection_sheet.dart';
-import 'package:playcado/video_player/widgets/video_slider.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/services/local_player_service.dart';
+import 'package:playcado/player/widgets/track_selection_sheet.dart';
+import 'package:playcado/player/widgets/video_slider.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class VideoControlsOverlay extends StatefulWidget {
   const VideoControlsOverlay({
-    required this.player,
-    required this.title,
-    super.key,
     this.isFullscreen = false,
     this.onFullscreenToggle,
+    super.key,
+    required this.title,
   });
-  final Player player;
   final String title;
   final bool isFullscreen;
   final VoidCallback? onFullscreenToggle;
@@ -30,39 +28,28 @@ class VideoControlsOverlay extends StatefulWidget {
 class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
   bool _visible = true;
   Timer? _hideTimer;
-  bool _isPlaying = false;
-  StreamSubscription<bool>? _playingSubscription;
 
   @override
   void initState() {
     super.initState();
-    _isPlaying = widget.player.state.playing;
-    if (_isPlaying) _startHideTimer();
-
-    _playingSubscription = widget.player.stream.playing.listen((playing) {
-      if (!mounted) return;
-      setState(() => _isPlaying = playing);
-      if (playing) {
-        _startHideTimer();
-      } else {
-        _cancelHideTimer();
-        setState(() => _visible = true);
-      }
-    });
+    _startHideTimer();
   }
 
   @override
   void dispose() {
     _cancelHideTimer();
-    unawaited(_playingSubscription?.cancel());
     super.dispose();
   }
 
   void _startHideTimer() {
     _cancelHideTimer();
     _hideTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted && _isPlaying) {
-        setState(() => _visible = false);
+      if (mounted) {
+        final isPlaying =
+            context.read<PlayerBloc>().state.status == PlayerStatus.playing;
+        if (isPlaying) {
+          setState(() => _visible = false);
+        }
       }
     });
   }
@@ -73,16 +60,12 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
 
   void _toggleVisibility() {
     setState(() => _visible = !_visible);
-    if (_visible && _isPlaying) _startHideTimer();
+    if (_visible) _startHideTimer();
   }
 
   void _onInteraction() {
     if (!_visible) setState(() => _visible = true);
-    if (_isPlaying) {
-      _startHideTimer();
-    } else {
-      _cancelHideTimer();
-    }
+    _startHideTimer();
   }
 
   @override
@@ -96,12 +79,13 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
         final seekAmount = isLeft
             ? const Duration(seconds: -10)
             : const Duration(seconds: 10);
-        unawaited(
-          widget.player.seek(widget.player.state.position + seekAmount),
+        final currentPos = context.read<PlayerBloc>().state.position;
+        context.read<PlayerBloc>().add(
+          PlayerSeekRequested(currentPos + seekAmount),
         );
         _onInteraction();
       },
-      child: BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+      child: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
           return Stack(
             children: [
@@ -111,22 +95,19 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _TopButtons(
-                      player: widget.player,
                       onAction: _onInteraction,
                       item: state.mediaItem,
                     ),
                     _CenterControls(
-                      player: widget.player,
                       visible: _visible,
                       onAction: _onInteraction,
                     ),
                     _BottomControls(
-                      player: widget.player,
                       isFullscreen: widget.isFullscreen,
                       onFullscreenToggle: widget.onFullscreenToggle,
                       onInteractionStart: _cancelHideTimer,
                       onInteractionEnd: () {
-                        if (_isPlaying) _startHideTimer();
+                        _startHideTimer();
                       },
                     ),
                   ],
@@ -138,7 +119,7 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
                   right: 24,
                   child: FilledButton.icon(
                     onPressed: () {
-                      context.read<VideoPlayerBloc>().add(
+                      context.read<PlayerBloc>().add(
                         PlayerSkipIntroRequested(),
                       );
                     },
@@ -159,24 +140,17 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
 }
 
 class _CenterControls extends StatelessWidget {
-  const _CenterControls({
-    required this.player,
-    required this.visible,
-    required this.onAction,
-  });
-  final Player player;
-  final bool visible;
+  const _CenterControls({required this.onAction, required this.visible});
   final VoidCallback onAction;
+  final bool visible;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<bool>(
-      stream: player.stream.buffering,
-      initialData: player.state.buffering,
-      builder: (context, snapshot) {
-        final isBuffering = snapshot.data ?? false;
-
-        if (isBuffering) {
+    return BlocBuilder<PlayerBloc, PlayerState>(
+      buildWhen: (prev, curr) =>
+          prev.isBuffering != curr.isBuffering || prev.status != curr.status,
+      builder: (context, state) {
+        if (state.isBuffering) {
           return const LoadingIndicator(color: Colors.white);
         }
 
@@ -188,31 +162,27 @@ class _CenterControls extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.8),
               icon: const PlaycadoIcon(PlaycadoIcons.replay10, size: 36),
               onPressed: () {
-                unawaited(
-                  player.seek(
-                    player.state.position - const Duration(seconds: 10),
-                  ),
+                final pos = context.read<PlayerBloc>().state.position;
+                context.read<PlayerBloc>().add(
+                  PlayerSeekRequested(pos - const Duration(seconds: 10)),
                 );
                 onAction();
               },
             ),
             const SizedBox(width: 32),
-            StreamBuilder<bool>(
-              stream: player.stream.playing,
-              initialData: player.state.playing,
-              builder: (context, snapshot) {
-                final isPlaying = snapshot.data ?? false;
-                return IconButton(
-                  color: Colors.white,
-                  icon: PlaycadoIcon(
-                    isPlaying ? PlaycadoIcons.pause : PlaycadoIcons.play,
-                    size: 48,
-                  ),
-                  onPressed: () {
-                    unawaited(player.playOrPause());
-                    onAction();
-                  },
+            IconButton(
+              color: Colors.white,
+              icon: PlaycadoIcon(
+                state.status == PlayerStatus.playing
+                    ? PlaycadoIcons.pause
+                    : PlaycadoIcons.play,
+                size: 48,
+              ),
+              onPressed: () {
+                context.read<PlayerBloc>().add(
+                  PlayerTogglePlayPauseRequested(),
                 );
+                onAction();
               },
             ),
             const SizedBox(width: 32),
@@ -220,10 +190,9 @@ class _CenterControls extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.8),
               icon: const PlaycadoIcon(PlaycadoIcons.forward10, size: 36),
               onPressed: () {
-                unawaited(
-                  player.seek(
-                    player.state.position + const Duration(seconds: 10),
-                  ),
+                final pos = context.read<PlayerBloc>().state.position;
+                context.read<PlayerBloc>().add(
+                  PlayerSeekRequested(pos + const Duration(seconds: 10)),
                 );
                 onAction();
               },
@@ -236,10 +205,9 @@ class _CenterControls extends StatelessWidget {
 }
 
 class _TopButtons extends StatelessWidget {
-  const _TopButtons({required this.player, required this.onAction, this.item});
-  final Player player;
-  final VoidCallback onAction;
+  const _TopButtons({this.item, required this.onAction});
   final MediaItem? item;
+  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +231,9 @@ class _TopButtons extends StatelessWidget {
                   useRootNavigator: true,
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   showDragHandle: true,
-                  builder: (context) => TrackSelectionSheet(player: player),
+                  builder: (context) => TrackSelectionSheet(
+                    service: context.read<LocalPlayerService>(),
+                  ),
                 ),
               );
             },
@@ -276,17 +246,15 @@ class _TopButtons extends StatelessWidget {
 
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
-    required this.player,
     required this.isFullscreen,
     required this.onFullscreenToggle,
-    required this.onInteractionStart,
     required this.onInteractionEnd,
+    required this.onInteractionStart,
   });
-  final Player player;
   final bool isFullscreen;
   final VoidCallback? onFullscreenToggle;
-  final VoidCallback onInteractionStart;
   final VoidCallback onInteractionEnd;
+  final VoidCallback onInteractionStart;
 
   @override
   Widget build(BuildContext context) {
@@ -296,7 +264,6 @@ class _BottomControls extends StatelessWidget {
         children: [
           Expanded(
             child: VideoSlider(
-              player: player,
               onInteractionStart: onInteractionStart,
               onInteractionEnd: onInteractionEnd,
             ),
@@ -324,9 +291,9 @@ class _BottomControls extends StatelessWidget {
 }
 
 class _AnimatedVisibility extends StatelessWidget {
-  const _AnimatedVisibility({required this.visible, required this.child});
-  final bool visible;
+  const _AnimatedVisibility({required this.child, required this.visible});
   final Widget child;
+  final bool visible;
 
   @override
   Widget build(BuildContext context) {

@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/media/repos/library_repository.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
@@ -51,16 +51,24 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       state.copyWith(
         continueWatching: results[0].error != null
             ? StatusError(results[0].error!)
-            : StatusSuccess<List<MediaItem>>(results[0].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[0].value as List<MediaItem>,
+              ),
         nextUp: results[1].error != null
             ? StatusError(results[1].error!)
-            : StatusSuccess<List<MediaItem>>(results[1].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[1].value as List<MediaItem>,
+              ),
         latestMovies: results[2].error != null
             ? StatusError(results[2].error!)
-            : StatusSuccess<List<MediaItem>>(results[2].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[2].value as List<MediaItem>,
+              ),
         latestTv: results[3].error != null
             ? StatusError(results[3].error!)
-            : StatusSuccess<List<MediaItem>>(results[3].value as List<MediaItem>),
+            : StatusSuccess<List<MediaItem>>(
+                results[3].value as List<MediaItem>,
+              ),
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/widgets/widgets.dart';
@@ -48,7 +48,7 @@ class CastControlView extends StatelessWidget {
           const SizedBox(height: 48),
           FilledButton.icon(
             onPressed: () {
-              unawaited(context.read<CastService>().disconnect());
+              unawaited(context.read<CastDeviceService>().disconnect());
             },
             icon: const PlaycadoIcon(PlaycadoIcons.stop),
             label: Text(context.l10n.stopCasting),

@@ -2,6 +2,7 @@ analyzer:
   errors:
     todo: ignore
   exclude:
+    - "build/**"
     - '**/*.g.dart'
     - '**/*.freezed.dart'
 

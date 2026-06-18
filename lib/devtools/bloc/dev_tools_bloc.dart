@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
-import 'package:playcado/media/models/media_item.dart';
+import 'package:playcado/player/models/playable_media.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 
@@ -14,28 +15,38 @@ part 'dev_tools_state.dart';
 
 class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   DevToolsBloc({
-    required PreferencesService preferencesService,
-    required CastService castService,
+    required CastDeviceService castDeviceService,
+    required CastPlayerService castPlayerService,
     required DownloadsRepository downloadsRepository,
+    required PreferencesService preferencesService,
     required SecureStorageService secureStorage,
-  }) : _preferencesService = preferencesService,
-       _castService = castService,
+  }) : _castDeviceService = castDeviceService,
+       _castPlayerService = castPlayerService,
        _downloadsRepository = downloadsRepository,
+       _preferencesService = preferencesService,
        _secureStorage = secureStorage,
        super(const DevToolsState()) {
     on<DevToolsCastSessionUpdated>(_onCastSessionUpdated);
     on<DevToolsCastTestVideoRequested>(_onCastTestVideo);
-    on<DevToolsClearPreferencesServiceRequested>(_onClearPreferencesService);
     on<DevToolsClearDownloadsDataRequested>(_onClearDownloadsData);
+    on<DevToolsClearPreferencesServiceRequested>(_onClearPreferencesService);
     on<DevToolsClearSecureStorageRequested>(_onClearSecureStorage);
     on<DevToolsDisconnectCastRequested>(_onDisconnectCast);
     on<DevToolsInitialized>(_onInitialized);
   }
-  final PreferencesService _preferencesService;
-  final CastService _castService;
+
+  final CastDeviceService _castDeviceService;
+  final CastPlayerService _castPlayerService;
   StreamSubscription<GoogleCastSession?>? _castSubscription;
   final DownloadsRepository _downloadsRepository;
+  final PreferencesService _preferencesService;
   final SecureStorageService _secureStorage;
+
+  @override
+  Future<void> close() {
+    unawaited(_castSubscription?.cancel());
+    return super.close();
+  }
 
   void _onCastSessionUpdated(
     DevToolsCastSessionUpdated event,
@@ -52,21 +63,13 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
         'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
     try {
-      await _castService.loadMedia(
-        const CastItem(
-          mediaItem: MediaItem(
-            id: 'test',
-            name: 'TEST VIDEO (Big Buck Bunny)',
-            type: MediaItemType.movie,
-            overview:
-                'Big Buck Bunny tells the story of a '
-                'giant rabbit with a heart bigger than '
-                'himself.',
-          ),
+      await _castPlayerService.load(
+        const PlayableMedia(
+          id: 'test',
+          title: 'TEST VIDEO (Big Buck Bunny)',
           streamUrl: testUrl,
-          imageUrl:
+          posterUrl:
               'https://upload.wikimedia.org/wikipedia/commons/7/70/Big.Buck.Bunny.-.Opening.Screen.png',
-          mimeType: 'video/mp4',
         ),
       );
       emit(
@@ -80,28 +83,6 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
         state.copyWith(
           status: DevToolsStatus.error,
           message: 'Failed to cast test video',
-        ),
-      );
-    }
-  }
-
-  Future<void> _onClearPreferencesService(
-    DevToolsClearPreferencesServiceRequested event,
-    Emitter<DevToolsState> emit,
-  ) async {
-    try {
-      await _preferencesService.resetAll();
-      emit(
-        state.copyWith(
-          status: DevToolsStatus.success,
-          message: 'App Preferences Reset',
-        ),
-      );
-    } on Exception catch (e) {
-      emit(
-        state.copyWith(
-          status: DevToolsStatus.error,
-          message: 'Error reseting app preferences: $e',
         ),
       );
     }
@@ -124,6 +105,28 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
         state.copyWith(
           status: DevToolsStatus.error,
           message: 'Error clearing downloads: $e',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onClearPreferencesService(
+    DevToolsClearPreferencesServiceRequested event,
+    Emitter<DevToolsState> emit,
+  ) async {
+    try {
+      await _preferencesService.resetAll();
+      emit(
+        state.copyWith(
+          status: DevToolsStatus.success,
+          message: 'App Preferences Reset',
+        ),
+      );
+    } on Exception catch (e) {
+      emit(
+        state.copyWith(
+          status: DevToolsStatus.error,
+          message: 'Error reseting app preferences: $e',
         ),
       );
     }
@@ -155,26 +158,17 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
     DevToolsDisconnectCastRequested event,
     Emitter<DevToolsState> emit,
   ) async {
-    await _castService.disconnect();
+    await _castDeviceService.disconnect();
   }
 
   void _onInitialized(DevToolsInitialized event, Emitter<DevToolsState> emit) {
-    // Check initial status
-    final isConnected = _castService.isConnected;
+    final isConnected = _castDeviceService.isConnected;
     emit(state.copyWith(isCastConnected: isConnected));
 
-    // Listen to session changes
     unawaited(_castSubscription?.cancel());
-    _castSubscription = _castService.currentSessionStream.listen((session) {
-      final connected =
-          session?.connectionState == GoogleCastConnectState.connected;
+    _castSubscription = _castDeviceService.currentSessionStream.listen((_) {
+      final connected = _castDeviceService.isConnected;
       add(DevToolsCastSessionUpdated(isConnected: connected));
     });
-  }
-
-  @override
-  Future<void> close() {
-    unawaited(_castSubscription?.cancel());
-    return super.close();
   }
 }

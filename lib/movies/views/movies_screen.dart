@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
-import 'package:playcado/media/repos/library_repository.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/paginated_media_list/bloc/paginated_media_list_bloc.dart';
 import 'package:playcado/paginated_media_list/widgets/paginated_media_grid.dart';
 import 'package:playcado/services/logger_service.dart';

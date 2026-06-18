@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/core/extensions.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/playcado_icon.dart';
 
 /// A row of buttons (Play/Pause, Stop, Fullscreen) shown when media is playing.
@@ -15,9 +15,9 @@ class ActivePlaybackControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<VideoPlayerBloc, VideoPlayerState>(
+    return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, playerState) {
-        final isPaused = playerState.status != VideoPlayerStatus.playing;
+        final isPaused = playerState.status != PlayerStatus.playing;
 
         return Row(
           children: [
@@ -30,11 +30,9 @@ class ActivePlaybackControls extends StatelessWidget {
                 fontSize: 13,
                 onPressed: () {
                   if (isPaused) {
-                    context.read<VideoPlayerBloc>().add(
-                      PlayerResumeRequested(),
-                    );
+                    context.read<PlayerBloc>().add(PlayerResumeRequested());
                   } else {
-                    context.read<VideoPlayerBloc>().add(PlayerPauseRequested());
+                    context.read<PlayerBloc>().add(PlayerPauseRequested());
                   }
                 },
               ),
@@ -48,7 +46,7 @@ class ActivePlaybackControls extends StatelessWidget {
                 isPrimary: false,
                 fontSize: 13,
                 onPressed: () {
-                  context.read<VideoPlayerBloc>().add(PlayerStopRequested());
+                  context.read<PlayerBloc>().add(PlayerStopRequested());
                 },
               ),
             ),

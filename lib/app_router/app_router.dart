@@ -19,7 +19,7 @@ import 'package:playcado/search/views/search_screen.dart';
 import 'package:playcado/server_management/views/server_management_screen.dart';
 import 'package:playcado/settings/views/settings_screen.dart';
 import 'package:playcado/tv/views/tv_shows_screen.dart';
-import 'package:playcado/video_player/views/fullscreen_player_screen.dart';
+import 'package:playcado/player/views/fullscreen_player_screen.dart';
 
 class AppRouter {
   AppRouter({required this.authBloc, required this.onboardingCubit});

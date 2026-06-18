@@ -1,15 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/services/logger_service.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 
 class AppBlocObserver extends BlocObserver {
   @override
   void onEvent(Bloc<dynamic, dynamic> bloc, Object? event) {
     super.onEvent(bloc, event);
-    if (event is! PlayerPositionUpdated) {
-      LoggerService.bloc.info('EVENT  [${bloc.runtimeType}] $event');
-    }
+    LoggerService.bloc.info('EVENT  [${bloc.runtimeType}] $event');
   }
 
   @override
@@ -26,12 +24,12 @@ class AppBlocObserver extends BlocObserver {
   void onChange(BlocBase<dynamic> bloc, Change<dynamic> change) {
     super.onChange(bloc, change);
 
-    // Skip logging for VideoPlayerBloc position-only updates to reduce noise
-    if (bloc is VideoPlayerBloc &&
-        change.currentState is VideoPlayerState &&
-        change.nextState is VideoPlayerState) {
-      if ((change.currentState as VideoPlayerState).isPositionOnlyChange(
-        change.nextState as VideoPlayerState,
+    // Skip logging for PlayerBloc position-only updates to reduce noise
+    if (bloc is PlayerBloc &&
+        change.currentState is PlayerState &&
+        change.nextState is PlayerState) {
+      if ((change.currentState as PlayerState).isPositionOnlyChange(
+        change.nextState as PlayerState,
       )) {
         return;
       }

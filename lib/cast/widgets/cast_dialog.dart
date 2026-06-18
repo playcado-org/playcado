@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:go_router/go_router.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/video_player/bloc/video_player_bloc.dart';
+import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class CastDeviceListDialog extends StatelessWidget {
@@ -21,17 +21,16 @@ class CastDeviceListDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final castService = context.read<CastService>();
-    final playerBloc = context.read<VideoPlayerBloc>();
+    final castDeviceService = context.read<CastDeviceService>();
+    final playerBloc = context.read<PlayerBloc>();
 
     return StreamBuilder<GoogleCastSession?>(
-      stream: castService.currentSessionStream,
-      initialData: castService.currentSession,
+      stream: castDeviceService.currentSessionStream,
+      initialData: castDeviceService.currentSession,
       builder: (context, sessionSnapshot) {
         final currentSession = sessionSnapshot.data;
-        // Use a combination of session and manager state for robustness
         final isConnected =
-            castService.isConnected ||
+            castDeviceService.isConnected ||
             currentSession?.connectionState == GoogleCastConnectState.connected;
         final connectedDevice = currentSession?.device;
 
@@ -46,7 +45,7 @@ class CastDeviceListDialog extends StatelessWidget {
           content: SizedBox(
             width: double.maxFinite,
             child: StreamBuilder<List<GoogleCastDevice>>(
-              stream: castService.devicesStream,
+              stream: castDeviceService.devicesStream,
               initialData: const [],
               builder: (context, snapshot) {
                 final devices = snapshot.data ?? [];
@@ -94,20 +93,15 @@ class CastDeviceListDialog extends StatelessWidget {
                         if (onDeviceSelected != null) {
                           onDeviceSelected!(device);
                         } else {
-                          // Close dialog first
                           context.pop();
 
                           if (autoPlayItem != null) {
-                            // Trigger cast play in bloc which handles
-                            // connection wait
                             playerBloc.add(
                               PlayerCastRequested(item: autoPlayItem!),
                             );
                           }
 
-                          // Trigger connection (even if already
-                          // connecting/connected, service handles it)
-                          unawaited(castService.connect(device));
+                          unawaited(castDeviceService.connect(device));
 
                           SnackbarHelper.showInfo(
                             context,
@@ -126,7 +120,7 @@ class CastDeviceListDialog extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   context.pop();
-                  unawaited(castService.disconnect());
+                  unawaited(castDeviceService.disconnect());
                 },
                 child: Text(
                   context.l10n.stopCasting,

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
+import 'package:playcado/cast/widgets/cast_dialog.dart';
 import 'package:playcado/devtools/bloc/dev_tools_bloc.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 import 'package:playcado/widgets/snackbar_helper.dart';
@@ -18,9 +20,10 @@ class DevToolsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => DevToolsBloc(
-        preferencesService: context.read<PreferencesService>(),
-        castService: context.read<CastService>(),
+        castDeviceService: context.read<CastDeviceService>(),
+        castPlayerService: context.read<CastPlayerService>(),
         downloadsRepository: context.read<DownloadsRepository>(),
+        preferencesService: context.read<PreferencesService>(),
         secureStorage: context.read<SecureStorageService>(),
       )..add(DevToolsInitialized()),
       child: const _DevToolsView(),
