@@ -64,11 +64,6 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final MediaUrlService _urlGenerator;
   bool _wasCasting = false;
 
-  PlayerService get _service {
-    if (_activeService == null) throw StateError('No active service');
-    return _activeService!;
-  }
-
   @override
   Future<void> close() {
     unawaited(_serviceSub?.cancel());
@@ -278,7 +273,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerPauseRequested event,
     Emitter<PlayerState> emit,
   ) async {
-    await _service.pause();
+    if (_activeService == null) return;
+    await _activeService!.pause();
     emit(state.copyWith(status: PlayerStatus.paused));
   }
 
@@ -350,7 +346,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerResumeRequested event,
     Emitter<PlayerState> emit,
   ) async {
-    await _service.play();
+    if (_activeService == null) return;
+    await _activeService!.play();
     emit(state.copyWith(status: PlayerStatus.playing));
   }
 
@@ -358,18 +355,20 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerSeekRequested event,
     Emitter<PlayerState> emit,
   ) async {
-    await _service.seek(event.position);
+    if (_activeService == null) return;
+    await _activeService!.seek(event.position);
   }
 
   Future<void> _onSkipIntroRequested(
     PlayerSkipIntroRequested event,
     Emitter<PlayerState> emit,
   ) async {
+    if (_activeService == null) return;
     final item = state.mediaItem;
     final introEndTicks = item?.introEndTicks;
     if (item != null && introEndTicks != null) {
       final endDuration = Duration(microseconds: introEndTicks ~/ 10);
-      await _service.seek(endDuration);
+      await _activeService!.seek(endDuration);
       emit(state.copyWith(showSkipIntro: false));
     }
   }
