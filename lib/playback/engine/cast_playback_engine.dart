@@ -6,6 +6,10 @@ import 'package:playcado/playback/engine/playback_engine.dart';
 import 'package:playcado/playback/models/playable_media.dart';
 import 'package:playcado/services/logger_service.dart';
 
+/// Plays media on a remote Google Cast device.
+///
+/// Delegates playback control to [GoogleCastRemoteMediaClient] and
+/// mirrors the Cast device's media status into [PlaybackEngineState] updates.
 class CastPlaybackEngine implements PlaybackEngine {
   CastPlaybackEngine();
 
@@ -20,6 +24,8 @@ class CastPlaybackEngine implements PlaybackEngine {
   StreamSubscription<GoggleCastMediaStatus?>? _mediaStatusSub;
 
   bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
+
+  /// Whether a Cast session is currently connected.
   bool get isConnected =>
       _sessionManager.connectionState == GoogleCastConnectState.connected;
 
@@ -140,6 +146,7 @@ class CastPlaybackEngine implements PlaybackEngine {
     await _stateController.close();
   }
 
+  /// Merges new values into [_currentState] and emits on [_stateController].
   void _updateState({
     Duration? position,
     Duration? duration,
