@@ -7,6 +7,17 @@ abstract class PlayerEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class PlayerCastRequested extends PlayerEvent {
+  const PlayerCastRequested({required this.item});
+
+  final MediaItem item;
+
+  @override
+  List<Object?> get props => [item];
+}
+
+class PlayerPauseRequested extends PlayerEvent {}
+
 class PlayerPlayRequested extends PlayerEvent {
   const PlayerPlayRequested({required this.item, this.localPath});
 
@@ -16,10 +27,6 @@ class PlayerPlayRequested extends PlayerEvent {
   @override
   List<Object?> get props => [item, localPath];
 }
-
-class PlayerStopRequested extends PlayerEvent {}
-
-class PlayerPauseRequested extends PlayerEvent {}
 
 class PlayerResumeRequested extends PlayerEvent {}
 
@@ -32,20 +39,11 @@ class PlayerSeekRequested extends PlayerEvent {
   List<Object?> get props => [position];
 }
 
-class PlayerTogglePlayPauseRequested extends PlayerEvent {}
-
-class PlayerCastRequested extends PlayerEvent {
-  const PlayerCastRequested({required this.item});
-
-  final MediaItem item;
-
-  @override
-  List<Object?> get props => [item];
-}
-
 class PlayerSkipIntroRequested extends PlayerEvent {}
 
-enum TrackType { audio, subtitle }
+class PlayerStopRequested extends PlayerEvent {}
+
+class PlayerTogglePlayPauseRequested extends PlayerEvent {}
 
 class PlayerTrackSelected extends PlayerEvent {
   const PlayerTrackSelected({required this.type, required this.index});
@@ -56,3 +54,13 @@ class PlayerTrackSelected extends PlayerEvent {
   @override
   List<Object?> get props => [type, index];
 }
+
+class ServiceStateUpdated extends PlayerEvent {
+  const ServiceStateUpdated(this.serviceState);
+  final PlayerServiceState serviceState;
+
+  @override
+  List<Object?> get props => [serviceState];
+}
+
+enum TrackType { audio, subtitle }

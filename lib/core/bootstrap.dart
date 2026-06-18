@@ -11,8 +11,8 @@ import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
-import 'package:playcado/player/services/local_playback_service.dart';
-import 'package:playcado/player/services/cast_playback_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
@@ -33,8 +33,8 @@ class BootstrapConfig {
     required this.searchRepository,
     required this.mediaUrlService,
     required this.castDeviceManager,
-    required this.localPlayerEngine,
-    required this.castPlayerEngine,
+    required this.localPlayerService,
+    required this.castPlayerService,
     required this.preferencesService,
     required this.secureStorageService,
     required this.isFirstRun,
@@ -49,8 +49,8 @@ class BootstrapConfig {
   final SearchRepository searchRepository;
   final MediaUrlService mediaUrlService;
   final CastDeviceManager castDeviceManager;
-  final LocalPlaybackService localPlayerEngine;
-  final CastPlaybackService castPlayerEngine;
+  final LocalPlayerService localPlayerService;
+  final CastPlayerService castPlayerService;
   final PreferencesService preferencesService;
   final SecureStorageService secureStorageService;
   final bool isFirstRun;
@@ -128,8 +128,8 @@ Future<BootstrapConfig> _initializeServices() async {
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
   final castDeviceManager = CastDeviceManager();
-  final localPlayerEngine = LocalPlaybackService();
-  final castPlayerEngine = CastPlaybackService();
+  final localPlayerService = LocalPlayerService();
+  final castPlayerService = CastPlayerService();
   final preferencesService = PreferencesService();
 
   // Initialize Cast service early
@@ -154,8 +154,8 @@ Future<BootstrapConfig> _initializeServices() async {
     searchRepository: searchRepository,
     mediaUrlService: mediaUrlService,
     castDeviceManager: castDeviceManager,
-    localPlayerEngine: localPlayerEngine,
-    castPlayerEngine: castPlayerEngine,
+    localPlayerService: localPlayerService,
+    castPlayerService: castPlayerService,
     preferencesService: preferencesService,
     secureStorageService: secureStorage,
     isFirstRun: isFirstRun,

@@ -15,8 +15,8 @@ import 'package:playcado/media/data/demo_remote_data_source.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/onboarding/bloc/onboarding_cubit.dart';
-import 'package:playcado/player/services/cast_playback_service.dart';
-import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/player/repositories/player_tracker.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
 import 'package:playcado/services/media_url/demo_url_service.dart';
@@ -44,11 +44,11 @@ class App extends StatelessWidget {
         RepositoryProvider<CastDeviceManager>.value(
           value: config.castDeviceManager,
         ),
-        RepositoryProvider<LocalPlaybackService>.value(
-          value: config.localPlayerEngine,
+        RepositoryProvider<LocalPlayerService>.value(
+          value: config.localPlayerService,
         ),
-        RepositoryProvider<CastPlaybackService>.value(
-          value: config.castPlayerEngine,
+        RepositoryProvider<CastPlayerService>.value(
+          value: config.castPlayerService,
         ),
         RepositoryProvider<SecureStorageService>.value(
           value: config.secureStorageService,
@@ -125,8 +125,8 @@ class App extends StatelessWidget {
                   ),
                   BlocProvider(
                     create: (context) => PlayerBloc(
-                      localEngine: context.read<LocalPlaybackService>(),
-                      castEngine: context.read<CastPlaybackService>(),
+                      localService: context.read<LocalPlayerService>(),
+                      castService: context.read<CastPlayerService>(),
                       castDeviceManager: context.read<CastDeviceManager>(),
                       playerTracker: context.read<PlayerTracker>(),
                       urlGenerator: context.read<MediaUrlService>(),

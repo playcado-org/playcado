@@ -2,40 +2,31 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
-import 'package:playcado/player/services/playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
+import 'package:playcado/player/services/player_service.dart';
 import 'package:playcado/services/logger_service.dart';
 
-class CastPlaybackService implements PlaybackService {
-  CastPlaybackService();
+class CastPlayerService implements PlayerService {
+  CastPlayerService();
 
+  PlayerServiceState _currentState = const PlayerServiceState();
+  StreamSubscription<GoggleCastMediaStatus?>? _mediaStatusSub;
   final GoogleCastRemoteMediaClientPlatformInterface _remoteMediaClient =
       GoogleCastRemoteMediaClient.instance;
   final GoogleCastSessionManagerPlatformInterface _sessionManager =
       GoogleCastSessionManager.instance;
-
-  final StreamController<PlaybackServiceState> _stateController =
-      StreamController<PlaybackServiceState>.broadcast();
-  PlaybackServiceState _currentState = const PlaybackServiceState();
-  StreamSubscription<GoggleCastMediaStatus?>? _mediaStatusSub;
-
-  bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
-
-  bool get isConnected =>
-      _sessionManager.connectionState == GoogleCastConnectState.connected;
+  final StreamController<PlayerServiceState> _stateController =
+      StreamController<PlayerServiceState>.broadcast();
 
   @override
-  Stream<PlaybackServiceState> get stateStream => _stateController.stream;
-
-  @override
-  PlaybackServiceState get currentState => _currentState;
-
-  @override
-  Object? get nativeViewAttachment => null;
+  Future<void> dispose() async {
+    await _mediaStatusSub?.cancel();
+    await _stateController.close();
+  }
 
   @override
   Future<void> load(PlayableMedia media) async {
-    LoggerService.player.info('CastPlayerEngine loading: ${media.title}');
+    LoggerService.player.info('CastPlayerService loading: ${media.title}');
     _updateState(isBuffering: true);
 
     _mediaStatusSub?.cancel();
@@ -91,17 +82,6 @@ class CastPlaybackService implements PlaybackService {
   }
 
   @override
-  Future<void> play() async {
-    if (!_isSupportedPlatform) return;
-    _updateState(isPlaying: true);
-    try {
-      await _remoteMediaClient.play();
-    } on Exception catch (e, stack) {
-      LoggerService.player.warning('Failed to play cast', e, stack);
-    }
-  }
-
-  @override
   Future<void> pause() async {
     if (!_isSupportedPlatform) return;
     _updateState(isPlaying: false);
@@ -113,13 +93,13 @@ class CastPlaybackService implements PlaybackService {
   }
 
   @override
-  Future<void> stop() async {
+  Future<void> play() async {
     if (!_isSupportedPlatform) return;
-    _updateState(isPlaying: false);
+    _updateState(isPlaying: true);
     try {
-      await _remoteMediaClient.stop();
+      await _remoteMediaClient.play();
     } on Exception catch (e, stack) {
-      LoggerService.player.warning('Failed to stop cast', e, stack);
+      LoggerService.player.warning('Failed to play cast', e, stack);
     }
   }
 
@@ -136,25 +116,44 @@ class CastPlaybackService implements PlaybackService {
   }
 
   @override
-  Future<void> dispose() async {
-    await _mediaStatusSub?.cancel();
-    await _stateController.close();
+  Future<void> stop() async {
+    if (!_isSupportedPlatform) return;
+    _updateState(isPlaying: false);
+    try {
+      await _remoteMediaClient.stop();
+    } on Exception catch (e, stack) {
+      LoggerService.player.warning('Failed to stop cast', e, stack);
+    }
   }
 
   void _updateState({
-    Duration? position,
     Duration? duration,
-    bool? isPlaying,
     bool? isBuffering,
     bool? isCompleted,
+    bool? isPlaying,
+    Duration? position,
   }) {
     _currentState = _currentState.copyWith(
-      position: position,
       duration: duration,
-      isPlaying: isPlaying,
       isBuffering: isBuffering,
       isCompleted: isCompleted,
+      isPlaying: isPlaying,
+      position: position,
     );
     _stateController.add(_currentState);
   }
+
+  @override
+  PlayerServiceState get currentState => _currentState;
+
+  @override
+  Object? get nativeViewAttachment => null;
+
+  @override
+  Stream<PlayerServiceState> get stateStream => _stateController.stream;
+
+  bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
+
+  bool get isConnected =>
+      _sessionManager.connectionState == GoogleCastConnectState.connected;
 }

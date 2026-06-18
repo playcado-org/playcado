@@ -3,63 +3,63 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:playcado/player/models/playable_media.dart';
 
-class PlaybackServiceState extends Equatable {
-  const PlaybackServiceState({
-    this.position = Duration.zero,
+class PlayerServiceState extends Equatable {
+  const PlayerServiceState({
     this.duration = Duration.zero,
-    this.isPlaying = false,
     this.isBuffering = false,
     this.isCompleted = false,
+    this.isPlaying = false,
+    this.position = Duration.zero,
   });
 
-  final Duration position;
   final Duration duration;
-  final bool isPlaying;
   final bool isBuffering;
   final bool isCompleted;
+  final bool isPlaying;
+  final Duration position;
 
-  PlaybackServiceState copyWith({
-    Duration? position,
+  PlayerServiceState copyWith({
     Duration? duration,
-    bool? isPlaying,
     bool? isBuffering,
     bool? isCompleted,
+    bool? isPlaying,
+    Duration? position,
   }) {
-    return PlaybackServiceState(
-      position: position ?? this.position,
+    return PlayerServiceState(
       duration: duration ?? this.duration,
-      isPlaying: isPlaying ?? this.isPlaying,
       isBuffering: isBuffering ?? this.isBuffering,
       isCompleted: isCompleted ?? this.isCompleted,
+      isPlaying: isPlaying ?? this.isPlaying,
+      position: position ?? this.position,
     );
   }
 
   @override
   List<Object?> get props => [
-    position,
     duration,
-    isPlaying,
     isBuffering,
     isCompleted,
+    isPlaying,
+    position,
   ];
 }
 
-abstract class PlaybackService {
-  Stream<PlaybackServiceState> get stateStream;
-
-  PlaybackServiceState get currentState;
+abstract class PlayerService {
+  Future<void> dispose();
 
   Future<void> load(PlayableMedia media);
 
-  Future<void> play();
-
   Future<void> pause();
 
-  Future<void> stop();
+  Future<void> play();
 
   Future<void> seek(Duration position);
 
-  Future<void> dispose();
+  Future<void> stop();
+
+  PlayerServiceState get currentState;
 
   Object? get nativeViewAttachment;
+
+  Stream<PlayerServiceState> get stateStream;
 }
