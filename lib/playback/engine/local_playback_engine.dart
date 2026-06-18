@@ -9,6 +9,11 @@ import 'package:playcado/playback/models/track_info.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+/// Plays media on the local device using [media_kit]'s [Player].
+///
+/// Manages audio session, wake lock, and audio/subtitle track selection.
+/// Shares a single [Player] instance for the app's lifetime to avoid
+/// native resource churn.
 class LocalPlaybackEngine implements PlaybackEngine {
   LocalPlaybackEngine() {
     _init();
@@ -34,6 +39,7 @@ class LocalPlaybackEngine implements PlaybackEngine {
   @override
   Object? get nativeViewAttachment => _controller;
 
+  /// Available audio tracks for the current media.
   List<TrackInfo> get audioTracks {
     final tracks = _player.state.tracks.audio;
     return List.generate(
@@ -47,6 +53,7 @@ class LocalPlaybackEngine implements PlaybackEngine {
     );
   }
 
+  /// Available subtitle tracks for the current media.
   List<TrackInfo> get subtitleTracks {
     final tracks = _player.state.tracks.subtitle;
     return List.generate(
@@ -60,18 +67,21 @@ class LocalPlaybackEngine implements PlaybackEngine {
     );
   }
 
+  /// Index of the currently selected audio track.
   int get currentAudioTrackIndex {
     final current = _player.state.track.audio;
     final tracks = _player.state.tracks.audio;
     return tracks.indexOf(current);
   }
 
+  /// Index of the currently selected subtitle track.
   int get currentSubtitleTrackIndex {
     final current = _player.state.track.subtitle;
     final tracks = _player.state.tracks.subtitle;
     return tracks.indexOf(current);
   }
 
+  /// Sets the active audio track by [index] into [audioTracks].
   Future<void> setAudioTrack(int index) async {
     final tracks = _player.state.tracks.audio;
     if (index >= 0 && index < tracks.length) {
@@ -79,6 +89,7 @@ class LocalPlaybackEngine implements PlaybackEngine {
     }
   }
 
+  /// Sets the active subtitle track by [index] into [subtitleTracks].
   Future<void> setSubtitleTrack(int index) async {
     final tracks = _player.state.tracks.subtitle;
     if (index >= 0 && index < tracks.length) {
@@ -86,6 +97,8 @@ class LocalPlaybackEngine implements PlaybackEngine {
     }
   }
 
+  /// Creates the [Player] and [VideoController], configures audio session,
+  /// and wires up state streams.
   void _init() {
     _player = Player();
     _controller = VideoController(
@@ -98,6 +111,7 @@ class LocalPlaybackEngine implements PlaybackEngine {
     _setupStreams();
   }
 
+  /// Configures the audio session for movie playback with media usage.
   Future<void> _initAudioSession() async {
     final session = await AudioSession.instance;
     await session.configure(
@@ -116,6 +130,7 @@ class LocalPlaybackEngine implements PlaybackEngine {
     );
   }
 
+  /// Subscribes to the native Player streams and forwards updates to state.
   void _setupStreams() {
     _positionSub = _player.stream.position.listen((position) {
       _updateState(position: position);
@@ -134,6 +149,7 @@ class LocalPlaybackEngine implements PlaybackEngine {
     });
   }
 
+  /// Merges new values into [_currentState] and emits on [_stateController].
   void _updateState({
     Duration? position,
     Duration? duration,
