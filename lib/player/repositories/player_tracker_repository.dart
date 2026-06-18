@@ -2,21 +2,21 @@ import 'package:jellyfin_dart/jellyfin_dart.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/services/logger_service.dart';
 
-class PlayerTracker {
-  PlayerTracker({required MediaRemoteDataSource dataSource})
+class PlayerTrackerRepository {
+  PlayerTrackerRepository({required MediaRemoteDataSource dataSource})
     : _dataSource = dataSource;
 
   final MediaRemoteDataSource _dataSource;
 
   Future<void> reportPlaybackStart(String itemId) async {
     try {
-      LoggerService.playbackTracker.fine('Reporting playback START: $itemId');
+      LoggerService.playerTracker.fine('Reporting playback START: $itemId');
       await _dataSource.reportPlaybackStart(
         itemId: itemId,
         playMethod: PlayMethod.directPlay,
       );
     } on Exception catch (e) {
-      LoggerService.playbackTracker.warning('Failed to report playback start', e);
+      LoggerService.playerTracker.warning('Failed to report playback start', e);
     }
   }
 
@@ -26,14 +26,14 @@ class PlayerTracker {
     bool isPaused = false,
   }) async {
     try {
-      LoggerService.playbackTracker.finest('Reporting progress: $itemId @ $positionTicks');
+      LoggerService.playerTracker.finest('Reporting progress: $itemId @ $positionTicks');
       await _dataSource.reportPlaybackProgress(
         itemId: itemId,
         positionTicks: positionTicks,
         isPaused: isPaused,
       );
     } on Exception catch (e) {
-      LoggerService.playbackTracker.finer('Failed to report playback progress', e);
+      LoggerService.playerTracker.finer('Failed to report playback progress', e);
     }
   }
 
@@ -42,13 +42,13 @@ class PlayerTracker {
     required int positionTicks,
   }) async {
     try {
-      LoggerService.playbackTracker.fine('Reporting playback STOPPED: $itemId');
+      LoggerService.playerTracker.fine('Reporting playback STOPPED: $itemId');
       await _dataSource.reportPlaybackStopped(
         itemId: itemId,
         positionTicks: positionTicks,
       );
     } on Exception catch (e) {
-      LoggerService.playbackTracker.warning('Failed to report playback stop', e);
+      LoggerService.playerTracker.warning('Failed to report playback stop', e);
     }
   }
 
@@ -66,7 +66,7 @@ class PlayerTracker {
         await _dataSource.markUnplayedItem(userId: userId, itemId: itemId);
       }
     } on Exception catch (e) {
-      LoggerService.playbackTracker.warning('Failed to toggle played status', e);
+      LoggerService.playerTracker.warning('Failed to toggle played status', e);
     }
   }
 }

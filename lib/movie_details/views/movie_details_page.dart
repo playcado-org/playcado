@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/movie_details/bloc/movie_details_bloc.dart';
 import 'package:playcado/movie_details/widgets/movie_action_row.dart';
@@ -51,7 +51,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     _scrollController = ScrollController();
     _detailsBloc = MovieDetailsBloc(
       libraryRepository: context.read<LibraryRepository>(),
-      playbackTracker: context.read<PlayerTracker>(),
+      playbackTracker: context.read<PlayerTrackerRepository>(),
     )..add(FetchMovieDetails(widget.item.id));
   }
 

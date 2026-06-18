@@ -8,7 +8,7 @@ import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/models/playable_media.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/player/services/player_service.dart';
@@ -26,7 +26,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     required MediaRemoteDataSource dataSource,
     required JellyfinClientService jellyfinClientService,
     required LocalPlayerService localService,
-    required PlayerTracker playerTracker,
+    required PlayerTrackerRepository playerTracker,
     required MediaUrlService urlGenerator,
   }) : _castDeviceService = castDeviceService,
        _castPlayerService = castPlayerService,
@@ -59,7 +59,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final JellyfinClientService _jellyfinClientService;
   DateTime _lastProgressReport = DateTime.now();
   final LocalPlayerService _localService;
-  final PlayerTracker _playerTracker;
+  final PlayerTrackerRepository _playerTracker;
   StreamSubscription<PlayerServiceState>? _serviceSub;
   final MediaUrlService _urlGenerator;
   bool _wasCasting = false;

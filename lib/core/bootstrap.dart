@@ -11,7 +11,7 @@ import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
@@ -52,7 +52,7 @@ class BootstrapConfig {
   final LibraryRepository libraryRepository;
   final LocalPlayerService localPlayerService;
   final MediaUrlService mediaUrlService;
-  final PlayerTracker playerTracker;
+  final PlayerTrackerRepository playerTracker;
   final PreferencesService preferencesService;
   final SearchRepository searchRepository;
   final SecureStorageService secureStorageService;
@@ -124,7 +124,7 @@ Future<BootstrapConfig> _initializeServices() async {
   final mediaUrlService = JellyfinUrlService(jellyfinClientService);
 
   final libraryRepository = LibraryRepository(dataSource: remoteDataSource);
-  final playerTracker = PlayerTracker(dataSource: remoteDataSource);
+  final playerTracker = PlayerTrackerRepository(dataSource: remoteDataSource);
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
   final castDeviceService = CastDeviceService();

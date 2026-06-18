@@ -16,7 +16,7 @@ import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/onboarding/bloc/onboarding_cubit.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
@@ -99,9 +99,9 @@ class App extends StatelessWidget {
                   create: (context) =>
                       LibraryRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<PlayerTracker>(
+                RepositoryProvider<PlayerTrackerRepository>(
                   create: (context) =>
-                      PlayerTracker(dataSource: remoteDataSource),
+                      PlayerTrackerRepository(dataSource: remoteDataSource),
                 ),
                 RepositoryProvider<SearchRepository>(
                   create: (context) =>
@@ -128,7 +128,7 @@ class App extends StatelessWidget {
                       localService: context.read<LocalPlayerService>(),
                       castPlayerService: context.read<CastPlayerService>(),
                       castDeviceService: context.read<CastDeviceService>(),
-                      playerTracker: context.read<PlayerTracker>(),
+                      playerTracker: context.read<PlayerTrackerRepository>(),
                       urlGenerator: context.read<MediaUrlService>(),
                       dataSource: remoteDataSource,
                       jellyfinClientService: config.jellyfinClientService,
