@@ -4,11 +4,11 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:jellyfin_dart/jellyfin_dart.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/models/playable_media.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/player/services/player_service.dart';
@@ -21,15 +21,15 @@ part 'player_state.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   PlayerBloc({
-    required CastDeviceManager castDeviceManager,
-    required CastPlayerService castService,
+    required CastDeviceService castDeviceService,
+    required CastPlayerService castPlayerService,
     required MediaRemoteDataSource dataSource,
     required JellyfinClientService jellyfinClientService,
     required LocalPlayerService localService,
-    required PlayerTracker playerTracker,
+    required PlayerTrackerRepository playerTracker,
     required MediaUrlService urlGenerator,
-  }) : _castDeviceManager = castDeviceManager,
-       _castService = castService,
+  }) : _castDeviceService = castDeviceService,
+       _castPlayerService = castPlayerService,
        _dataSource = dataSource,
        _jellyfinClientService = jellyfinClientService,
        _localService = localService,
@@ -51,15 +51,15 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   PlayerService? _activeService;
-  final CastDeviceManager _castDeviceManager;
-  final CastPlayerService _castService;
+  final CastDeviceService _castDeviceService;
+  final CastPlayerService _castPlayerService;
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
   final MediaRemoteDataSource _dataSource;
   bool _isLocalMedia = false;
   final JellyfinClientService _jellyfinClientService;
   DateTime _lastProgressReport = DateTime.now();
   final LocalPlayerService _localService;
-  final PlayerTracker _playerTracker;
+  final PlayerTrackerRepository _playerTracker;
   StreamSubscription<PlayerServiceState>? _serviceSub;
   final MediaUrlService _urlGenerator;
   bool _wasCasting = false;
@@ -181,8 +181,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   void _initCastListeners() {
-    _castSessionSub = _castDeviceManager.currentSessionStream.listen((_) {
-      final connected = _castDeviceManager.isConnected;
+    _castSessionSub = _castDeviceService.currentSessionStream.listen((_) {
+      final connected = _castDeviceService.isConnected;
       if (!connected && _wasCasting) {
         add(PlayerStopRequested());
       }
@@ -211,8 +211,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     _isLocalMedia = false;
 
     try {
-      if (!_castDeviceManager.isConnected) {
-        final connected = await _castDeviceManager.waitUntilConnected();
+      if (!_castDeviceService.isConnected) {
+        final connected = await _castDeviceService.waitUntilConnected();
         if (!connected) {
           emit(state.copyWith(status: PlayerStatus.error));
           return;
@@ -223,9 +223,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         event.item,
         forCast: true,
       );
-      _activeService = _castService;
-      _subscribeToService(_castService);
-      await _castService.load(playableMedia);
+      _activeService = _castPlayerService;
+      _subscribeToService(_castPlayerService);
+      await _castPlayerService.load(playableMedia);
     } on Exception catch (e) {
       LoggerService.player.severe('Failed to cast media', e);
       emit(state.copyWith(status: PlayerStatus.error));
@@ -285,7 +285,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) async {
     LoggerService.player.info('Play requested for ${event.item.name}');
 
-    final useCast = _castDeviceManager.isConnected;
+    final useCast = _castDeviceService.isConnected;
 
     if (useCast) {
       emit(
@@ -303,9 +303,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           event.item,
           forCast: true,
         );
-        _activeService = _castService;
-        _subscribeToService(_castService);
-        await _castService.load(playableMedia);
+        _activeService = _castPlayerService;
+        _subscribeToService(_castPlayerService);
+        await _castPlayerService.load(playableMedia);
       } on Exception catch (e) {
         LoggerService.player.severe('Failed to start cast playback', e);
         emit(state.copyWith(status: PlayerStatus.error));

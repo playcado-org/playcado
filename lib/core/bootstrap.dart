@@ -6,12 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:playcado/app/view/app.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
@@ -27,7 +27,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 class BootstrapConfig {
   const BootstrapConfig({
     required this.authRepository,
-    required this.castDeviceManager,
+    required this.castDeviceService,
     required this.castPlayerService,
     this.initialThemeColor,
     this.initialUser,
@@ -43,7 +43,7 @@ class BootstrapConfig {
   });
 
   final AuthRepository authRepository;
-  final CastDeviceManager castDeviceManager;
+  final CastDeviceService castDeviceService;
   final CastPlayerService castPlayerService;
   final Color? initialThemeColor;
   final User? initialUser;
@@ -52,7 +52,7 @@ class BootstrapConfig {
   final LibraryRepository libraryRepository;
   final LocalPlayerService localPlayerService;
   final MediaUrlService mediaUrlService;
-  final PlayerTracker playerTracker;
+  final PlayerTrackerRepository playerTracker;
   final PreferencesService preferencesService;
   final SearchRepository searchRepository;
   final SecureStorageService secureStorageService;
@@ -124,16 +124,16 @@ Future<BootstrapConfig> _initializeServices() async {
   final mediaUrlService = JellyfinUrlService(jellyfinClientService);
 
   final libraryRepository = LibraryRepository(dataSource: remoteDataSource);
-  final playerTracker = PlayerTracker(dataSource: remoteDataSource);
+  final playerTracker = PlayerTrackerRepository(dataSource: remoteDataSource);
   final searchRepository = SearchRepository(dataSource: remoteDataSource);
 
-  final castDeviceManager = CastDeviceManager();
+  final castDeviceService = CastDeviceService();
   final localPlayerService = LocalPlayerService();
   final castPlayerService = CastPlayerService();
   final preferencesService = PreferencesService();
 
   // Initialize Cast service early
-  await castDeviceManager.initialize();
+  await castDeviceService.initialize();
 
   // Load app preferences
   final isFirstRun = await preferencesService.isFirstRun();
@@ -148,7 +148,7 @@ Future<BootstrapConfig> _initializeServices() async {
 
   return BootstrapConfig(
     authRepository: authRepository,
-    castDeviceManager: castDeviceManager,
+    castDeviceService: castDeviceService,
     castPlayerService: castPlayerService,
     initialThemeColor: savedThemeColor,
     initialUser: initialUser,

@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast_device_manager.dart';
+import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
@@ -16,7 +16,7 @@ import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/onboarding/bloc/onboarding_cubit.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/repositories/player_tracker_repository.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
@@ -41,8 +41,8 @@ class App extends StatelessWidget {
           value: config.preferencesService,
         ),
         RepositoryProvider<AuthRepository>.value(value: config.authRepository),
-        RepositoryProvider<CastDeviceManager>.value(
-          value: config.castDeviceManager,
+        RepositoryProvider<CastDeviceService>.value(
+          value: config.castDeviceService,
         ),
         RepositoryProvider<LocalPlayerService>.value(
           value: config.localPlayerService,
@@ -99,9 +99,9 @@ class App extends StatelessWidget {
                   create: (context) =>
                       LibraryRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<PlayerTracker>(
+                RepositoryProvider<PlayerTrackerRepository>(
                   create: (context) =>
-                      PlayerTracker(dataSource: remoteDataSource),
+                      PlayerTrackerRepository(dataSource: remoteDataSource),
                 ),
                 RepositoryProvider<SearchRepository>(
                   create: (context) =>
@@ -126,9 +126,9 @@ class App extends StatelessWidget {
                   BlocProvider(
                     create: (context) => PlayerBloc(
                       localService: context.read<LocalPlayerService>(),
-                      castService: context.read<CastPlayerService>(),
-                      castDeviceManager: context.read<CastDeviceManager>(),
-                      playerTracker: context.read<PlayerTracker>(),
+                      castPlayerService: context.read<CastPlayerService>(),
+                      castDeviceService: context.read<CastDeviceService>(),
+                      playerTracker: context.read<PlayerTrackerRepository>(),
                       urlGenerator: context.read<MediaUrlService>(),
                       dataSource: remoteDataSource,
                       jellyfinClientService: config.jellyfinClientService,
