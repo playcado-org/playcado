@@ -2,6 +2,21 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.0.2] - 2026-06-18
+
+### Fixed
+- Action button labels no longer clipped to a single line
+
+## [1.0.1] - 2026-06-16
+
+### Added
+- Parallelized home content fetches so one slow section doesn't block others
+
+### Fixed
+- Prevent media_kit crash on hot-restart
+- RangeError in Continue Watching carousel on refresh
+- Update dependencies and pin Flutter SDK to 3.44.2
+
 ## [1.0.0+15] - 2026-06-11
 
 ### Added
