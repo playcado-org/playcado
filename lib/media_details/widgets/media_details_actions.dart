@@ -189,7 +189,7 @@ class _ActionButton extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: iconColor ?? theme.colorScheme.onSurfaceVariant,
