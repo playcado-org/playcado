@@ -10,7 +10,7 @@ class PlayerState extends Equatable {
     this.isLocalMedia = false,
     this.localPath,
     this.mediaItem,
-    this.nativeViewAttachment,
+    this.playerView,
     this.position = Duration.zero,
     this.showSkipIntro = false,
     this.status = PlayerStatus.initial,
@@ -22,7 +22,7 @@ class PlayerState extends Equatable {
   final bool isLocalMedia;
   final String? localPath;
   final MediaItem? mediaItem;
-  final Object? nativeViewAttachment;
+  final PlayerView? playerView;
   final Duration position;
   final bool showSkipIntro;
   final PlayerStatus status;
@@ -40,7 +40,7 @@ class PlayerState extends Equatable {
     isLocalMedia,
     localPath,
     mediaItem,
-    nativeViewAttachment,
+    playerView,
     position,
     showSkipIntro,
     status,
@@ -68,7 +68,7 @@ class PlayerState extends Equatable {
     bool? isLocalMedia,
     String? localPath,
     MediaItem? mediaItem,
-    Object? nativeViewAttachment,
+    PlayerView? playerView,
     Duration? position,
     bool? showSkipIntro,
     PlayerStatus? status,
@@ -80,8 +80,7 @@ class PlayerState extends Equatable {
       isLocalMedia: isLocalMedia ?? this.isLocalMedia,
       localPath: localPath ?? this.localPath,
       mediaItem: mediaItem ?? this.mediaItem,
-      nativeViewAttachment:
-          nativeViewAttachment ?? this.nativeViewAttachment,
+      playerView: playerView ?? this.playerView,
       position: position ?? this.position,
       showSkipIntro: showSkipIntro ?? this.showSkipIntro,
       status: status ?? this.status,
@@ -97,7 +96,7 @@ class PlayerState extends Equatable {
         showSkipIntro == other.showSkipIntro &&
         duration == other.duration &&
         isBuffering == other.isBuffering &&
-        nativeViewAttachment == other.nativeViewAttachment &&
+        playerView == other.playerView &&
         position != other.position;
   }
 }

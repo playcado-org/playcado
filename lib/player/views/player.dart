@@ -7,6 +7,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/player/services/player_service.dart';
 import 'package:playcado/player/widgets/video_controls_overlay.dart';
 
 class Player extends StatefulWidget {
@@ -40,7 +41,7 @@ class _PlayerState extends State<Player> {
     return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
         final title = state.mediaItem?.name ?? widget.item.name;
-        final attachment = state.nativeViewAttachment;
+        final playerView = state.playerView;
 
         return ColoredBox(
           color: Colors.black,
@@ -50,12 +51,14 @@ class _PlayerState extends State<Player> {
               Center(
                 child: Hero(
                   tag: 'video_player_${widget.item.id}',
-                  child: attachment is VideoController
-                      ? Video(
-                          controller: attachment,
-                          controls: NoVideoControls as VideoControlsBuilder?,
-                        )
-                      : const SizedBox.shrink(),
+                  child: switch (playerView) {
+                    LocalPlayerView(:final controller) => Video(
+                      controller: controller as VideoController,
+                      controls: NoVideoControls as VideoControlsBuilder?,
+                    ),
+                    CastPlayerView() => const SizedBox.shrink(),
+                    null => const SizedBox.shrink(),
+                  },
                 ),
               ),
               VideoControlsOverlay(

@@ -22,7 +22,7 @@ class CastPlayerService implements PlayerService {
   PlayerServiceState get currentState => _currentState;
 
   @override
-  Object? get nativeViewAttachment => null;
+  PlayerView? get playerView => const CastPlayerView();
 
   @override
   Stream<PlayerServiceState> get stateStream => _stateController.stream;

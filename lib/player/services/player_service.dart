@@ -3,6 +3,26 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:playcado/player/models/playable_media.dart';
 
+abstract class PlayerService {
+  PlayerServiceState get currentState;
+
+  PlayerView? get playerView;
+
+  Stream<PlayerServiceState> get stateStream;
+
+  Future<void> dispose();
+
+  Future<void> load(PlayableMedia media);
+
+  Future<void> pause();
+
+  Future<void> play();
+
+  Future<void> seek(Duration position);
+
+  Future<void> stop();
+}
+
 class PlayerServiceState extends Equatable {
   const PlayerServiceState({
     this.duration = Duration.zero,
@@ -44,22 +64,16 @@ class PlayerServiceState extends Equatable {
   ];
 }
 
-abstract class PlayerService {
-  PlayerServiceState get currentState;
+sealed class PlayerView {
+  const PlayerView();
+}
 
-  Object? get nativeViewAttachment;
+class LocalPlayerView extends PlayerView {
+  const LocalPlayerView(this.controller);
 
-  Stream<PlayerServiceState> get stateStream;
+  final Object controller; // VideoController
+}
 
-  Future<void> dispose();
-
-  Future<void> load(PlayableMedia media);
-
-  Future<void> pause();
-
-  Future<void> play();
-
-  Future<void> seek(Duration position);
-
-  Future<void> stop();
+class CastPlayerView extends PlayerView {
+  const CastPlayerView();
 }
