@@ -8,10 +8,11 @@ import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/formatters.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/downloads/models/download_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
+import 'package:playcado/downloads/views/offline_media_detail_page.dart';
 
 class DownloadsScreen extends StatelessWidget {
   const DownloadsScreen({super.key});
@@ -28,12 +29,12 @@ class DownloadsScreen extends StatelessWidget {
           title: Text(context.l10n.offlineDownloads),
           centerTitle: false,
         ),
-        body: const _CompletedDownloadsList(isOfflineMode: true),
+        body: const _OfflineBody(),
       );
     }
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: IconTitle(title: context.l10n.downloads),
@@ -45,15 +46,17 @@ class DownloadsScreen extends StatelessWidget {
               top: Radius.circular(12),
             ),
             tabs: [
-              Tab(text: context.l10n.active),
-              Tab(text: context.l10n.completed),
+              Tab(text: context.l10n.manager),
+              Tab(text: context.l10n.movies),
+              Tab(text: context.l10n.tvShows),
             ],
           ),
         ),
         body: const TabBarView(
           children: [
-            _ActiveDownloadsList(),
-            _CompletedDownloadsList(isOfflineMode: false),
+            _ManagerTab(),
+            _DownloadsGrid(filterType: MediaItemType.movie),
+            _DownloadedTvList(),
           ],
         ),
       ),
@@ -61,19 +64,27 @@ class DownloadsScreen extends StatelessWidget {
   }
 }
 
-class _ActiveDownloadsList extends StatelessWidget {
-  const _ActiveDownloadsList();
+class _ManagerTab extends StatelessWidget {
+  const _ManagerTab();
 
   @override
   Widget build(BuildContext context) {
-    final items = context.select<DownloadsBloc, List<DownloadItem>>(
+    final active = context.select<DownloadsBloc, List<DownloadItem>>(
       (b) => b.state.activeDownloads,
     );
-    if (items.isEmpty) {
+    final completed = context.select<DownloadsBloc, List<DownloadItem>>(
+      (b) => b.state.completedDownloads,
+    );
+
+    final hasActive = active.isNotEmpty;
+    final hasCompleted = completed.isNotEmpty;
+
+    if (!hasActive && !hasCompleted) {
       return _EmptyState(
-        icon: PlaycadoIcons.check,
-        message: context.l10n.noActiveDownloads,
-        subMessage: context.l10n.moviesAndEpisodesYouDownloadWillAppearHere,
+        icon: PlaycadoIcons.download,
+        message: context.l10n.noDownloadsYet,
+        subMessage: context.l10n.downloadedContentIsAvailableOffline,
+        showBrowseButton: true,
       );
     }
 
@@ -83,13 +94,30 @@ class _ActiveDownloadsList extends StatelessWidget {
     final bottomPadding =
         MediaQuery.paddingOf(context).bottom + 10 + (playerActive ? 70 : 0);
 
-    return ListView.separated(
+    return ListView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPadding),
-      itemCount: items.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        return _ActiveDownloadCard(item: items[index]);
-      },
+      children: [
+        if (hasActive) ...[
+          _SectionHeader(title: context.l10n.active),
+          const SizedBox(height: 8),
+          ...active.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _ActiveDownloadCard(item: item),
+            ),
+          ),
+        ],
+        if (hasCompleted) ...[
+          _SectionHeader(title: context.l10n.completed),
+          const SizedBox(height: 8),
+          ...completed.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _CompletedDownloadCard(item: item, isOfflineMode: false),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -281,9 +309,8 @@ class _ActiveDownloadCard extends StatelessWidget {
   }
 }
 
-class _CompletedDownloadsList extends StatelessWidget {
-  const _CompletedDownloadsList({required this.isOfflineMode});
-  final bool isOfflineMode;
+class _OfflineBody extends StatelessWidget {
+  const _OfflineBody();
 
   @override
   Widget build(BuildContext context) {
@@ -293,13 +320,9 @@ class _CompletedDownloadsList extends StatelessWidget {
     if (items.isEmpty) {
       return _EmptyState(
         icon: PlaycadoIcons.download,
-        message: isOfflineMode
-            ? context.l10n.noOfflineContent
-            : context.l10n.noDownloadsYet,
-        subMessage: isOfflineMode
-            ? context.l10n.connectToYourServerToDownloadContent
-            : context.l10n.downloadedContentIsAvailableOffline,
-        showBrowseButton: !isOfflineMode,
+        message: context.l10n.noOfflineContent,
+        subMessage: context.l10n.connectToYourServerToDownloadContent,
+        showBrowseButton: false,
       );
     }
 
@@ -314,11 +337,410 @@ class _CompletedDownloadsList extends StatelessWidget {
       itemCount: items.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        return _CompletedDownloadCard(
-          item: items[index],
-          isOfflineMode: isOfflineMode,
-        );
+        return _CompletedDownloadCard(item: items[index], isOfflineMode: true);
       },
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      child: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _DownloadsGrid extends StatelessWidget {
+  const _DownloadsGrid({required this.filterType});
+  final MediaItemType filterType;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = context.select<DownloadsBloc, List<DownloadItem>>(
+      (b) => b.state.completedDownloads
+          .where((d) => d.type == filterType)
+          .toList(),
+    );
+
+    if (items.isEmpty) {
+      return _EmptyState(
+        icon: filterType == MediaItemType.movie
+            ? PlaycadoIcons.movie
+            : PlaycadoIcons.tv,
+        message: filterType == MediaItemType.movie
+            ? context.l10n.noDownloadedMovies
+            : context.l10n.noDownloadedEpisodes,
+        subMessage: context.l10n.downloadedContentIsAvailableOffline,
+        showBrowseButton: true,
+      );
+    }
+
+    final playerActive = context.select<PlayerBloc, bool>(
+      (b) => b.state.isActive,
+    );
+    final bottomPadding =
+        MediaQuery.paddingOf(context).bottom + 10 + (playerActive ? 70 : 0);
+
+    return GridView.builder(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPadding),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 160,
+        childAspectRatio: 0.50,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return _DownloadPoster(item: items[index]);
+      },
+    );
+  }
+}
+
+class _DownloadedTvList extends StatelessWidget {
+  const _DownloadedTvList();
+
+  @override
+  Widget build(BuildContext context) {
+    final episodes = context.select<DownloadsBloc, List<DownloadItem>>(
+      (b) => b.state.completedDownloads
+          .where((d) => d.type == MediaItemType.episode)
+          .toList(),
+    );
+
+    if (episodes.isEmpty) {
+      return _EmptyState(
+        icon: PlaycadoIcons.tv,
+        message: context.l10n.noDownloadedEpisodes,
+        subMessage: context.l10n.downloadedContentIsAvailableOffline,
+        showBrowseButton: true,
+      );
+    }
+
+    final grouped = <String, List<DownloadItem>>{};
+    for (final ep in episodes) {
+      final key = ep.seriesName ?? ep.name;
+      grouped.putIfAbsent(key, () => []).add(ep);
+    }
+
+    for (final group in grouped.values) {
+      group.sort((a, b) {
+        final sa = a.parentIndexNumber ?? 0;
+        final sb = b.parentIndexNumber ?? 0;
+        if (sa != sb) return sa.compareTo(sb);
+        final ea = a.indexNumber ?? 0;
+        final eb = b.indexNumber ?? 0;
+        return ea.compareTo(eb);
+      });
+    }
+
+    final sortedKeys = grouped.keys.toList()..sort();
+
+    final playerActive = context.select<PlayerBloc, bool>(
+      (b) => b.state.isActive,
+    );
+    final bottomPadding =
+        MediaQuery.paddingOf(context).bottom + 10 + (playerActive ? 70 : 0);
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPadding),
+      children: [
+        for (final seriesName in sortedKeys) ...[
+          _SeriesHeader(seriesName: seriesName, episodes: grouped[seriesName]!),
+          const SizedBox(height: 8),
+          for (final ep in grouped[seriesName]!) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _EpisodeTile(item: ep),
+            ),
+          ],
+          const SizedBox(height: 16),
+        ],
+      ],
+    );
+  }
+}
+
+class _SeriesHeader extends StatelessWidget {
+  const _SeriesHeader({required this.seriesName, required this.episodes});
+  final String seriesName;
+  final List<DownloadItem> episodes;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final first = episodes.first;
+    final seasonCount = episodes.map((e) => e.parentIndexNumber).toSet().length;
+
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: first.imageUrl != null
+                ? PlaycadoNetworkImage(
+                    imageUrl: first.imageUrl!,
+                    errorWidget: (context, url, error) => ColoredBox(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: const PlaycadoIcon(PlaycadoIcons.imageNotFound),
+                    ),
+                  )
+                : ColoredBox(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: const PlaycadoIcon(PlaycadoIcons.tv),
+                  ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                seriesName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '${episodes.length} ${episodes.length == 1 ? 'episode' : 'episodes'}'
+                '${seasonCount > 1 ? ' • $seasonCount seasons' : ''}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EpisodeTile extends StatelessWidget {
+  const _EpisodeTile({required this.item});
+  final DownloadItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final season = item.parentIndexNumber?.toString().padLeft(2, '0') ?? '??';
+    final episode = item.indexNumber?.toString().padLeft(2, '0') ?? '??';
+
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainer,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          unawaited(
+            Navigator.of(context).push(OfflineMediaDetailPage.route(item)),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: item.imageUrl != null
+                      ? PlaycadoNetworkImage(
+                          imageUrl: item.imageUrl!,
+                          errorWidget: (context, url, error) => ColoredBox(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: const PlaycadoIcon(
+                              PlaycadoIcons.imageNotFound,
+                            ),
+                          ),
+                        )
+                      : ColoredBox(
+                          color: colorScheme.surfaceContainerHighest,
+                          child: const PlaycadoIcon(PlaycadoIcons.tv),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'S$season E$episode',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                        if (item.totalBytes > 0) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            Formatters.formatBytes(item.totalBytes),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const PlaycadoIcon(
+                PlaycadoIcons.arrowRight,
+                color: Colors.grey,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DownloadPoster extends StatelessWidget {
+  const _DownloadPoster({required this.item});
+  final DownloadItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Semantics(
+      button: true,
+      label: item.name,
+      child: GestureDetector(
+        onTap: () {
+          unawaited(
+            Navigator.of(context).push(OfflineMediaDetailPage.route(item)),
+          );
+        },
+        child: RepaintBoundary(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    color: theme.colorScheme.surfaceContainerHighest,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: item.imageUrl != null
+                      ? PlaycadoNetworkImage(
+                          imageUrl: item.imageUrl!,
+                          width: double.infinity,
+                          memCacheWidth: 240,
+                          memCacheHeight: 360,
+                          placeholder: (context, url) => ColoredBox(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: Center(
+                              child: PlaycadoIcon(
+                                PlaycadoIcons.movie,
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.2),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Center(
+                            child: PlaycadoIcon(
+                              PlaycadoIcons.imageNotFound,
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: PlaycadoIcon(
+                            PlaycadoIcons.movie,
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.3),
+                            size: 48,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                item.productionYear != null
+                    ? item.name.replaceAll(' (${item.productionYear})', '')
+                    : item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              if (item.productionYear case final year?)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    year,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -344,18 +766,8 @@ class _CompletedDownloadCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
-          final mediaItem = MediaItem(
-            id: item.id,
-            name: item.name,
-            overview: item.overview,
-            type: item.type ?? MediaItemType.movie,
-          );
-          final heroTag = mediaItem.heroTag('download');
           unawaited(
-            context.push(
-              AppRouter.detailsPath,
-              extra: {'item': mediaItem, 'heroTag': heroTag},
-            ),
+            Navigator.of(context).push(OfflineMediaDetailPage.route(item)),
           );
         },
         child: Padding(

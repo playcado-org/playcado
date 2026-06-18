@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/formatters.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/downloads/models/download_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/widgets/widgets.dart';

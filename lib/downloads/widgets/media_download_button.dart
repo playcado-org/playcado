@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/models/download_item.dart';
+import 'package:playcado/downloads/models/download_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/widgets/widgets.dart';
 

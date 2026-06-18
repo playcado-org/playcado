@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/downloads/models/download_item.dart';
+import 'package:playcado/downloads/services/downloads_manager_service.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/services/logger_service.dart';
 
@@ -10,8 +11,8 @@ part 'downloads_event.dart';
 part 'downloads_state.dart';
 
 class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
-  DownloadsBloc({required DownloadsRepository repository})
-    : _downloadsRepository = repository,
+  DownloadsBloc({required DownloadsManagerService downloadsManagerService})
+    : _downloadsManagerService = downloadsManagerService,
       super(const DownloadsState()) {
     on<DownloadsDeleteRequested>(_onDownloadsDeleteRequested);
     on<DownloadsInitialized>(_onDownloadsInitialized);
@@ -23,14 +24,14 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
 
     add(DownloadsInitialized());
   }
-  final DownloadsRepository _downloadsRepository;
+  final DownloadsManagerService _downloadsManagerService;
   StreamSubscription<List<DownloadItem>>? _subscription;
 
   Future<void> _onDownloadsDeleteRequested(
     DownloadsDeleteRequested event,
     Emitter<DownloadsState> emit,
   ) async {
-    await _downloadsRepository.deleteDownload(event.id);
+    await _downloadsManagerService.deleteDownload(event.id);
   }
 
   void _onDownloadsInitialized(
@@ -38,19 +39,17 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     Emitter<DownloadsState> emit,
   ) {
     LoggerService.downloads.info('Initializing DownloadsBloc');
-    // Check if repository already has data (handling potential
-    // race condition with async init)
-    if (_downloadsRepository.currentDownloads.isNotEmpty) {
+    if (_downloadsManagerService.currentDownloads.isNotEmpty) {
       emit(
         state.copyWith(
-          downloads: _downloadsRepository.currentDownloads,
+          downloads: _downloadsManagerService.currentDownloads,
           isLoading: false,
         ),
       );
     }
 
     unawaited(_subscription?.cancel());
-    _subscription = _downloadsRepository.downloads.listen((items) {
+    _subscription = _downloadsManagerService.downloads.listen((items) {
       add(DownloadsUpdated(items));
     });
   }
@@ -59,14 +58,14 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     DownloadsPauseRequested event,
     Emitter<DownloadsState> emit,
   ) async {
-    await _downloadsRepository.pauseDownload(event.id);
+    await _downloadsManagerService.pauseDownload(event.id);
   }
 
   Future<void> _onDownloadsResumeRequested(
     DownloadsResumeRequested event,
     Emitter<DownloadsState> emit,
   ) async {
-    await _downloadsRepository.resumeDownload(event.id);
+    await _downloadsManagerService.resumeDownload(event.id);
   }
 
   Future<void> _onDownloadsStartRequested(
@@ -75,7 +74,7 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
   ) async {
     LoggerService.downloads.info('User requested download: ${event.item.name}');
     try {
-      await _downloadsRepository.addDownload(event.item);
+      await _downloadsManagerService.addDownload(event.item);
     } on Exception catch (e, s) {
       LoggerService.downloads.severe('Error adding download in Bloc', e, s);
     }
@@ -91,7 +90,7 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     );
 
     try {
-      await _downloadsRepository.addMediaDownload(item);
+      await _downloadsManagerService.addMediaDownload(item);
     } on Exception catch (e, s) {
       LoggerService.downloads.severe('Error preparing download', e, s);
     }

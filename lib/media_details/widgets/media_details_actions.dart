@@ -7,7 +7,7 @@ import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/cast/widgets/cast_dialog.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/models/download_item.dart';
+import 'package:playcado/downloads/models/download_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';

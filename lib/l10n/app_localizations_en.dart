@@ -223,6 +223,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageServers => 'Manage Servers';
 
   @override
+  String get manager => 'Manager';
+
+  @override
   String get mediaType => 'Media';
 
   @override
@@ -243,6 +246,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noActiveDownloads => 'No active downloads';
+
+  @override
+  String get noDownloadedEpisodes => 'No downloaded episodes';
+
+  @override
+  String get noDownloadedMovies => 'No downloaded movies';
 
   @override
   String get noDownloadsYet => 'No downloads yet';

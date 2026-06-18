@@ -8,7 +8,7 @@ import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/downloads/services/downloads_manager_service.dart';
 import 'package:playcado/l10n/app_localizations.dart';
 import 'package:playcado/libraries/bloc/libraries_bloc.dart';
 import 'package:playcado/media/data/demo_remote_data_source.dart';
@@ -107,10 +107,10 @@ class App extends StatelessWidget {
                   create: (context) =>
                       SearchRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<DownloadsRepository>(
+                RepositoryProvider<DownloadsManagerService>(
                   create: (context) =>
-                      DownloadsRepository(urlGenerator: mediaUrlService),
-                  dispose: (repo) => repo.dispose(),
+                      DownloadsManagerService(urlGenerator: mediaUrlService),
+                  dispose: (service) => service.dispose(),
                 ),
                 RepositoryProvider<MediaUrlService>.value(
                   value: mediaUrlService,
@@ -120,7 +120,8 @@ class App extends StatelessWidget {
                 providers: [
                   BlocProvider(
                     create: (context) => DownloadsBloc(
-                      repository: context.read<DownloadsRepository>(),
+                      downloadsManagerService: context
+                          .read<DownloadsManagerService>(),
                     ),
                   ),
                   BlocProvider(
