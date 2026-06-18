@@ -5,17 +5,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/player/widgets/track_selection_sheet.dart';
 import 'package:playcado/player/widgets/video_slider.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class VideoControlsOverlay extends StatefulWidget {
   const VideoControlsOverlay({
-    required this.title,
-    super.key,
     this.isFullscreen = false,
     this.onFullscreenToggle,
+    super.key,
+    required this.title,
   });
   final String title;
   final bool isFullscreen;
@@ -141,9 +141,9 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
 }
 
 class _CenterControls extends StatelessWidget {
-  const _CenterControls({required this.visible, required this.onAction});
-  final bool visible;
+  const _CenterControls({required this.onAction, required this.visible});
   final VoidCallback onAction;
+  final bool visible;
 
   @override
   Widget build(BuildContext context) {
@@ -206,9 +206,9 @@ class _CenterControls extends StatelessWidget {
 }
 
 class _TopButtons extends StatelessWidget {
-  const _TopButtons({required this.onAction, this.item});
-  final VoidCallback onAction;
+  const _TopButtons({this.item, required this.onAction});
   final MediaItem? item;
+  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +233,7 @@ class _TopButtons extends StatelessWidget {
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   showDragHandle: true,
                   builder: (context) => TrackSelectionSheet(
-                    engine: context.read<LocalPlaybackService>(),
+                    service: context.read<LocalPlayerService>(),
                   ),
                 ),
               );
@@ -249,13 +249,13 @@ class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.isFullscreen,
     required this.onFullscreenToggle,
-    required this.onInteractionStart,
     required this.onInteractionEnd,
+    required this.onInteractionStart,
   });
   final bool isFullscreen;
   final VoidCallback? onFullscreenToggle;
-  final VoidCallback onInteractionStart;
   final VoidCallback onInteractionEnd;
+  final VoidCallback onInteractionStart;
 
   @override
   Widget build(BuildContext context) {
@@ -292,9 +292,9 @@ class _BottomControls extends StatelessWidget {
 }
 
 class _AnimatedVisibility extends StatelessWidget {
-  const _AnimatedVisibility({required this.visible, required this.child});
-  final bool visible;
+  const _AnimatedVisibility({required this.child, required this.visible});
   final Widget child;
+  final bool visible;
 
   @override
   Widget build(BuildContext context) {

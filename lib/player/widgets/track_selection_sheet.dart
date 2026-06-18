@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/player/services/local_playback_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class TrackSelectionSheet extends StatefulWidget {
-  const TrackSelectionSheet({required this.engine, super.key});
-  final LocalPlaybackService engine;
+  const TrackSelectionSheet({required this.service, super.key});
+
+  final LocalPlayerService service;
 
   @override
   State<TrackSelectionSheet> createState() => _TrackSelectionSheetState();
@@ -16,10 +17,10 @@ class TrackSelectionSheet extends StatefulWidget {
 class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
   @override
   Widget build(BuildContext context) {
-    final audioTracks = widget.engine.audioTracks;
-    final subtitleTracks = widget.engine.subtitleTracks;
-    final currentAudio = widget.engine.currentAudioTrackIndex;
-    final currentSubtitle = widget.engine.currentSubtitleTrackIndex;
+    final audioTracks = widget.service.audioTracks;
+    final subtitleTracks = widget.service.subtitleTracks;
+    final currentAudio = widget.service.currentAudioTrackIndex;
+    final currentSubtitle = widget.service.currentSubtitleTrackIndex;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),

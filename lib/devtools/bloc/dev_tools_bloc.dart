@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/downloads_repository/downloads_repository.dart';
-import 'package:playcado/player/services/cast_playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/services/secure_storage_service.dart';
 
@@ -15,31 +15,38 @@ part 'dev_tools_state.dart';
 
 class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   DevToolsBloc({
-    required PreferencesService preferencesService,
     required CastDeviceManager castDeviceManager,
-    required CastPlaybackService castPlayerEngine,
+    required CastPlayerService castPlayerService,
     required DownloadsRepository downloadsRepository,
+    required PreferencesService preferencesService,
     required SecureStorageService secureStorage,
-  }) : _preferencesService = preferencesService,
-       _castDeviceManager = castDeviceManager,
-       _castPlayerEngine = castPlayerEngine,
+  }) : _castDeviceManager = castDeviceManager,
+       _castPlayerService = castPlayerService,
        _downloadsRepository = downloadsRepository,
+       _preferencesService = preferencesService,
        _secureStorage = secureStorage,
        super(const DevToolsState()) {
     on<DevToolsCastSessionUpdated>(_onCastSessionUpdated);
     on<DevToolsCastTestVideoRequested>(_onCastTestVideo);
-    on<DevToolsClearPreferencesServiceRequested>(_onClearPreferencesService);
     on<DevToolsClearDownloadsDataRequested>(_onClearDownloadsData);
+    on<DevToolsClearPreferencesServiceRequested>(_onClearPreferencesService);
     on<DevToolsClearSecureStorageRequested>(_onClearSecureStorage);
     on<DevToolsDisconnectCastRequested>(_onDisconnectCast);
     on<DevToolsInitialized>(_onInitialized);
   }
-  final PreferencesService _preferencesService;
+
   final CastDeviceManager _castDeviceManager;
-  final CastPlaybackService _castPlayerEngine;
+  final CastPlayerService _castPlayerService;
   StreamSubscription<GoogleCastSession?>? _castSubscription;
   final DownloadsRepository _downloadsRepository;
+  final PreferencesService _preferencesService;
   final SecureStorageService _secureStorage;
+
+  @override
+  Future<void> close() {
+    unawaited(_castSubscription?.cancel());
+    return super.close();
+  }
 
   void _onCastSessionUpdated(
     DevToolsCastSessionUpdated event,
@@ -56,7 +63,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
         'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
     try {
-      await _castPlayerEngine.load(
+      await _castPlayerService.load(
         const PlayableMedia(
           id: 'test',
           title: 'TEST VIDEO (Big Buck Bunny)',
@@ -81,28 +88,6 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
     }
   }
 
-  Future<void> _onClearPreferencesService(
-    DevToolsClearPreferencesServiceRequested event,
-    Emitter<DevToolsState> emit,
-  ) async {
-    try {
-      await _preferencesService.resetAll();
-      emit(
-        state.copyWith(
-          status: DevToolsStatus.success,
-          message: 'App Preferences Reset',
-        ),
-      );
-    } on Exception catch (e) {
-      emit(
-        state.copyWith(
-          status: DevToolsStatus.error,
-          message: 'Error reseting app preferences: $e',
-        ),
-      );
-    }
-  }
-
   Future<void> _onClearDownloadsData(
     DevToolsClearDownloadsDataRequested event,
     Emitter<DevToolsState> emit,
@@ -120,6 +105,28 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
         state.copyWith(
           status: DevToolsStatus.error,
           message: 'Error clearing downloads: $e',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onClearPreferencesService(
+    DevToolsClearPreferencesServiceRequested event,
+    Emitter<DevToolsState> emit,
+  ) async {
+    try {
+      await _preferencesService.resetAll();
+      emit(
+        state.copyWith(
+          status: DevToolsStatus.success,
+          message: 'App Preferences Reset',
+        ),
+      );
+    } on Exception catch (e) {
+      emit(
+        state.copyWith(
+          status: DevToolsStatus.error,
+          message: 'Error reseting app preferences: $e',
         ),
       );
     }
@@ -163,11 +170,5 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
       final connected = _castDeviceManager.isConnected;
       add(DevToolsCastSessionUpdated(isConnected: connected));
     });
-  }
-
-  @override
-  Future<void> close() {
-    unawaited(_castSubscription?.cancel());
-    return super.close();
   }
 }

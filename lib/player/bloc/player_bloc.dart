@@ -7,11 +7,11 @@ import 'package:jellyfin_dart/jellyfin_dart.dart';
 import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/media/data/media_remote_data_source.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/player/services/cast_playback_service.dart';
-import 'package:playcado/player/services/local_playback_service.dart';
-import 'package:playcado/player/services/playback_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
+import 'package:playcado/player/services/player_service.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
@@ -19,161 +19,70 @@ import 'package:playcado/services/media_url/media_url_service.dart';
 part 'player_event.dart';
 part 'player_state.dart';
 
-class _EngineStateUpdated extends PlayerEvent {
-  const _EngineStateUpdated(this.engineState);
-  final PlaybackServiceState engineState;
-
-  @override
-  List<Object?> get props => [engineState];
-}
-
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   PlayerBloc({
-    required LocalPlaybackService localEngine,
-    required CastPlaybackService castEngine,
     required CastDeviceManager castDeviceManager,
-    required PlayerTracker playerTracker,
-    required MediaUrlService urlGenerator,
+    required CastPlayerService castService,
     required MediaRemoteDataSource dataSource,
     required JellyfinClientService jellyfinClientService,
-  }) : _localEngine = localEngine,
-       _castEngine = castEngine,
-       _castDeviceManager = castDeviceManager,
-       _playerTracker = playerTracker,
-       _urlGenerator = urlGenerator,
+    required LocalPlayerService localService,
+    required PlayerTracker playerTracker,
+    required MediaUrlService urlGenerator,
+  }) : _castDeviceManager = castDeviceManager,
+       _castService = castService,
        _dataSource = dataSource,
        _jellyfinClientService = jellyfinClientService,
+       _localService = localService,
+       _playerTracker = playerTracker,
+       _urlGenerator = urlGenerator,
        super(const PlayerState()) {
-    on<PlayerPlayRequested>(_onPlayRequested);
-    on<PlayerStopRequested>(_onStopRequested);
+    on<PlayerCastRequested>(_onCastRequested);
     on<PlayerPauseRequested>(_onPauseRequested);
+    on<PlayerPlayRequested>(_onPlayRequested);
     on<PlayerResumeRequested>(_onResumeRequested);
     on<PlayerSeekRequested>(_onSeekRequested);
-    on<PlayerTogglePlayPauseRequested>(_onTogglePlayPause);
-    on<PlayerCastRequested>(_onCastRequested);
     on<PlayerSkipIntroRequested>(_onSkipIntroRequested);
+    on<PlayerStopRequested>(_onStopRequested);
+    on<PlayerTogglePlayPauseRequested>(_onTogglePlayPause);
     on<PlayerTrackSelected>(_onTrackSelected);
-    on<_EngineStateUpdated>(_onInternalEngineStateUpdated);
+    on<ServiceStateUpdated>(_onInternalServiceStateUpdated);
 
     _initCastListeners();
   }
 
-  final LocalPlaybackService _localEngine;
-  final CastPlaybackService _castEngine;
+  PlayerService? _activeService;
   final CastDeviceManager _castDeviceManager;
-  final PlayerTracker _playerTracker;
-  final MediaUrlService _urlGenerator;
-  final MediaRemoteDataSource _dataSource;
-  final JellyfinClientService _jellyfinClientService;
-
-  PlaybackService? _activeEngine;
-  StreamSubscription<PlaybackServiceState>? _engineSub;
+  final CastPlayerService _castService;
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
-  DateTime _lastProgressReport = DateTime.now();
+  final MediaRemoteDataSource _dataSource;
   bool _isLocalMedia = false;
+  final JellyfinClientService _jellyfinClientService;
+  DateTime _lastProgressReport = DateTime.now();
+  final LocalPlayerService _localService;
+  final PlayerTracker _playerTracker;
+  StreamSubscription<PlayerServiceState>? _serviceSub;
+  final MediaUrlService _urlGenerator;
   bool _wasCasting = false;
 
-  PlaybackService get _engine {
-    if (_activeEngine == null) throw StateError('No active engine');
-    return _activeEngine!;
+  PlayerService get _service {
+    if (_activeService == null) throw StateError('No active service');
+    return _activeService!;
   }
 
-  void _initCastListeners() {
-    _castSessionSub = _castDeviceManager.currentSessionStream.listen((_) {
-      final connected = _castDeviceManager.isConnected;
-      if (!connected && _wasCasting) {
-        add(PlayerStopRequested());
-      }
-      _wasCasting = connected;
-    });
-  }
-
-  void _subscribeToEngine(PlaybackService engine) {
-    _engineSub?.cancel();
-    _engineSub = engine.stateStream.listen((engineState) {
-      if (isClosed) return;
-      add(_EngineStateUpdated(engineState));
-    });
-  }
-
-  void _onInternalEngineStateUpdated(
-    _EngineStateUpdated event,
-    Emitter<PlayerState> emit,
-  ) {
-    final engineState = event.engineState;
-    final item = state.mediaItem;
-    var showSkip = false;
-
-    if (item != null) {
-      final introStart = item.introStartTicks;
-      final introEnd = item.introEndTicks;
-      if (introStart != null && introEnd != null) {
-        final currentTicks = engineState.position.inMicroseconds * 10;
-        if (currentTicks >= introStart && currentTicks < introEnd) {
-          showSkip = true;
-        }
-      }
+  @override
+  Future<void> close() {
+    unawaited(_serviceSub?.cancel());
+    unawaited(_castSessionSub?.cancel());
+    if (_activeService != null) {
+      unawaited(_activeService!.stop());
     }
-
-    final newStatus = _determineStatus(engineState);
-
-    emit(
-      state.copyWith(
-        position: engineState.position,
-        duration: engineState.duration,
-        isBuffering: engineState.isBuffering,
-        showSkipIntro: showSkip,
-        status: newStatus,
-        nativeViewAttachment: _activeEngine?.nativeViewAttachment,
-      ),
-    );
-
-    if (newStatus == PlayerStatus.playing) {
-      _handleProgressReporting(engineState.position);
-    }
-  }
-
-  PlayerStatus _determineStatus(PlaybackServiceState engineState) {
-    if (state.status == PlayerStatus.loading) {
-      if (!engineState.isBuffering && engineState.position > Duration.zero) {
-        return PlayerStatus.playing;
-      }
-      return PlayerStatus.loading;
-    }
-    if (engineState.isCompleted) {
-      return PlayerStatus.stopped;
-    }
-    if (engineState.isPlaying) {
-      return PlayerStatus.playing;
-    }
-    if (state.status == PlayerStatus.playing && !engineState.isPlaying) {
-      return PlayerStatus.paused;
-    }
-    return state.status;
-  }
-
-  Future<void> _handleProgressReporting(Duration position) async {
-    if (_isLocalMedia ||
-        state.mediaItem == null ||
-        state.isCasting ||
-        state.status != PlayerStatus.playing) {
-      return;
-    }
-
-    if (DateTime.now().difference(_lastProgressReport).inSeconds > 10) {
-      _lastProgressReport = DateTime.now();
-      final ticks = position.inMicroseconds * 10;
-      await _playerTracker.reportPlaybackProgress(
-        itemId: state.mediaItem!.id,
-        positionTicks: ticks,
-      );
-    }
+    return super.close();
   }
 
   Future<PlayableMedia> _buildPlayableMedia(
     MediaItem item, {
-    String? localPath,
     bool forCast = false,
+    String? localPath,
   }) async {
     final startTicks = item.playbackPositionTicks ?? 0;
     final startPosition = startTicks > 0
@@ -239,6 +148,140 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     );
   }
 
+  PlayerStatus _determineStatus(PlayerServiceState serviceState) {
+    if (state.status == PlayerStatus.loading) {
+      if (!serviceState.isBuffering && serviceState.position > Duration.zero) {
+        return PlayerStatus.playing;
+      }
+      return PlayerStatus.loading;
+    }
+    if (serviceState.isCompleted) {
+      return PlayerStatus.stopped;
+    }
+    if (serviceState.isPlaying) {
+      return PlayerStatus.playing;
+    }
+    if (state.status == PlayerStatus.playing && !serviceState.isPlaying) {
+      return PlayerStatus.paused;
+    }
+    return state.status;
+  }
+
+  Future<void> _handleProgressReporting(Duration position) async {
+    if (_isLocalMedia ||
+        state.mediaItem == null ||
+        state.isCasting ||
+        state.status != PlayerStatus.playing) {
+      return;
+    }
+
+    if (DateTime.now().difference(_lastProgressReport).inSeconds > 10) {
+      _lastProgressReport = DateTime.now();
+      final ticks = position.inMicroseconds * 10;
+      await _playerTracker.reportPlaybackProgress(
+        itemId: state.mediaItem!.id,
+        positionTicks: ticks,
+      );
+    }
+  }
+
+  void _initCastListeners() {
+    _castSessionSub = _castDeviceManager.currentSessionStream.listen((_) {
+      final connected = _castDeviceManager.isConnected;
+      if (!connected && _wasCasting) {
+        add(PlayerStopRequested());
+      }
+      _wasCasting = connected;
+    });
+  }
+
+  Future<void> _onCastRequested(
+    PlayerCastRequested event,
+    Emitter<PlayerState> emit,
+  ) async {
+    LoggerService.player.info('Cast requested for ${event.item.name}');
+
+    if (_activeService != null && !state.isCasting) {
+      await _activeService!.stop();
+    }
+
+    emit(
+      state.copyWith(
+        status: PlayerStatus.loading,
+        mediaItem: event.item,
+        isCasting: true,
+        isLocalMedia: false,
+      ),
+    );
+    _isLocalMedia = false;
+
+    try {
+      if (!_castDeviceManager.isConnected) {
+        final connected = await _castDeviceManager.waitUntilConnected();
+        if (!connected) {
+          emit(state.copyWith(status: PlayerStatus.error));
+          return;
+        }
+      }
+
+      final playableMedia = await _buildPlayableMedia(
+        event.item,
+        forCast: true,
+      );
+      _activeService = _castService;
+      _subscribeToService(_castService);
+      await _castService.load(playableMedia);
+    } on Exception catch (e) {
+      LoggerService.player.severe('Failed to cast media', e);
+      emit(state.copyWith(status: PlayerStatus.error));
+    }
+  }
+
+  void _onInternalServiceStateUpdated(
+    ServiceStateUpdated event,
+    Emitter<PlayerState> emit,
+  ) {
+    final serviceState = event.serviceState;
+    final item = state.mediaItem;
+    var showSkip = false;
+
+    if (item != null) {
+      final introStart = item.introStartTicks;
+      final introEnd = item.introEndTicks;
+      if (introStart != null && introEnd != null) {
+        final currentTicks = serviceState.position.inMicroseconds * 10;
+        if (currentTicks >= introStart && currentTicks < introEnd) {
+          showSkip = true;
+        }
+      }
+    }
+
+    final newStatus = _determineStatus(serviceState);
+
+    emit(
+      state.copyWith(
+        position: serviceState.position,
+        duration: serviceState.duration,
+        isBuffering: serviceState.isBuffering,
+        showSkipIntro: showSkip,
+        status: newStatus,
+        nativeViewAttachment: _activeService?.nativeViewAttachment,
+      ),
+    );
+
+    if (newStatus == PlayerStatus.playing) {
+      _handleProgressReporting(serviceState.position);
+    }
+  }
+
+  Future<void> _onPauseRequested(
+    PlayerPauseRequested event,
+    Emitter<PlayerState> emit,
+  ) async {
+    await _service.pause();
+    emit(state.copyWith(status: PlayerStatus.paused));
+  }
+
   Future<void> _onPlayRequested(
     PlayerPlayRequested event,
     Emitter<PlayerState> emit,
@@ -263,9 +306,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           event.item,
           forCast: true,
         );
-        _activeEngine = _castEngine;
-        _subscribeToEngine(_castEngine);
-        await _castEngine.load(playableMedia);
+        _activeService = _castService;
+        _subscribeToService(_castService);
+        await _castService.load(playableMedia);
       } on Exception catch (e) {
         LoggerService.player.severe('Failed to start cast playback', e);
         emit(state.copyWith(status: PlayerStatus.error));
@@ -294,12 +337,40 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         localPath: event.localPath,
         forCast: false,
       );
-      _activeEngine = _localEngine;
-      _subscribeToEngine(_localEngine);
-      await _localEngine.load(playableMedia);
+      _activeService = _localService;
+      _subscribeToService(_localService);
+      await _localService.load(playableMedia);
     } on Exception catch (e) {
       LoggerService.player.severe('Failed to play media', e);
       emit(state.copyWith(status: PlayerStatus.error));
+    }
+  }
+
+  Future<void> _onResumeRequested(
+    PlayerResumeRequested event,
+    Emitter<PlayerState> emit,
+  ) async {
+    await _service.play();
+    emit(state.copyWith(status: PlayerStatus.playing));
+  }
+
+  Future<void> _onSeekRequested(
+    PlayerSeekRequested event,
+    Emitter<PlayerState> emit,
+  ) async {
+    await _service.seek(event.position);
+  }
+
+  Future<void> _onSkipIntroRequested(
+    PlayerSkipIntroRequested event,
+    Emitter<PlayerState> emit,
+  ) async {
+    final item = state.mediaItem;
+    final introEndTicks = item?.introEndTicks;
+    if (item != null && introEndTicks != null) {
+      final endDuration = Duration(microseconds: introEndTicks ~/ 10);
+      await _service.seek(endDuration);
+      emit(state.copyWith(showSkipIntro: false));
     }
   }
 
@@ -310,13 +381,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     final finalPosition = state.position;
     final item = state.mediaItem;
 
-    if (_activeEngine != null) {
-      await _activeEngine!.stop();
-      _activeEngine = null;
+    if (_activeService != null) {
+      await _activeService!.stop();
+      _activeService = null;
     }
 
-    await _engineSub?.cancel();
-    _engineSub = null;
+    await _serviceSub?.cancel();
+    _serviceSub = null;
 
     if (item != null && !_isLocalMedia) {
       await _playerTracker.reportPlaybackStopped(
@@ -336,29 +407,6 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     );
   }
 
-  Future<void> _onPauseRequested(
-    PlayerPauseRequested event,
-    Emitter<PlayerState> emit,
-  ) async {
-    await _engine.pause();
-    emit(state.copyWith(status: PlayerStatus.paused));
-  }
-
-  Future<void> _onResumeRequested(
-    PlayerResumeRequested event,
-    Emitter<PlayerState> emit,
-  ) async {
-    await _engine.play();
-    emit(state.copyWith(status: PlayerStatus.playing));
-  }
-
-  Future<void> _onSeekRequested(
-    PlayerSeekRequested event,
-    Emitter<PlayerState> emit,
-  ) async {
-    await _engine.seek(event.position);
-  }
-
   Future<void> _onTogglePlayPause(
     PlayerTogglePlayPauseRequested event,
     Emitter<PlayerState> emit,
@@ -370,79 +418,22 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     }
   }
 
-  Future<void> _onCastRequested(
-    PlayerCastRequested event,
-    Emitter<PlayerState> emit,
-  ) async {
-    LoggerService.player.info('Cast requested for ${event.item.name}');
-
-    if (_activeEngine != null && !state.isCasting) {
-      await _activeEngine!.stop();
-    }
-
-    emit(
-      state.copyWith(
-        status: PlayerStatus.loading,
-        mediaItem: event.item,
-        isCasting: true,
-        isLocalMedia: false,
-      ),
-    );
-    _isLocalMedia = false;
-
-    try {
-      if (!_castDeviceManager.isConnected) {
-        final connected = await _castDeviceManager.waitUntilConnected();
-        if (!connected) {
-          emit(state.copyWith(status: PlayerStatus.error));
-          return;
-        }
-      }
-
-      final playableMedia = await _buildPlayableMedia(
-        event.item,
-        forCast: true,
-      );
-      _activeEngine = _castEngine;
-      _subscribeToEngine(_castEngine);
-      await _castEngine.load(playableMedia);
-    } on Exception catch (e) {
-      LoggerService.player.severe('Failed to cast media', e);
-      emit(state.copyWith(status: PlayerStatus.error));
-    }
-  }
-
-  Future<void> _onSkipIntroRequested(
-    PlayerSkipIntroRequested event,
-    Emitter<PlayerState> emit,
-  ) async {
-    final item = state.mediaItem;
-    final introEndTicks = item?.introEndTicks;
-    if (item != null && introEndTicks != null) {
-      final endDuration = Duration(microseconds: introEndTicks ~/ 10);
-      await _engine.seek(endDuration);
-      emit(state.copyWith(showSkipIntro: false));
-    }
-  }
-
   Future<void> _onTrackSelected(
     PlayerTrackSelected event,
     Emitter<PlayerState> emit,
   ) async {
     if (event.type == TrackType.audio) {
-      await _localEngine.setAudioTrack(event.index);
+      await _localService.setAudioTrack(event.index);
     } else {
-      await _localEngine.setSubtitleTrack(event.index);
+      await _localService.setSubtitleTrack(event.index);
     }
   }
 
-  @override
-  Future<void> close() {
-    unawaited(_engineSub?.cancel());
-    unawaited(_castSessionSub?.cancel());
-    if (_activeEngine != null) {
-      unawaited(_activeEngine!.stop());
-    }
-    return super.close();
+  void _subscribeToService(PlayerService service) {
+    _serviceSub?.cancel();
+    _serviceSub = service.stateStream.listen((serviceState) {
+      if (isClosed) return;
+      add(ServiceStateUpdated(serviceState));
+    });
   }
 }
