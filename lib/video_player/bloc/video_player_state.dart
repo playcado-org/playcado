@@ -10,15 +10,22 @@ class VideoPlayerState extends Equatable {
     this.isLocalMedia = false,
     this.isCasting = false,
     this.position = Duration.zero,
+    this.duration = Duration.zero,
+    this.isBuffering = false,
     this.showSkipIntro = false,
+    this.nativeViewAttachment,
   });
+
   final VideoPlayerStatus status;
   final MediaItem? mediaItem;
   final String? localPath;
   final bool isLocalMedia;
   final bool isCasting;
   final Duration position;
+  final Duration duration;
+  final bool isBuffering;
   final bool showSkipIntro;
+  final Object? nativeViewAttachment;
 
   VideoPlayerState copyWith({
     VideoPlayerStatus? status,
@@ -27,7 +34,10 @@ class VideoPlayerState extends Equatable {
     bool? isLocalMedia,
     bool? isCasting,
     Duration? position,
+    Duration? duration,
+    bool? isBuffering,
     bool? showSkipIntro,
+    Object? nativeViewAttachment,
   }) {
     return VideoPlayerState(
       status: status ?? this.status,
@@ -36,7 +46,10 @@ class VideoPlayerState extends Equatable {
       isLocalMedia: isLocalMedia ?? this.isLocalMedia,
       isCasting: isCasting ?? this.isCasting,
       position: position ?? this.position,
+      duration: duration ?? this.duration,
+      isBuffering: isBuffering ?? this.isBuffering,
       showSkipIntro: showSkipIntro ?? this.showSkipIntro,
+      nativeViewAttachment: nativeViewAttachment ?? this.nativeViewAttachment,
     );
   }
 
@@ -49,10 +62,8 @@ class VideoPlayerState extends Equatable {
     final item = mediaItem;
     if (!isActive || item == null) return false;
 
-    // 1. Exact ID Match (Primary check for all types)
     if (item.id == displayItem.id) return true;
 
-    // 2. Parent-Child Relationship (Series/Episode)
     if (displayItem.type == MediaItemType.series &&
         item.type == MediaItemType.episode) {
       return item.seriesId == displayItem.id ||
@@ -70,11 +81,12 @@ class VideoPlayerState extends Equatable {
     isLocalMedia,
     isCasting,
     position,
+    duration,
+    isBuffering,
     showSkipIntro,
+    nativeViewAttachment,
   ];
 
-  /// Returns true if the only difference between this state
-  /// and [other] is the position.
   bool isPositionOnlyChange(VideoPlayerState other) {
     return status == other.status &&
         mediaItem == other.mediaItem &&
@@ -82,6 +94,9 @@ class VideoPlayerState extends Equatable {
         isLocalMedia == other.isLocalMedia &&
         isCasting == other.isCasting &&
         showSkipIntro == other.showSkipIntro &&
+        duration == other.duration &&
+        isBuffering == other.isBuffering &&
+        nativeViewAttachment == other.nativeViewAttachment &&
         position != other.position;
   }
 }

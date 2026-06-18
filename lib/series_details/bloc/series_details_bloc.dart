@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/media/repos/playback_repository.dart';
+import 'package:playcado/playback/repos/playback_tracker.dart';
 import 'package:playcado/services/logger_service.dart';
 
 part 'series_details_event.dart';
@@ -13,9 +13,9 @@ part 'series_details_state.dart';
 class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
   SeriesDetailsBloc({
     required LibraryRepository libraryRepository,
-    required PlaybackRepository playbackRepository,
+    required PlaybackTracker playbackTracker,
   }) : _libraryRepository = libraryRepository,
-       _playbackRepository = playbackRepository,
+       _playbackTracker = playbackTracker,
        super(const SeriesDetailsState()) {
     on<SeriesDetailsStarted>(_onSeriesDetailsStarted);
     on<FetchSeasons>(_onFetchSeasons);
@@ -30,7 +30,7 @@ class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
     on<UpdateLocalPlaybackProgress>(_onUpdateLocalPlaybackProgress);
   }
   final LibraryRepository _libraryRepository;
-  final PlaybackRepository _playbackRepository;
+  final PlaybackTracker _playbackTracker;
 
   Future<void> _onSeriesDetailsStarted(
     SeriesDetailsStarted event,
@@ -105,7 +105,10 @@ class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
       }
     }
 
-    final episodesMap = {?seasonIdToLoad: initialEpisodes};
+    final episodesMap = <String, List<MediaItem>>{};
+    if (seasonIdToLoad != null) {
+      episodesMap[seasonIdToLoad] = initialEpisodes;
+    }
 
     emit(
       state.copyWith(
@@ -280,7 +283,7 @@ class SeriesDetailsBloc extends Bloc<SeriesDetailsEvent, SeriesDetailsState> {
     final updatedItem = currentItem.copyWith(isPlayed: newPlayedStatus);
     emit(state.copyWith(series: StatusSuccess(updatedItem)));
     try {
-      await _playbackRepository.togglePlayedStatus(
+      await _playbackTracker.togglePlayedStatus(
         currentItem.id,
         isPlayed: newPlayedStatus,
       );

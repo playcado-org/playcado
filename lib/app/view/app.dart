@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
-import 'package:playcado/cast/cast.dart';
+import 'package:playcado/cast/cast_device_manager.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
@@ -14,8 +14,10 @@ import 'package:playcado/libraries/bloc/libraries_bloc.dart';
 import 'package:playcado/media/data/demo_remote_data_source.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/media/repos/playback_repository.dart';
 import 'package:playcado/onboarding/bloc/onboarding_cubit.dart';
+import 'package:playcado/playback/engine/cast_playback_engine.dart';
+import 'package:playcado/playback/engine/local_playback_engine.dart';
+import 'package:playcado/playback/repos/playback_tracker.dart';
 import 'package:playcado/search/repos/search_repository.dart';
 import 'package:playcado/services/media_url/demo_url_service.dart';
 import 'package:playcado/services/media_url/jellyfin_url_service.dart';
@@ -25,7 +27,6 @@ import 'package:playcado/services/secure_storage_service.dart';
 import 'package:playcado/theme/app_theme.dart';
 import 'package:playcado/theme/bloc/theme_bloc.dart';
 import 'package:playcado/video_player/bloc/video_player_bloc.dart';
-import 'package:playcado/video_player/services/player_service.dart';
 
 class App extends StatelessWidget {
   const App({required this.config, super.key});
@@ -40,8 +41,15 @@ class App extends StatelessWidget {
           value: config.preferencesService,
         ),
         RepositoryProvider<AuthRepository>.value(value: config.authRepository),
-        RepositoryProvider<CastService>.value(value: config.castService),
-        RepositoryProvider<PlayerService>.value(value: config.playerService),
+        RepositoryProvider<CastDeviceManager>.value(
+          value: config.castDeviceManager,
+        ),
+        RepositoryProvider<LocalPlaybackEngine>.value(
+          value: config.localPlaybackEngine,
+        ),
+        RepositoryProvider<CastPlaybackEngine>.value(
+          value: config.castPlaybackEngine,
+        ),
         RepositoryProvider<SecureStorageService>.value(
           value: config.secureStorageService,
         ),
@@ -91,11 +99,9 @@ class App extends StatelessWidget {
                   create: (context) =>
                       LibraryRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<PlaybackRepository>(
-                  create: (context) => PlaybackRepository(
-                    dataSource: remoteDataSource,
-                    urlGenerator: mediaUrlService,
-                  ),
+                RepositoryProvider<PlaybackTracker>(
+                  create: (context) =>
+                      PlaybackTracker(dataSource: remoteDataSource),
                 ),
                 RepositoryProvider<SearchRepository>(
                   create: (context) =>
@@ -119,10 +125,12 @@ class App extends StatelessWidget {
                   ),
                   BlocProvider(
                     create: (context) => VideoPlayerBloc(
-                      playbackRepository: context.read<PlaybackRepository>(),
+                      localEngine: context.read<LocalPlaybackEngine>(),
+                      castEngine: context.read<CastPlaybackEngine>(),
+                      castDeviceManager: context.read<CastDeviceManager>(),
+                      playbackTracker: context.read<PlaybackTracker>(),
                       urlGenerator: context.read<MediaUrlService>(),
-                      playerService: context.read<PlayerService>(),
-                      castService: context.read<CastService>(),
+                      dataSource: remoteDataSource,
                       jellyfinClientService: config.jellyfinClientService,
                     ),
                   ),

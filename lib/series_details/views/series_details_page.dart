@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media/repos/library_repository.dart';
-import 'package:playcado/media/repos/playback_repository.dart';
+import 'package:playcado/playback/repos/playback_tracker.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/series_details/bloc/series_details_bloc.dart';
 import 'package:playcado/series_details/widgets/series_action_row.dart';
@@ -34,7 +34,7 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
     _scrollController = ScrollController();
     _detailsBloc = SeriesDetailsBloc(
       libraryRepository: context.read<LibraryRepository>(),
-      playbackRepository: context.read<PlaybackRepository>(),
+      playbackTracker: context.read<PlaybackTracker>(),
     );
 
     _detailsBloc.add(SeriesDetailsStarted(item: widget.item));

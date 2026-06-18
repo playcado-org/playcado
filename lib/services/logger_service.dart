@@ -4,7 +4,8 @@ import 'package:logging/logging.dart';
 class LoggerService {
   static final Logger _preferencesServiceLogger = Logger('AppPrefs');
   static final Logger _authRepositoryLogger = Logger('AuthRepo');
-  static final Logger _castServiceLogger = Logger('CastService');
+  static final Logger _castDeviceManagerLogger = Logger('CastMgr');
+  static final Logger _playbackTrackerLogger = Logger('PlaybackTracker');
   static final Logger _mediaBlocLogger = Logger('MediaBloc');
   static final Logger _mediaRepositoryLogger = Logger('MediaRepo');
   static final Logger _homeScreenLogger = Logger('HomeScreen');
@@ -49,7 +50,8 @@ class LoggerService {
 
   static Logger get preferencesService => _preferencesServiceLogger;
   static Logger get auth => _authRepositoryLogger;
-  static Logger get castService => _castServiceLogger;
+  static Logger get castDeviceManager => _castDeviceManagerLogger;
+  static Logger get playbackTracker => _playbackTrackerLogger;
   static Logger get media => _mediaBlocLogger;
   static Logger get api => _mediaRepositoryLogger;
   static Logger get home => _homeScreenLogger;

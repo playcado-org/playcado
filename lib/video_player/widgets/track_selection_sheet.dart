@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
+import 'package:playcado/playback/engine/local_playback_engine.dart';
+import 'package:playcado/video_player/bloc/video_player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class TrackSelectionSheet extends StatefulWidget {
-  const TrackSelectionSheet({required this.player, super.key});
-  final Player player;
+  const TrackSelectionSheet({required this.engine, super.key});
+  final LocalPlaybackEngine engine;
 
   @override
   State<TrackSelectionSheet> createState() => _TrackSelectionSheetState();
@@ -14,13 +16,10 @@ class TrackSelectionSheet extends StatefulWidget {
 class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
   @override
   Widget build(BuildContext context) {
-    // We access tracks directly from state.
-    // In a production app, wrapping this in a StreamBuilder listening to
-    // widget.player.stream.tracks would be more reactive,
-    // but looking at state is sufficient for the modal's lifespan.
-    final tracks = widget.player.state.tracks;
-    final audioTracks = tracks.audio;
-    final subtitleTracks = tracks.subtitle;
+    final audioTracks = widget.engine.audioTracks;
+    final subtitleTracks = widget.engine.subtitleTracks;
+    final currentAudio = widget.engine.currentAudioTrackIndex;
+    final currentSubtitle = widget.engine.currentSubtitleTrackIndex;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -40,25 +39,45 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildTrackList<AudioTrack>(
+                  _buildTrackList(
                     context,
                     audioTracks,
-                    widget.player.state.track.audio,
-                    (track) async {
-                      await widget.player.setAudioTrack(track);
+                    currentAudio,
+                    (index) {
+                      context.read<VideoPlayerBloc>().add(
+                        PlayerTrackSelected(
+                          type: TrackType.audio,
+                          index: index,
+                        ),
+                      );
                       setState(() {});
                     },
-                    labelBuilder: _audioLabel,
+                    labelBuilder: (track) {
+                      if (track.id == 'no') return context.l10n.off;
+                      if (track.id == 'auto') return context.l10n.auto;
+                      return '${track.language ?? context.l10n.unknown}'
+                          ' ${track.title != null ? "(${track.title})" : ""}';
+                    },
                   ),
-                  _buildTrackList<SubtitleTrack>(
+                  _buildTrackList(
                     context,
                     subtitleTracks,
-                    widget.player.state.track.subtitle,
-                    (track) async {
-                      await widget.player.setSubtitleTrack(track);
+                    currentSubtitle,
+                    (index) {
+                      context.read<VideoPlayerBloc>().add(
+                        PlayerTrackSelected(
+                          type: TrackType.subtitle,
+                          index: index,
+                        ),
+                      );
                       setState(() {});
                     },
-                    labelBuilder: _subtitleLabel,
+                    labelBuilder: (track) {
+                      if (track.id == 'no') return context.l10n.off;
+                      if (track.id == 'auto') return context.l10n.auto;
+                      return '${track.language ?? context.l10n.unknown}'
+                          ' ${track.title != null ? "(${track.title})" : ""}';
+                    },
                   ),
                 ],
               ),
@@ -69,12 +88,12 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
     );
   }
 
-  Widget _buildTrackList<T>(
+  Widget _buildTrackList(
     BuildContext context,
-    List<T> tracks,
-    T current,
-    ValueChanged<T> onSelect, {
-    required String Function(T) labelBuilder,
+    List<dynamic> tracks,
+    int currentIndex,
+    ValueChanged<int> onSelect, {
+    required String Function(dynamic) labelBuilder,
   }) {
     if (tracks.isEmpty) {
       return Center(child: Text(context.l10n.noTracksAvailable));
@@ -84,7 +103,7 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
       itemCount: tracks.length,
       itemBuilder: (context, index) {
         final track = tracks[index];
-        final isSelected = track == current;
+        final isSelected = index == currentIndex;
 
         return ListTile(
           title: Text(labelBuilder(track)),
@@ -94,23 +113,9 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
                   color: Theme.of(context).colorScheme.primary,
                 )
               : null,
-          onTap: () => onSelect(track),
+          onTap: () => onSelect(index),
         );
       },
     );
-  }
-
-  String _audioLabel(AudioTrack track) {
-    if (track.id == 'no') return context.l10n.off;
-    if (track.id == 'auto') return context.l10n.auto;
-    return '${track.language ?? context.l10n.unknown}'
-        ' ${track.title != null ? "(${track.title})" : ""}';
-  }
-
-  String _subtitleLabel(SubtitleTrack track) {
-    if (track.id == 'no') return context.l10n.off;
-    if (track.id == 'auto') return context.l10n.auto;
-    return '${track.language ?? context.l10n.unknown}'
-        ' ${track.title != null ? "(${track.title})" : ""}';
   }
 }
