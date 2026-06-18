@@ -14,12 +14,12 @@ class DownloadsManagerService {
   }
   final MediaUrlService _urlGenerator;
   final _controller = StreamController<List<DownloadItem>>.broadcast();
-  final Map<String, DownloadItem> _items = {};
+  final Map<String, DownloadItem> _downloadItems = {};
   StreamSubscription<TaskUpdate>? _updatesSubscription;
   final Set<String> _processingDeletions = {};
 
   Stream<List<DownloadItem>> get downloads => _controller.stream;
-  List<DownloadItem> get currentDownloads => _items.values.toList();
+  List<DownloadItem> get currentDownloads => _downloadItems.values.toList();
 
   Future<void> _init() async {
     try {
@@ -42,7 +42,7 @@ class DownloadsManagerService {
             final item = DownloadItem.fromJson(jsonMap);
             final path = await record.task.filePath();
 
-            _items[record.taskId] = item.copyWith(
+            _downloadItems[record.taskId] = item.copyWith(
               status: _mapStatus(record.status),
               progress: record.progress,
               localPath: path,
@@ -56,7 +56,7 @@ class DownloadsManagerService {
           );
         }
       }
-      if (_items.isNotEmpty) _emit();
+      if (_downloadItems.isNotEmpty) _emit();
     } on Exception catch (e, s) {
       LoggerService.downloads.severe(
         'DownloadsManagerService init failed',
@@ -123,14 +123,14 @@ class DownloadsManagerService {
     final metaString = jsonEncode(itemWithPath.toJson());
     final taskWithMeta = task.copyWith(metaData: metaString);
 
-    _items[item.id] = itemWithPath;
+    _downloadItems[item.id] = itemWithPath;
     _emit();
 
     try {
       await FileDownloader().enqueue(taskWithMeta);
     } catch (e, s) {
       LoggerService.downloads.severe('Failed to enqueue task', e, s);
-      _items.remove(item.id);
+      _downloadItems.remove(item.id);
       _emit();
       rethrow;
     }
@@ -144,7 +144,7 @@ class DownloadsManagerService {
     _processingDeletions.add(id);
 
     try {
-      _items.remove(id);
+      _downloadItems.remove(id);
       _emit();
 
       await FileDownloader().database.deleteRecordWithId(id);
@@ -171,7 +171,7 @@ class DownloadsManagerService {
   }
 
   Future<void> clearAll() async {
-    _items.clear();
+    _downloadItems.clear();
     _emit();
 
     await FileDownloader().database.deleteAllRecords();
@@ -194,7 +194,7 @@ class DownloadsManagerService {
     final updatedItem = _updateItem(item, update);
     if (updatedItem == null) return;
 
-    _items[taskId] = updatedItem;
+    _downloadItems[taskId] = updatedItem;
     _emit();
 
     if (update is TaskStatusUpdate && update.status == TaskStatus.complete) {
@@ -207,7 +207,7 @@ class DownloadsManagerService {
   }
 
   Future<void> _handleTerminalStatus(String taskId) async {
-    _items.remove(taskId);
+    _downloadItems.remove(taskId);
     _emit();
     await FileDownloader().database.deleteRecordWithId(taskId);
   }
@@ -226,9 +226,9 @@ class DownloadsManagerService {
         LoggerService.downloads.info(
           'File moved to shared storage: $sharedPath',
         );
-        final item = _items[task.taskId];
+        final item = _downloadItems[task.taskId];
         if (item != null) {
-          _items[task.taskId] = item.copyWith(localPath: sharedPath);
+          _downloadItems[task.taskId] = item.copyWith(localPath: sharedPath);
           _emit();
         }
       }
@@ -246,7 +246,7 @@ class DownloadsManagerService {
     String taskId,
     TaskUpdate update,
   ) async {
-    final existing = _items[taskId];
+    final existing = _downloadItems[taskId];
     if (existing != null) return existing;
 
     LoggerService.downloads.info('Item not in memory cache: $taskId');
@@ -268,7 +268,7 @@ class DownloadsManagerService {
       final jsonMap = jsonDecode(update.task.metaData) as Map<String, dynamic>;
       final path = await update.task.filePath();
       final item = DownloadItem.fromJson(jsonMap).copyWith(localPath: path);
-      _items[taskId] = item;
+      _downloadItems[taskId] = item;
       return item;
     } on Exception catch (_) {
       LoggerService.downloads.warning(
@@ -314,7 +314,7 @@ class DownloadsManagerService {
     }
   }
 
-  void _emit() => _controller.add(_items.values.toList());
+  void _emit() => _controller.add(_downloadItems.values.toList());
 
   void dispose() {
     unawaited(_updatesSubscription?.cancel());
