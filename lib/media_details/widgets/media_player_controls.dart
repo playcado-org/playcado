@@ -30,9 +30,7 @@ class ActivePlaybackControls extends StatelessWidget {
                 fontSize: 13,
                 onPressed: () {
                   if (isPaused) {
-                    context.read<PlayerBloc>().add(
-                      PlayerResumeRequested(),
-                    );
+                    context.read<PlayerBloc>().add(PlayerResumeRequested());
                   } else {
                     context.read<PlayerBloc>().add(PlayerPauseRequested());
                   }

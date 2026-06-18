@@ -5,7 +5,9 @@ class LoggerService {
   static final Logger _preferencesServiceLogger = Logger('AppPrefs');
   static final Logger _authRepositoryLogger = Logger('AuthRepo');
   static final Logger _castDeviceServiceLogger = Logger('CastDeviceService');
-  static final Logger _playerTrackerRepositoryLogger = Logger('PlayerTrackerRepo');
+  static final Logger _playerTrackerRepositoryLogger = Logger(
+    'PlayerTrackerRepo',
+  );
   static final Logger _mediaBlocLogger = Logger('MediaBloc');
   static final Logger _mediaRepositoryLogger = Logger('MediaRepo');
   static final Logger _homeScreenLogger = Logger('HomeScreen');

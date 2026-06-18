@@ -26,14 +26,19 @@ class PlayerTrackerRepository {
     bool isPaused = false,
   }) async {
     try {
-      LoggerService.playerTracker.finest('Reporting progress: $itemId @ $positionTicks');
+      LoggerService.playerTracker.finest(
+        'Reporting progress: $itemId @ $positionTicks',
+      );
       await _dataSource.reportPlaybackProgress(
         itemId: itemId,
         positionTicks: positionTicks,
         isPaused: isPaused,
       );
     } on Exception catch (e) {
-      LoggerService.playerTracker.finer('Failed to report playback progress', e);
+      LoggerService.playerTracker.finer(
+        'Failed to report playback progress',
+        e,
+      );
     }
   }
 

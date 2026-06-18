@@ -43,8 +43,7 @@ class MiniPlayer extends StatelessWidget {
     }
 
     final isPlaying =
-        status == PlayerStatus.playing ||
-        status == PlayerStatus.loading;
+        status == PlayerStatus.playing || status == PlayerStatus.loading;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -143,13 +142,9 @@ class MiniPlayer extends StatelessWidget {
                   ),
                   onPressed: () {
                     if (isPlaying) {
-                      context.read<PlayerBloc>().add(
-                        PlayerPauseRequested(),
-                      );
+                      context.read<PlayerBloc>().add(PlayerPauseRequested());
                     } else {
-                      context.read<PlayerBloc>().add(
-                        PlayerResumeRequested(),
-                      );
+                      context.read<PlayerBloc>().add(PlayerResumeRequested());
                     }
                   },
                 ),
