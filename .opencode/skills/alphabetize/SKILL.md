@@ -9,11 +9,11 @@ Apply alphabetical ordering throughout Dart/Flutter source files:
 
 1. **Imports** — Sort alphabetically by package path within each import group (dart:, package:, relative).
 2. **Classes** — Sort members alphabetically: fields first, then getters/setters, then methods.
-3. **Constructor parameters** — Sort alphabetically.
+3. **Constructor parameters** — Required parameters first (alpha), then not-required parameters (alpha).
 4. **Initializer list** — Sort alphabetically.
 5. **Event registrations** (`on<...>`) — Sort alphabetically by event name.
 6. **Switch cases / if-else chains** — Sort alphabetically where order is not semantically meaningful.
-7. **Method parameters** — Sort alphabetically.
+7. **Method parameters** — Required parameters first (alpha), then not-required parameters (alpha).
 8. **Public before private** — Within each group, public members precede private ones, then alpha-sorted.
 
 ## Examples
@@ -50,7 +50,7 @@ on<ServiceStateUpdated>(_onInternalServiceStateUpdated);
 ```
 
 ```dart
-// Constructor params — alpha
+// Constructor params — required first (alpha), then not-required (alpha)
 PlayerBloc({
   required CastDeviceManager castDeviceManager,
   required CastPlayerService castService,
@@ -59,6 +59,16 @@ PlayerBloc({
   required MediaRemoteDataSource dataSource,
   required MediaUrlService urlGenerator,
   required PlayerTracker playerTracker,
+})
+```
+
+```dart
+// Method params — required first (alpha), then not-required (alpha)
+void updateProfile({
+  required String email,
+  required String name,
+  String? avatarUrl,
+  int? preferredTheme,
 })
 ```
 
