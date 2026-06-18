@@ -440,7 +440,9 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
   Future<void> close() {
     unawaited(_engineSub?.cancel());
     unawaited(_castSessionSub?.cancel());
-    unawaited(_localEngine.dispose());
+    if (_activeEngine != null) {
+      unawaited(_activeEngine!.stop());
+    }
     return super.close();
   }
 }
