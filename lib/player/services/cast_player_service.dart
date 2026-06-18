@@ -19,6 +19,20 @@ class CastPlayerService implements PlayerService {
       StreamController<PlayerServiceState>.broadcast();
 
   @override
+  PlayerServiceState get currentState => _currentState;
+
+  @override
+  Object? get nativeViewAttachment => null;
+
+  @override
+  Stream<PlayerServiceState> get stateStream => _stateController.stream;
+
+  bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
+
+  bool get isConnected =>
+      _sessionManager.connectionState == GoogleCastConnectState.connected;
+
+  @override
   Future<void> dispose() async {
     await _mediaStatusSub?.cancel();
     await _stateController.close();
@@ -142,18 +156,4 @@ class CastPlayerService implements PlayerService {
     );
     _stateController.add(_currentState);
   }
-
-  @override
-  PlayerServiceState get currentState => _currentState;
-
-  @override
-  Object? get nativeViewAttachment => null;
-
-  @override
-  Stream<PlayerServiceState> get stateStream => _stateController.stream;
-
-  bool get _isSupportedPlatform => Platform.isIOS || Platform.isAndroid;
-
-  bool get isConnected =>
-      _sessionManager.connectionState == GoogleCastConnectState.connected;
 }

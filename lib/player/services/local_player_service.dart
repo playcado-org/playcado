@@ -25,6 +25,53 @@ class LocalPlayerService implements PlayerService {
   final StreamController<PlayerServiceState> _stateController =
       StreamController<PlayerServiceState>.broadcast();
 
+  List<TrackInfo> get audioTracks {
+    final tracks = _player.state.tracks.audio;
+    return List.generate(
+      tracks.length,
+      (i) => TrackInfo(
+        index: i,
+        id: tracks[i].id,
+        language: tracks[i].language,
+        title: tracks[i].title,
+      ),
+    );
+  }
+
+  int get currentAudioTrackIndex {
+    final current = _player.state.track.audio;
+    final tracks = _player.state.tracks.audio;
+    return tracks.indexOf(current);
+  }
+
+  @override
+  PlayerServiceState get currentState => _currentState;
+
+  int get currentSubtitleTrackIndex {
+    final current = _player.state.track.subtitle;
+    final tracks = _player.state.tracks.subtitle;
+    return tracks.indexOf(current);
+  }
+
+  @override
+  Object? get nativeViewAttachment => _controller;
+
+  @override
+  Stream<PlayerServiceState> get stateStream => _stateController.stream;
+
+  List<TrackInfo> get subtitleTracks {
+    final tracks = _player.state.tracks.subtitle;
+    return List.generate(
+      tracks.length,
+      (i) => TrackInfo(
+        index: i,
+        id: tracks[i].id,
+        language: tracks[i].language,
+        title: tracks[i].title,
+      ),
+    );
+  }
+
   @override
   Future<void> dispose() async {
     await _positionSub?.cancel();
@@ -146,52 +193,5 @@ class LocalPlayerService implements PlayerService {
       position: position,
     );
     _stateController.add(_currentState);
-  }
-
-  List<TrackInfo> get audioTracks {
-    final tracks = _player.state.tracks.audio;
-    return List.generate(
-      tracks.length,
-      (i) => TrackInfo(
-        index: i,
-        id: tracks[i].id,
-        language: tracks[i].language,
-        title: tracks[i].title,
-      ),
-    );
-  }
-
-  int get currentAudioTrackIndex {
-    final current = _player.state.track.audio;
-    final tracks = _player.state.tracks.audio;
-    return tracks.indexOf(current);
-  }
-
-  @override
-  PlayerServiceState get currentState => _currentState;
-
-  int get currentSubtitleTrackIndex {
-    final current = _player.state.track.subtitle;
-    final tracks = _player.state.tracks.subtitle;
-    return tracks.indexOf(current);
-  }
-
-  @override
-  Object? get nativeViewAttachment => _controller;
-
-  @override
-  Stream<PlayerServiceState> get stateStream => _stateController.stream;
-
-  List<TrackInfo> get subtitleTracks {
-    final tracks = _player.state.tracks.subtitle;
-    return List.generate(
-      tracks.length,
-      (i) => TrackInfo(
-        index: i,
-        id: tracks[i].id,
-        language: tracks[i].language,
-        title: tracks[i].title,
-      ),
-    );
   }
 }

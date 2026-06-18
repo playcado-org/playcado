@@ -8,7 +8,7 @@ description: Use for any code editing task in Dart/Flutter files. Always sort me
 Apply alphabetical ordering throughout Dart/Flutter source files:
 
 1. **Imports** — Sort alphabetically by package path within each import group (dart:, package:, relative).
-2. **Classes** — Sort members alphabetically: fields first, then methods, then getters/setters.
+2. **Classes** — Sort members alphabetically: fields first, then getters/setters, then methods.
 3. **Constructor parameters** — Sort alphabetically.
 4. **Initializer list** — Sort alphabetically.
 5. **Event registrations** (`on<...>`) — Sort alphabetically by event name.

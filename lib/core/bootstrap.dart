@@ -11,9 +11,9 @@ import 'package:playcado/core/app_bloc_observer.dart';
 import 'package:playcado/core/secrets.dart';
 import 'package:playcado/media/data/jellyfin_remote_data_source.dart';
 import 'package:playcado/media/repositories/library_repository.dart';
-import 'package:playcado/player/services/local_player_service.dart';
-import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/player/repositories/player_tracker.dart';
+import 'package:playcado/player/services/cast_player_service.dart';
+import 'package:playcado/player/services/local_player_service.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
@@ -26,36 +26,36 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 /// Configuration data returned from bootstrap initialization.
 class BootstrapConfig {
   const BootstrapConfig({
-    required this.jellyfinClientService,
     required this.authRepository,
-    required this.libraryRepository,
-    required this.playerTracker,
-    required this.searchRepository,
-    required this.mediaUrlService,
     required this.castDeviceManager,
-    required this.localPlayerService,
     required this.castPlayerService,
-    required this.preferencesService,
-    required this.secureStorageService,
-    required this.isFirstRun,
-    this.initialUser,
     this.initialThemeColor,
+    this.initialUser,
+    required this.isFirstRun,
+    required this.jellyfinClientService,
+    required this.libraryRepository,
+    required this.localPlayerService,
+    required this.mediaUrlService,
+    required this.playerTracker,
+    required this.preferencesService,
+    required this.searchRepository,
+    required this.secureStorageService,
   });
 
-  final JellyfinClientService jellyfinClientService;
   final AuthRepository authRepository;
-  final LibraryRepository libraryRepository;
-  final PlayerTracker playerTracker;
-  final SearchRepository searchRepository;
-  final MediaUrlService mediaUrlService;
   final CastDeviceManager castDeviceManager;
-  final LocalPlayerService localPlayerService;
   final CastPlayerService castPlayerService;
-  final PreferencesService preferencesService;
-  final SecureStorageService secureStorageService;
-  final bool isFirstRun;
-  final User? initialUser;
   final Color? initialThemeColor;
+  final User? initialUser;
+  final bool isFirstRun;
+  final JellyfinClientService jellyfinClientService;
+  final LibraryRepository libraryRepository;
+  final LocalPlayerService localPlayerService;
+  final MediaUrlService mediaUrlService;
+  final PlayerTracker playerTracker;
+  final PreferencesService preferencesService;
+  final SearchRepository searchRepository;
+  final SecureStorageService secureStorageService;
 }
 
 /// Bootstrap the application by initializing all required services,
@@ -147,20 +147,20 @@ Future<BootstrapConfig> _initializeServices() async {
   );
 
   return BootstrapConfig(
-    jellyfinClientService: jellyfinClientService,
     authRepository: authRepository,
-    libraryRepository: libraryRepository,
-    playerTracker: playerTracker,
-    searchRepository: searchRepository,
-    mediaUrlService: mediaUrlService,
     castDeviceManager: castDeviceManager,
-    localPlayerService: localPlayerService,
     castPlayerService: castPlayerService,
-    preferencesService: preferencesService,
-    secureStorageService: secureStorage,
-    isFirstRun: isFirstRun,
-    initialUser: initialUser,
     initialThemeColor: savedThemeColor,
+    initialUser: initialUser,
+    isFirstRun: isFirstRun,
+    jellyfinClientService: jellyfinClientService,
+    libraryRepository: libraryRepository,
+    localPlayerService: localPlayerService,
+    mediaUrlService: mediaUrlService,
+    playerTracker: playerTracker,
+    preferencesService: preferencesService,
+    searchRepository: searchRepository,
+    secureStorageService: secureStorage,
   );
 }
 

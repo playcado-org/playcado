@@ -27,6 +27,40 @@ class PlayerState extends Equatable {
   final bool showSkipIntro;
   final PlayerStatus status;
 
+  bool get isActive =>
+      status == PlayerStatus.playing ||
+      status == PlayerStatus.paused ||
+      status == PlayerStatus.loading;
+
+  @override
+  List<Object?> get props => [
+    duration,
+    isBuffering,
+    isCasting,
+    isLocalMedia,
+    localPath,
+    mediaItem,
+    nativeViewAttachment,
+    position,
+    showSkipIntro,
+    status,
+  ];
+
+  bool containsItem(MediaItem displayItem) {
+    final item = mediaItem;
+    if (!isActive || item == null) return false;
+
+    if (item.id == displayItem.id) return true;
+
+    if (displayItem.type == MediaItemType.series &&
+        item.type == MediaItemType.episode) {
+      return item.seriesId == displayItem.id ||
+          item.seriesName == displayItem.name;
+    }
+
+    return false;
+  }
+
   PlayerState copyWith({
     Duration? duration,
     bool? isBuffering,
@@ -54,21 +88,6 @@ class PlayerState extends Equatable {
     );
   }
 
-  bool containsItem(MediaItem displayItem) {
-    final item = mediaItem;
-    if (!isActive || item == null) return false;
-
-    if (item.id == displayItem.id) return true;
-
-    if (displayItem.type == MediaItemType.series &&
-        item.type == MediaItemType.episode) {
-      return item.seriesId == displayItem.id ||
-          item.seriesName == displayItem.name;
-    }
-
-    return false;
-  }
-
   bool isPositionOnlyChange(PlayerState other) {
     return status == other.status &&
         mediaItem == other.mediaItem &&
@@ -81,23 +100,4 @@ class PlayerState extends Equatable {
         nativeViewAttachment == other.nativeViewAttachment &&
         position != other.position;
   }
-
-  bool get isActive =>
-      status == PlayerStatus.playing ||
-      status == PlayerStatus.paused ||
-      status == PlayerStatus.loading;
-
-  @override
-  List<Object?> get props => [
-    duration,
-    isBuffering,
-    isCasting,
-    isLocalMedia,
-    localPath,
-    mediaItem,
-    nativeViewAttachment,
-    position,
-    showSkipIntro,
-    status,
-  ];
 }

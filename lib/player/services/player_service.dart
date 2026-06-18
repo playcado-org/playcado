@@ -45,6 +45,12 @@ class PlayerServiceState extends Equatable {
 }
 
 abstract class PlayerService {
+  PlayerServiceState get currentState;
+
+  Object? get nativeViewAttachment;
+
+  Stream<PlayerServiceState> get stateStream;
+
   Future<void> dispose();
 
   Future<void> load(PlayableMedia media);
@@ -56,10 +62,4 @@ abstract class PlayerService {
   Future<void> seek(Duration position);
 
   Future<void> stop();
-
-  PlayerServiceState get currentState;
-
-  Object? get nativeViewAttachment;
-
-  Stream<PlayerServiceState> get stateStream;
 }

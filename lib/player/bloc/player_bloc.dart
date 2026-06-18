@@ -64,6 +64,11 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final MediaUrlService _urlGenerator;
   bool _wasCasting = false;
 
+  PlayerService get _service {
+    if (_activeService == null) throw StateError('No active service');
+    return _activeService!;
+  }
+
   @override
   Future<void> close() {
     unawaited(_serviceSub?.cancel());
@@ -430,10 +435,5 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       if (isClosed) return;
       add(ServiceStateUpdated(serviceState));
     });
-  }
-
-  PlayerService get _service {
-    if (_activeService == null) throw StateError('No active service');
-    return _activeService!;
   }
 }

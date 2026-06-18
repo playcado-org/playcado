@@ -19,10 +19,10 @@ class DevToolsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => DevToolsBloc(
-        preferencesService: context.read<PreferencesService>(),
         castDeviceManager: context.read<CastDeviceManager>(),
         castPlayerService: context.read<CastPlayerService>(),
         downloadsRepository: context.read<DownloadsRepository>(),
+        preferencesService: context.read<PreferencesService>(),
         secureStorage: context.read<SecureStorageService>(),
       )..add(DevToolsInitialized()),
       child: const _DevToolsView(),
