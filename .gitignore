@@ -61,3 +61,6 @@ config/secrets_*.json
 
 # FVM Version Cache
 .fvm/
+
+# OpenCode configuration
+.opencode/
