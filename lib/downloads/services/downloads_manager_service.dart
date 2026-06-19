@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:playcado/downloads/models/download_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/services/logger_service.dart';
@@ -18,7 +20,8 @@ class DownloadsManagerService {
   StreamSubscription<TaskUpdate>? _updatesSubscription;
   final Set<String> _processingDeletions = {};
 
-  Stream<List<DownloadItem>> get downloads => _controller.stream;
+  Stream<List<DownloadItem>> get downloads =>
+      _controller.stream.throttleTime(const Duration(milliseconds: 250));
   List<DownloadItem> get currentDownloads => _downloadItems.values.toList();
 
   Future<void> _init() async {
@@ -103,13 +106,11 @@ class DownloadsManagerService {
   }
 
   Future<void> addDownload(DownloadItem item) async {
-    final safeName = item.name.replaceAll(RegExp(r'[^\w\s\.-]'), '');
-    final filename = '$safeName.mp4';
-
     final task = DownloadTask(
       taskId: item.id,
       url: item.downloadUrl,
-      filename: filename,
+      filename: '${item.id}.mp4',
+      baseDirectory: BaseDirectory.applicationSupport,
       updates: Updates.statusAndProgress,
       allowPause: true,
     );
@@ -144,11 +145,22 @@ class DownloadsManagerService {
     _processingDeletions.add(id);
 
     try {
+      final item = _downloadItems[id];
+
+      if (item != null && item.localPath.isNotEmpty) {
+        final file = File(item.localPath);
+        if (file.existsSync()) {
+          await file.delete();
+        }
+      }
+
       _downloadItems.remove(id);
       _emit();
 
       await FileDownloader().database.deleteRecordWithId(id);
       await FileDownloader().cancelTaskWithId(id);
+    } catch (e, s) {
+      LoggerService.downloads.severe('Failed to delete download', e, s);
     } finally {
       Future.delayed(const Duration(milliseconds: 500), () {
         _processingDeletions.remove(id);
@@ -196,10 +208,6 @@ class DownloadsManagerService {
 
     _downloadItems[taskId] = updatedItem;
     _emit();
-
-    if (update is TaskStatusUpdate && update.status == TaskStatus.complete) {
-      unawaited(_handleCompletion(update.task));
-    }
   }
 
   bool _isTerminalStatus(TaskStatus status) {
@@ -210,35 +218,6 @@ class DownloadsManagerService {
     _downloadItems.remove(taskId);
     _emit();
     await FileDownloader().database.deleteRecordWithId(taskId);
-  }
-
-  /// Moves the completed task to shared storage in the background
-  Future<void> _handleCompletion(Task task) async {
-    if (task is! DownloadTask) return;
-
-    try {
-      final sharedPath = await FileDownloader().moveToSharedStorage(
-        task,
-        SharedStorage.downloads,
-      );
-
-      if (sharedPath != null) {
-        LoggerService.downloads.info(
-          'File moved to shared storage: $sharedPath',
-        );
-        final item = _downloadItems[task.taskId];
-        if (item != null) {
-          _downloadItems[task.taskId] = item.copyWith(localPath: sharedPath);
-          _emit();
-        }
-      }
-    } on Exception catch (e, s) {
-      LoggerService.downloads.warning(
-        'Failed to move file to shared storage',
-        e,
-        s,
-      );
-    }
   }
 
   /// Gets the item from the cache or creates it from the database
