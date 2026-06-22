@@ -5,11 +5,17 @@
 
 ## Type of change
 
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Refactor
-- [ ] CI / Build
-- [ ] Documentation
+<!-- Use conventional commit type: feat, fix, chore, refactor, perf, docs, ci, test, style -->
+
+- [ ] `feat` — New feature
+- [ ] `fix` — Bug fix
+- [ ] `chore` — Maintenance, dependencies, tooling
+- [ ] `refactor` — Code change without feature/fix
+- [ ] `perf` — Performance improvement
+- [ ] `docs` — Documentation only
+- [ ] `ci` — CI / Build only
+- [ ] `test` — Test only
+- [ ] `style` — Formatting, linting (no logic change)
 
 ## How to test?
 
@@ -23,4 +29,4 @@
 ## Checklist
 
 - [ ] `flutter analyze` passes with no new issues
-- [ ] No new warnings or errors
+- [ ] Commit messages follow conventional commits (`type: description`)

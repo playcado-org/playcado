@@ -45,6 +45,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Node.js / commitlint
+node_modules/
+
 # FVM - ignore machine-specific symlinks, keep config
 
 sentry.properties
