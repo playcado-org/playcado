@@ -2,6 +2,11 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.0.4]
+
+### Changed
+- Rewrote git history with descriptive commit messages and squashed related commits
+
 ## [1.0.3]
 
 ### Changed
