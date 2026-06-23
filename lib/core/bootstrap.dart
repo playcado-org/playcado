@@ -64,7 +64,7 @@ class BootstrapConfig {
 /// This follows the Very Good CLI bootstrap pattern where all initialization
 /// is encapsulated and `runApp` is called internally.
 Future<void> bootstrap() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  SentryWidgetsFlutterBinding.ensureInitialized();
 
   // Initialize MediaKit for video playback
   try {
@@ -92,7 +92,8 @@ Future<void> bootstrap() async {
 
   if (shouldInitializeSentry) {
     LoggerService.system.info('Starting app with Sentry');
-    await SentryFlutter.init((options) {
+    runApp(SentryWidget(child: app));
+    SentryFlutter.init((options) {
       options
         ..dsn = Secrets.sentryDsn
         ..sendDefaultPii = false
@@ -100,7 +101,7 @@ Future<void> bootstrap() async {
         ..tracesSampleRate = 0.2;
       options.replay.sessionSampleRate = 0.0;
       options.replay.onErrorSampleRate = 0.0;
-    }, appRunner: () => runApp(SentryWidget(child: app)));
+    });
   } else {
     LoggerService.system.warning(
       'Sentry disabled: SENTRY_DSN not provided in environment',
@@ -132,12 +133,13 @@ Future<BootstrapConfig> _initializeServices() async {
   final castPlayerService = CastPlayerService();
   final preferencesService = PreferencesService();
 
-  // Initialize Cast service early
-  await castDeviceService.initialize();
+  final (isFirstRun, savedThemeColor) = await (
+    preferencesService.isFirstRun(),
+    preferencesService.getThemeColor(),
+  ).wait;
 
-  // Load app preferences
-  final isFirstRun = await preferencesService.isFirstRun();
-  final savedThemeColor = await preferencesService.getThemeColor();
+  // Start Cast discovery in background (nothing downstream blocks on it)
+  unawaited(castDeviceService.initialize());
 
   // Attempt auto-login if not first run
   final initialUser = await _attemptAutoLogin(
@@ -167,7 +169,9 @@ Future<BootstrapConfig> _initializeServices() async {
 /// Configure system UI settings.
 Future<void> _configureSystemUI() async {
   unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  unawaited(
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
+  );
 }
 
 /// Attempt to auto-login the user if not first run.
