@@ -231,6 +231,7 @@ class _TopButtons extends StatelessWidget {
               unawaited(
                 showModalBottomSheet<void>(
                   context: context,
+                  isScrollControlled: true,
                   useRootNavigator: true,
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   showDragHandle: true,
