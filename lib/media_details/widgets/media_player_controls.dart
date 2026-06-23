@@ -16,6 +16,7 @@ class ActivePlaybackControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PlayerBloc, PlayerState>(
+      buildWhen: (prev, curr) => prev.status != curr.status,
       builder: (context, playerState) {
         final isPaused = playerState.status != PlayerStatus.playing;
 

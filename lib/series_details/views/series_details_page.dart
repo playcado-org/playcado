@@ -70,6 +70,10 @@ class _SeriesDetailsPageState extends State<SeriesDetailsPage> {
     return BlocProvider.value(
       value: _detailsBloc,
       child: BlocBuilder<PlayerBloc, PlayerState>(
+        buildWhen: (prev, curr) =>
+            prev.mediaItem?.id != curr.mediaItem?.id ||
+            prev.status != curr.status ||
+            prev.isCasting != curr.isCasting,
         builder: (context, playerState) {
           return BlocBuilder<SeriesDetailsBloc, SeriesDetailsState>(
             builder: (context, detailsState) {
