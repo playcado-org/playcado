@@ -20,6 +20,7 @@ class JellyfinClientService {
     String accessToken,
     String deviceId,
   ) {
+    _client?.dio.close();
     _client = client;
     _credentials = credentials;
     _accessToken = accessToken;
@@ -27,6 +28,7 @@ class JellyfinClientService {
   }
 
   void clear() {
+    _client?.dio.close();
     _client = null;
     _credentials = null;
     _accessToken = null;
