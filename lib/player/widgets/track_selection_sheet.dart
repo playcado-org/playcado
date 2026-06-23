@@ -25,7 +25,7 @@ class _TrackSelectionSheetState extends State<TrackSelectionSheet> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       child: DefaultTabController(
         length: 2,
