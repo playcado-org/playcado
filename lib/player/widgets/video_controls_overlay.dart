@@ -86,6 +86,9 @@ class _VideoControlsOverlayState extends State<VideoControlsOverlay> {
         _onInteraction();
       },
       child: BlocBuilder<PlayerBloc, PlayerState>(
+        buildWhen: (prev, curr) =>
+            prev.showSkipIntro != curr.showSkipIntro ||
+            prev.mediaItem?.id != curr.mediaItem?.id,
         builder: (context, state) {
           return Stack(
             children: [
