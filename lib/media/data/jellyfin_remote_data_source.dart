@@ -7,10 +7,12 @@ class JellyfinRemoteDataSource implements MediaRemoteDataSource {
   JellyfinRemoteDataSource({required JellyfinClientService clientManager})
     : _jellyfinClientService = clientManager;
   final JellyfinClientService _jellyfinClientService;
+  String? _cachedUserId;
 
   JellyfinDart get _requireClient {
     final client = _jellyfinClientService.client;
     if (client == null || !_jellyfinClientService.hasSession) {
+      _cachedUserId = null;
       throw Exception('Not authenticated');
     }
     return client;
@@ -18,8 +20,10 @@ class JellyfinRemoteDataSource implements MediaRemoteDataSource {
 
   @override
   Future<String?> getCurrentUserId() async {
+    if (_cachedUserId != null) return _cachedUserId;
     final userResponse = await _requireClient.getUserApi().getCurrentUser();
-    return userResponse.data?.id;
+    _cachedUserId = userResponse.data?.id;
+    return _cachedUserId;
   }
 
   @override
