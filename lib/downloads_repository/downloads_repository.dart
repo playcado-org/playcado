@@ -18,6 +18,8 @@ class DownloadsRepository {
   final _controller = StreamController<List<DownloadItem>>.broadcast();
   StreamSubscription<TaskUpdate>? _updatesSubscription;
 
+  bool _initialized = false;
+
   /// In-memory cache of items
   final Map<String, DownloadItem> _items = {};
 
@@ -29,11 +31,15 @@ class DownloadsRepository {
   List<DownloadItem> get currentDownloads => _items.values.toList();
 
   void dispose() {
+    _initialized = false;
     unawaited(_updatesSubscription?.cancel());
     unawaited(_controller.close());
   }
 
   Future<void> _init() async {
+    if (_initialized) return;
+    _initialized = true;
+
     try {
       // 1. Configure Plugin
       await FileDownloader().configure(

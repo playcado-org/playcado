@@ -46,6 +46,10 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: BlocBuilder<PlayerBloc, PlayerState>(
+        buildWhen: (prev, curr) =>
+            prev.playerView?.runtimeType != curr.playerView?.runtimeType ||
+            prev.isCasting != curr.isCasting ||
+            prev.mediaItem?.id != curr.mediaItem?.id,
         builder: (context, state) {
           if (state.isCasting) {
             return CastControlView(item: state.mediaItem);
