@@ -144,6 +144,10 @@ class _EpisodeTile extends StatelessWidget {
     );
 
     return BlocBuilder<PlayerBloc, PlayerState>(
+      buildWhen: (prev, curr) =>
+          (prev.mediaItem?.id == episode.id) !=
+              (curr.mediaItem?.id == episode.id) ||
+          prev.isActive != curr.isActive,
       builder: (context, playerState) {
         final isPlaying =
             playerState.mediaItem?.id == episode.id && playerState.isActive;
