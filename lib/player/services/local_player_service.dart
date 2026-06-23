@@ -10,24 +10,38 @@ import 'package:playcado/services/logger_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class LocalPlayerService implements PlayerService {
-  LocalPlayerService() {
-    _init();
-  }
+  LocalPlayerService();
 
   StreamSubscription<bool>? _bufferingSub;
   StreamSubscription<bool>? _completedSub;
-  late final VideoController _controller;
+  VideoController? _controller;
   PlayerServiceState _currentState = const PlayerServiceState();
   StreamSubscription<Duration>? _durationSub;
   DateTime? _lastPositionEmit;
-  late final Player _player;
   StreamSubscription<bool>? _playingSub;
   StreamSubscription<Duration>? _positionSub;
   final StreamController<PlayerServiceState> _stateController =
       StreamController<PlayerServiceState>.broadcast();
 
+  Player? _player;
+  Player get _lazyPlayer {
+    if (_player == null) {
+      final player = Player();
+      _player = player;
+      _controller = VideoController(
+        player,
+        configuration: const VideoControllerConfiguration(
+          androidAttachSurfaceAfterVideoParameters: true,
+        ),
+      );
+      unawaited(_initAudioSession());
+      _setupStreams(player);
+    }
+    return _player!;
+  }
+
   List<TrackInfo> get audioTracks {
-    final tracks = _player.state.tracks.audio;
+    final tracks = _lazyPlayer.state.tracks.audio;
     return List.generate(
       tracks.length,
       (i) => TrackInfo(
@@ -40,8 +54,8 @@ class LocalPlayerService implements PlayerService {
   }
 
   int get currentAudioTrackIndex {
-    final current = _player.state.track.audio;
-    final tracks = _player.state.tracks.audio;
+    final current = _lazyPlayer.state.track.audio;
+    final tracks = _lazyPlayer.state.tracks.audio;
     return tracks.indexOf(current);
   }
 
@@ -49,19 +63,25 @@ class LocalPlayerService implements PlayerService {
   PlayerServiceState get currentState => _currentState;
 
   int get currentSubtitleTrackIndex {
-    final current = _player.state.track.subtitle;
-    final tracks = _player.state.tracks.subtitle;
+    final current = _lazyPlayer.state.track.subtitle;
+    final tracks = _lazyPlayer.state.tracks.subtitle;
     return tracks.indexOf(current);
   }
 
   @override
-  PlayerView? get playerView => LocalPlayerView(_controller);
+  PlayerView get playerView {
+    // Ensure the player and video controller are initialized before
+    // providing the view.  The controller is set up inside _lazyPlayer
+    // and is guaranteed non-null after that point.
+    final _ = _lazyPlayer;
+    return LocalPlayerView(_controller!);
+  }
 
   @override
   Stream<PlayerServiceState> get stateStream => _stateController.stream;
 
   List<TrackInfo> get subtitleTracks {
-    final tracks = _player.state.tracks.subtitle;
+    final tracks = _lazyPlayer.state.tracks.subtitle;
     return List.generate(
       tracks.length,
       (i) => TrackInfo(
@@ -80,7 +100,7 @@ class LocalPlayerService implements PlayerService {
     await _bufferingSub?.cancel();
     await _durationSub?.cancel();
     await _completedSub?.cancel();
-    await _player.dispose();
+    await _player?.dispose();
     await _stateController.close();
     await WakelockPlus.disable();
   }
@@ -88,67 +108,57 @@ class LocalPlayerService implements PlayerService {
   @override
   Future<void> load(PlayableMedia media) async {
     LoggerService.player.info('LocalPlayerService loading: ${media.title}');
-    await WakelockPlus.enable();
 
     _currentState = const PlayerServiceState();
 
-    await _player.open(Media(media.streamUrl, httpHeaders: media.httpHeaders));
+    await _lazyPlayer.open(
+      Media(media.streamUrl, httpHeaders: media.httpHeaders),
+    );
 
     if (media.startPosition > Duration.zero) {
-      await _player.stream.duration.firstWhere((d) => d > Duration.zero);
-      await _player.seek(media.startPosition);
-      // On some Android devices (MTK) the codec is released and recreated
-      // during startup, which discards the seek above.  If position resets
-      // near 0, re-apply the seek once.
-      await _player.stream.position
+      // Wait for the duration to become known before seeking.
+      // Without this the seek may land before the media has loaded
+      // enough to know its boundaries.
+      await _lazyPlayer.stream.duration
+          .firstWhere((d) => d > Duration.zero)
+          .timeout(const Duration(seconds: 10), onTimeout: () => Duration.zero);
+      await _lazyPlayer.seek(media.startPosition);
+      await _lazyPlayer.stream.position
           .firstWhere((pos) => pos < const Duration(seconds: 3))
           .timeout(const Duration(seconds: 5))
-          .then((_) => _player.seek(media.startPosition))
+          .then((_) => _lazyPlayer.seek(media.startPosition))
           .catchError((_) {});
     }
   }
 
   @override
-  Future<void> pause() async => _player.pause();
+  Future<void> pause() async => _lazyPlayer.pause();
 
   @override
-  Future<void> play() async => _player.play();
+  Future<void> play() async => _lazyPlayer.play();
 
   @override
-  Future<void> seek(Duration position) async => _player.seek(position);
+  Future<void> seek(Duration position) async => _lazyPlayer.seek(position);
 
   @override
   Future<void> setAudioTrack(int index) async {
-    final tracks = _player.state.tracks.audio;
+    final tracks = _lazyPlayer.state.tracks.audio;
     if (index >= 0 && index < tracks.length) {
-      await _player.setAudioTrack(tracks[index]);
+      await _lazyPlayer.setAudioTrack(tracks[index]);
     }
   }
 
   @override
   Future<void> setSubtitleTrack(int index) async {
-    final tracks = _player.state.tracks.subtitle;
+    final tracks = _lazyPlayer.state.tracks.subtitle;
     if (index >= 0 && index < tracks.length) {
-      await _player.setSubtitleTrack(tracks[index]);
+      await _lazyPlayer.setSubtitleTrack(tracks[index]);
     }
   }
 
   @override
   Future<void> stop() async {
-    await _player.stop();
-    await WakelockPlus.disable();
-  }
-
-  void _init() {
-    _player = Player();
-    _controller = VideoController(
-      _player,
-      configuration: const VideoControllerConfiguration(
-        androidAttachSurfaceAfterVideoParameters: true,
-      ),
-    );
-    unawaited(_initAudioSession());
-    _setupStreams();
+    await _lazyPlayer.stop();
   }
 
   Future<void> _initAudioSession() async {
@@ -169,10 +179,16 @@ class LocalPlayerService implements PlayerService {
     );
   }
 
-  void _setupStreams() {
-    _positionSub = _player.stream.position.listen((position) {
+  void _setupStreams(Player player) {
+    _positionSub = player.stream.position.listen((position) {
       final now = DateTime.now();
-      if (_lastPositionEmit != null &&
+      final duration = player.state.duration;
+
+      // Always emit if the video is at the very end
+      final isAtEnd = position >= duration && duration > Duration.zero;
+
+      if (!isAtEnd &&
+          _lastPositionEmit != null &&
           now.difference(_lastPositionEmit!) <
               const Duration(milliseconds: 200)) {
         return;
@@ -180,16 +196,21 @@ class LocalPlayerService implements PlayerService {
       _lastPositionEmit = now;
       _updateState(position: position);
     });
-    _playingSub = _player.stream.playing.listen((isPlaying) {
+    _playingSub = player.stream.playing.listen((isPlaying) {
       _updateState(isPlaying: isPlaying);
+      if (isPlaying) {
+        WakelockPlus.enable();
+      } else {
+        WakelockPlus.disable();
+      }
     });
-    _bufferingSub = _player.stream.buffering.listen((isBuffering) {
+    _bufferingSub = player.stream.buffering.listen((isBuffering) {
       _updateState(isBuffering: isBuffering);
     });
-    _durationSub = _player.stream.duration.listen((duration) {
+    _durationSub = player.stream.duration.listen((duration) {
       _updateState(duration: duration);
     });
-    _completedSub = _player.stream.completed.listen((isCompleted) {
+    _completedSub = player.stream.completed.listen((isCompleted) {
       _updateState(isCompleted: isCompleted);
     });
   }
@@ -201,6 +222,8 @@ class LocalPlayerService implements PlayerService {
     bool? isPlaying,
     Duration? position,
   }) {
+    if (_stateController.isClosed) return;
+
     _currentState = _currentState.copyWith(
       duration: duration,
       isBuffering: isBuffering,
