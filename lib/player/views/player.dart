@@ -39,6 +39,9 @@ class _PlayerState extends State<Player> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PlayerBloc, PlayerState>(
+      buildWhen: (prev, curr) =>
+          prev.playerView?.runtimeType != curr.playerView?.runtimeType ||
+          prev.mediaItem?.id != curr.mediaItem?.id,
       builder: (context, state) {
         final title = state.mediaItem?.name ?? widget.item.name;
         final playerView = state.playerView;

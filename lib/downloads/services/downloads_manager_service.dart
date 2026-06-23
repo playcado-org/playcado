@@ -18,13 +18,26 @@ class DownloadsManagerService {
   final _controller = StreamController<List<DownloadItem>>.broadcast();
   final Map<String, DownloadItem> _downloadItems = {};
   StreamSubscription<TaskUpdate>? _updatesSubscription;
+  bool _initialized = false;
+
+  /// Tracks IDs currently being deleted to prevent race conditions
+  /// where terminal updates resurrect the item in the UI.
   final Set<String> _processingDeletions = {};
 
   Stream<List<DownloadItem>> get downloads =>
       _controller.stream.throttleTime(const Duration(milliseconds: 250));
   List<DownloadItem> get currentDownloads => _downloadItems.values.toList();
 
+  void dispose() {
+    _initialized = false;
+    unawaited(_updatesSubscription?.cancel());
+    unawaited(_controller.close());
+  }
+
   Future<void> _init() async {
+    if (_initialized) return;
+    _initialized = true;
+
     try {
       await FileDownloader().configure(
         globalConfig: [(Config.requestTimeout, const Duration(seconds: 100))],

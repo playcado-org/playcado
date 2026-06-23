@@ -19,6 +19,7 @@ class LocalPlayerService implements PlayerService {
   late final VideoController _controller;
   PlayerServiceState _currentState = const PlayerServiceState();
   StreamSubscription<Duration>? _durationSub;
+  DateTime? _lastPositionEmit;
   late final Player _player;
   StreamSubscription<bool>? _playingSub;
   StreamSubscription<Duration>? _positionSub;
@@ -170,6 +171,13 @@ class LocalPlayerService implements PlayerService {
 
   void _setupStreams() {
     _positionSub = _player.stream.position.listen((position) {
+      final now = DateTime.now();
+      if (_lastPositionEmit != null &&
+          now.difference(_lastPositionEmit!) <
+              const Duration(milliseconds: 200)) {
+        return;
+      }
+      _lastPositionEmit = now;
       _updateState(position: position);
     });
     _playingSub = _player.stream.playing.listen((isPlaying) {
