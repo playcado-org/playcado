@@ -106,16 +106,17 @@ jobs:
 
       - name: Extract release notes
         run: |
+          mkdir -p distribution/whatsnew
           awk -v ver="[${{ steps.version.outputs.build_name }}]" \
             '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
-            CHANGELOG.md > /tmp/release-notes.md || true
+            CHANGELOG.md > distribution/whatsnew/whatsnew-en-US || true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ steps.version.outputs.build_name }}
-          body_path: /tmp/release-notes.md
+          body_path: distribution/whatsnew/whatsnew-en-US
           files: build/ios/ipa/*.ipa
 
       - name: Clean up keychain
