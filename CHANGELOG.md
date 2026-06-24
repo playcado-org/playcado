@@ -2,6 +2,20 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.0.5]
+
+### Fixed
+- Close Jellyfin HTTP sessions to prevent connection leak (#3)
+- Throttle position updates and add buildWhen to reduce video stutter (#4)
+- Increase track selection sheet height and enable scroll control in bottom sheet (#5)
+
+### Performance
+- Reduce app startup time by ~800ms (#7)
+
+### Changed
+- Add dart-mcp-server to MCP config (#6)
+- Enforce conventional commits via commitlint and PR title lint
+
 ## [1.0.4]
 
 ### Changed
