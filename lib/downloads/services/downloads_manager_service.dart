@@ -307,9 +307,4 @@ class DownloadsManagerService {
   }
 
   void _emit() => _controller.add(_downloadItems.values.toList());
-
-  void dispose() {
-    unawaited(_updatesSubscription?.cancel());
-    unawaited(_controller.close());
-  }
 }
