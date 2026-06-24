@@ -86,6 +86,13 @@ jobs:
           name: android-symbols-${{ steps.version.outputs.build_name }}
           path: build/symbols/
 
+      - name: Extract release notes
+        run: |
+          mkdir -p distribution/whatsnew
+          awk -v ver="[${{ steps.version.outputs.build_name }}]" \
+            '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
+            CHANGELOG.md > distribution/whatsnew/whatsnew-en-US || true
+
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
@@ -95,17 +102,12 @@ jobs:
           track: ${{ inputs.track }}
           status: completed
           mappingFile: build/app/outputs/mapping/release/mapping.txt
-
-      - name: Extract release notes
-        run: |
-          awk -v ver="[${{ steps.version.outputs.build_name }}]" \
-            '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
-            CHANGELOG.md > /tmp/release-notes.md || true
+          whatsNewDirectory: distribution/whatsnew
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ steps.version.outputs.build_name }}
-          body_path: /tmp/release-notes.md
+          body_path: distribution/whatsnew/whatsnew-en-US
           files: build/app/outputs/bundle/release/app-release.aab
