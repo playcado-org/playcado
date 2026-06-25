@@ -130,16 +130,18 @@ class MediaDetailsActions extends StatelessWidget {
                         AppRouter.offlineMediaDetailPath,
                         extra: downloadedItem,
                       );
-                    } else if (activeDownload == null ||
-                        activeDownload.status == ActiveDownloadStatus.error) {
-                      context.read<DownloadsBloc>().add(
-                        DownloadsRequested(item: item),
-                      );
-                      if (item.type == MediaItemType.episode) {
-                        SnackbarHelper.showInfo(
-                          context,
-                          context.l10n.downloadingEpisode,
+                    } else {
+                      if (activeDownload == null ||
+                          activeDownload.status == ActiveDownloadStatus.error) {
+                        context.read<DownloadsBloc>().add(
+                          DownloadsRequested(item: item),
                         );
+                        if (item.type == MediaItemType.episode) {
+                          SnackbarHelper.showInfo(
+                            context,
+                            context.l10n.downloadingEpisode,
+                          );
+                        }
                       }
                       context.go(AppRouter.downloadsPath);
                     }
