@@ -27,8 +27,52 @@ part '../widgets/episode_tile.dart';
 part '../widgets/section_header.dart';
 part '../widgets/series_header.dart';
 
-class DownloadsScreen extends StatelessWidget {
+class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
+
+  @override
+  State<DownloadsScreen> createState() => _DownloadsScreenState();
+}
+
+class _DownloadsScreenState extends State<DownloadsScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+  bool _tabForcedByExtra = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+    _applyTabFromRoute();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _applyTabFromRoute();
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabForcedByExtra && !_tabController.indexIsChanging) {
+      _tabForcedByExtra = false;
+    }
+  }
+
+  void _applyTabFromRoute() {
+    final extra = GoRouterState.of(context).extra;
+    if (extra is int && extra >= 0 && extra < 3) {
+      _tabController.index = extra;
+      _tabForcedByExtra = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,32 +90,31 @@ class DownloadsScreen extends StatelessWidget {
       );
     }
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: IconTitle(title: context.l10n.downloads),
-          centerTitle: false,
-          bottom: TabBar(
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            splashBorderRadius: const BorderRadius.vertical(
-              top: Radius.circular(12),
-            ),
-            tabs: [
-              Tab(text: context.l10n.manager),
-              Tab(text: context.l10n.movies),
-              Tab(text: context.l10n.tvShows),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: IconTitle(title: context.l10n.downloads),
+        centerTitle: false,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorSize: TabBarIndicatorSize.tab,
+          dividerColor: Colors.transparent,
+          splashBorderRadius: const BorderRadius.vertical(
+            top: Radius.circular(12),
           ),
-        ),
-        body: const TabBarView(
-          children: [
-            _ManagerTab(),
-            _DownloadsGrid(filterType: MediaItemType.movie),
-            _DownloadedTvList(),
+          tabs: [
+            Tab(text: context.l10n.manager),
+            Tab(text: context.l10n.movies),
+            Tab(text: context.l10n.tvShows),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          const _ManagerTab(),
+          const _DownloadsGrid(filterType: MediaItemType.movie),
+          const _DownloadedTvList(),
+        ],
       ),
     );
   }
