@@ -18,6 +18,7 @@ class DownloadsManagerService {
   final _controller = StreamController<List<DownloadItem>>.broadcast();
   final Map<String, DownloadItem> _downloadItems = {};
   StreamSubscription<TaskUpdate>? _updatesSubscription;
+
   bool _initialized = false;
 
   /// Tracks IDs currently being deleted to prevent race conditions
