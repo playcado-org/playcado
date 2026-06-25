@@ -295,11 +295,15 @@ class DownloadsManagerService {
             ? update.expectedFileSize
             : item.totalBytes;
 
-        final received = total > 0 ? (total * update.progress).round() : 0;
+        final received = update.progress >= 0
+            ? (total * update.progress).round()
+            : item.receivedBytes;
 
         return item.copyWith(
-          progress: update.progress,
-          networkSpeed: update.networkSpeed * 1024 * 1024,
+          progress: update.progress >= 0 ? update.progress : item.progress,
+          networkSpeed: update.networkSpeed > 0
+              ? update.networkSpeed * 1024 * 1024
+              : 0,
           totalBytes: total,
           receivedBytes: received,
         );
