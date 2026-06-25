@@ -122,7 +122,7 @@ class MediaDetailsActions extends StatelessWidget {
                             'S${item.parentIndexNumber} '
                             'E${item.indexNumber}'
                       : downloadLabel,
-                    onTap: () {
+                  onTap: () {
                     if (isDownloaded) {
                       final downloadedItem = downloadsState.offlineLibrary
                           .firstWhere((d) => d.id == item.id);
