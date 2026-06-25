@@ -2,15 +2,18 @@ part of '../views/downloads_screen.dart';
 
 class _EpisodeTile extends StatelessWidget {
   const _EpisodeTile({required this.item});
-  final DownloadItem item;
+  final DownloadedMediaItem item;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final urlService = context.read<MediaUrlService>();
+    final imageUrl = urlService.getImageUrl(item.media.id);
 
-    final season = item.parentIndexNumber?.toString().padLeft(2, '0') ?? '??';
-    final episode = item.indexNumber?.toString().padLeft(2, '0') ?? '??';
+    final season =
+        item.media.parentIndexNumber?.toString().padLeft(2, '0') ?? '??';
+    final episode = item.media.indexNumber?.toString().padLeft(2, '0') ?? '??';
 
     return Card(
       elevation: 0,
@@ -21,7 +24,7 @@ class _EpisodeTile extends StatelessWidget {
       child: InkWell(
         onTap: () {
           unawaited(
-            Navigator.of(context).push(OfflineMediaDetailPage.route(item)),
+            context.push(AppRouter.offlineMediaDetailPath, extra: item),
           );
         },
         child: Padding(
@@ -33,9 +36,9 @@ class _EpisodeTile extends StatelessWidget {
                 child: SizedBox(
                   width: 60,
                   height: 60,
-                  child: item.imageUrl != null
+                  child: imageUrl.isNotEmpty
                       ? PlaycadoNetworkImage(
-                          imageUrl: item.imageUrl!,
+                          imageUrl: imageUrl,
                           errorWidget: (context, url, error) => ColoredBox(
                             color: colorScheme.surfaceContainerHighest,
                             child: const PlaycadoIcon(
@@ -88,7 +91,7 @@ class _EpisodeTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      item.name,
+                      item.media.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(

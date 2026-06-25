@@ -8,10 +8,11 @@ import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/formatters.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads/models/download_item.dart';
-import 'package:playcado/downloads/views/offline_media_detail_page.dart';
+import 'package:playcado/downloads/models/active_download.dart';
+import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
+import 'package:playcado/services/media_url/media_url_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 part 'downloaded_tv_list.dart';
