@@ -28,6 +28,9 @@ class AppRouter {
   final AuthBloc authBloc;
   final OnboardingCubit onboardingCubit;
 
+  final GlobalKey<NavigatorState> rootNavigatorKey =
+      GlobalKey<NavigatorState>();
+
   static const basePath = '/';
   static const serverManagementPath = '/server_management';
   static const onboardingPath = '/onboarding';
@@ -43,6 +46,7 @@ class AppRouter {
   static const offlineMediaDetailPath = '/offline-media';
 
   late final GoRouter router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: basePath,
     refreshListenable: Listenable.merge([
       _GoRouterRefreshStream(authBloc.stream),
@@ -108,9 +112,13 @@ class AppRouter {
       ),
       GoRoute(
         path: offlineMediaDetailPath,
-        builder: (context, state) {
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
           final item = state.extra! as DownloadedMediaItem;
-          return OfflineMediaDetailPage(item: item);
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: OfflineMediaDetailPage(item: item),
+          );
         },
       ),
       GoRoute(
