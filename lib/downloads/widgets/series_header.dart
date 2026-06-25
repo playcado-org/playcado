@@ -3,13 +3,18 @@ part of '../views/downloads_screen.dart';
 class _SeriesHeader extends StatelessWidget {
   const _SeriesHeader({required this.seriesName, required this.episodes});
   final String seriesName;
-  final List<DownloadItem> episodes;
+  final List<DownloadedMediaItem> episodes;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final urlService = context.read<MediaUrlService>();
     final first = episodes.first;
-    final seasonCount = episodes.map((e) => e.parentIndexNumber).toSet().length;
+    final imageUrl = urlService.getImageUrl(first.media.id);
+    final seasonCount = episodes
+        .map((e) => e.media.parentIndexNumber)
+        .toSet()
+        .length;
 
     return Row(
       children: [
@@ -18,9 +23,9 @@ class _SeriesHeader extends StatelessWidget {
           child: SizedBox(
             width: 48,
             height: 48,
-            child: first.imageUrl != null
+            child: imageUrl.isNotEmpty
                 ? PlaycadoNetworkImage(
-                    imageUrl: first.imageUrl!,
+                    imageUrl: imageUrl,
                     errorWidget: (context, url, error) => ColoredBox(
                       color: theme.colorScheme.surfaceContainerHighest,
                       child: const PlaycadoIcon(PlaycadoIcons.imageNotFound),

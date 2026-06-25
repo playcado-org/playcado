@@ -5,8 +5,8 @@ class _OfflineBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = context.select<DownloadsBloc, List<DownloadItem>>(
-      (b) => b.state.completedDownloads,
+    final items = context.select<DownloadsBloc, List<DownloadedMediaItem>>(
+      (b) => b.state.offlineLibrary,
     );
     if (items.isEmpty) {
       return _EmptyState(

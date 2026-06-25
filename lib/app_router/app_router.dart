@@ -7,7 +7,9 @@ import 'package:playcado/app_router/main_navigation_shell.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 
 import 'package:playcado/devtools/views/dev_tools_screen.dart';
+import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/downloads/views/downloads_screen.dart';
+import 'package:playcado/downloads/views/offline_media_detail_page.dart';
 import 'package:playcado/home/views/home_screen.dart';
 import 'package:playcado/libraries/views/library_browse_screen.dart';
 import 'package:playcado/media/models/media_item.dart';
@@ -38,6 +40,7 @@ class AppRouter {
   static const videoPlayerPath = '/player';
   static const searchPath = '/search';
   static const libraryPath = '/library';
+  static const offlineMediaDetailPath = '/offline-media';
 
   late final GoRouter router = GoRouter(
     initialLocation: basePath,
@@ -101,6 +104,13 @@ class AppRouter {
           final item = extra['item'] as MediaItem;
           final heroTag = extra['heroTag'] as String;
           return MediaDetailsPage(item: item, heroTag: heroTag);
+        },
+      ),
+      GoRoute(
+        path: offlineMediaDetailPath,
+        builder: (context, state) {
+          final item = state.extra! as DownloadedMediaItem;
+          return OfflineMediaDetailPage(item: item);
         },
       ),
       GoRoute(
@@ -169,7 +179,8 @@ class AppRouter {
         if (state.matchedLocation == downloadsPath ||
             state.matchedLocation == settingsPath ||
             state.matchedLocation == videoPlayerPath ||
-            state.matchedLocation == detailsPath) {
+            state.matchedLocation == detailsPath ||
+            state.matchedLocation == offlineMediaDetailPath) {
           return null;
         }
         // Default to downloads for any other route

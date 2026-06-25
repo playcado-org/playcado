@@ -7,6 +7,7 @@ import 'package:playcado/auth_repository/auth_repository.dart';
 import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
+import 'package:playcado/downloads/data/downloaded_media_database.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
 import 'package:playcado/downloads/services/downloads_manager_service.dart';
 import 'package:playcado/l10n/app_localizations.dart';
@@ -52,6 +53,10 @@ class App extends StatelessWidget {
         ),
         RepositoryProvider<SecureStorageService>.value(
           value: config.secureStorageService,
+        ),
+        RepositoryProvider<DownloadedMediaDatabase>(
+          create: (context) => DownloadedMediaDatabase(),
+          dispose: (db) => db.close(),
         ),
       ],
       child: MultiBlocProvider(
@@ -107,13 +112,16 @@ class App extends StatelessWidget {
                   create: (context) =>
                       SearchRepository(dataSource: remoteDataSource),
                 ),
-                RepositoryProvider<DownloadsManagerService>(
-                  create: (context) =>
-                      DownloadsManagerService(urlGenerator: mediaUrlService),
-                  dispose: (service) => service.dispose(),
-                ),
                 RepositoryProvider<MediaUrlService>.value(
                   value: mediaUrlService,
+                ),
+                RepositoryProvider<DownloadsManagerService>(
+                  create: (context) => DownloadsManagerService(
+                    urlService: context.read<MediaUrlService>(),
+                    jellyfinClient: config.jellyfinClientService,
+                    database: context.read<DownloadedMediaDatabase>(),
+                  ),
+                  dispose: (service) => service.dispose(),
                 ),
               ],
               child: MultiBlocProvider(

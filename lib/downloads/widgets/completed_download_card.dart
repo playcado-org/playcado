@@ -5,13 +5,15 @@ class _CompletedDownloadCard extends StatelessWidget {
     required this.item,
     required this.isOfflineMode,
   });
-  final DownloadItem item;
+  final DownloadedMediaItem item;
   final bool isOfflineMode;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final urlService = context.read<MediaUrlService>();
+    final imageUrl = urlService.getImageUrl(item.media.id);
 
     return Card(
       elevation: 0,
@@ -22,7 +24,7 @@ class _CompletedDownloadCard extends StatelessWidget {
       child: InkWell(
         onTap: () {
           unawaited(
-            Navigator.of(context).push(OfflineMediaDetailPage.route(item)),
+            context.push(AppRouter.offlineMediaDetailPath, extra: item),
           );
         },
         child: Padding(
@@ -37,9 +39,9 @@ class _CompletedDownloadCard extends StatelessWidget {
                     child: SizedBox(
                       width: 80,
                       height: 50,
-                      child: item.imageUrl != null
+                      child: imageUrl.isNotEmpty
                           ? PlaycadoNetworkImage(
-                              imageUrl: item.imageUrl!,
+                              imageUrl: imageUrl,
                               errorWidget: (context, url, error) => ColoredBox(
                                 color: colorScheme.surfaceContainerHighest,
                                 child: const PlaycadoIcon(
@@ -74,7 +76,7 @@ class _CompletedDownloadCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.name,
+                      item.media.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -99,7 +101,7 @@ class _CompletedDownloadCard extends StatelessWidget {
                     );
                     SnackbarHelper.showInfo(
                       context,
-                      context.l10n.deletedItem(item.name),
+                      context.l10n.deletedItem(item.media.name),
                     );
                   },
                   icon: const PlaycadoIcon(PlaycadoIcons.trash),

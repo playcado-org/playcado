@@ -5,15 +5,16 @@ class _ManagerTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<DownloadsBloc, List<DownloadItem>>(
+    final active = context.select<DownloadsBloc, List<ActiveDownload>>(
       (b) => b.state.activeDownloads,
     );
     final completed =
-        context.select<DownloadsBloc, List<DownloadItem>>(
-          (b) => b.state.completedDownloads,
+        context.select<DownloadsBloc, List<DownloadedMediaItem>>(
+          (b) => b.state.offlineLibrary,
         )..sort(
-          (a, b) =>
-              (b.lastUpdateTimeMs ?? 0).compareTo(a.lastUpdateTimeMs ?? 0),
+          (a, b) => b.downloadedAt.millisecondsSinceEpoch.compareTo(
+            a.downloadedAt.millisecondsSinceEpoch,
+          ),
         );
     if (completed.length > 10) completed.length = 10;
 

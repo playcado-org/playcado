@@ -1,23 +1,24 @@
 part of 'downloads_bloc.dart';
 
 class DownloadsState extends Equatable {
-  const DownloadsState({this.downloads = const [], this.isLoading = true});
-  final List<DownloadItem> downloads;
-  final bool isLoading;
+  const DownloadsState({
+    this.activeDownloads = const [],
+    this.offlineLibrary = const [],
+  });
 
-  List<DownloadItem> get activeDownloads =>
-      downloads.where((i) => i.status != DownloadStatus.completed).toList();
+  final List<ActiveDownload> activeDownloads;
+  final List<DownloadedMediaItem> offlineLibrary;
 
-  List<DownloadItem> get completedDownloads =>
-      downloads.where((i) => i.status == DownloadStatus.completed).toList();
-
-  DownloadsState copyWith({List<DownloadItem>? downloads, bool? isLoading}) {
+  DownloadsState copyWith({
+    List<ActiveDownload>? activeDownloads,
+    List<DownloadedMediaItem>? offlineLibrary,
+  }) {
     return DownloadsState(
-      downloads: downloads ?? this.downloads,
-      isLoading: isLoading ?? this.isLoading,
+      activeDownloads: activeDownloads ?? this.activeDownloads,
+      offlineLibrary: offlineLibrary ?? this.offlineLibrary,
     );
   }
 
   @override
-  List<Object> get props => [downloads, isLoading];
+  List<Object> get props => [activeDownloads, offlineLibrary];
 }

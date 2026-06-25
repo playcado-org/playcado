@@ -5,9 +5,9 @@ class _DownloadedTvList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final episodes = context.select<DownloadsBloc, List<DownloadItem>>(
-      (b) => b.state.completedDownloads
-          .where((d) => d.type == MediaItemType.episode)
+    final episodes = context.select<DownloadsBloc, List<DownloadedMediaItem>>(
+      (b) => b.state.offlineLibrary
+          .where((d) => d.media.type == MediaItemType.episode)
           .toList(),
     );
 
@@ -20,19 +20,19 @@ class _DownloadedTvList extends StatelessWidget {
       );
     }
 
-    final grouped = <String, List<DownloadItem>>{};
+    final grouped = <String, List<DownloadedMediaItem>>{};
     for (final ep in episodes) {
-      final key = ep.seriesName ?? ep.name;
+      final key = ep.media.seriesName ?? ep.media.name;
       grouped.putIfAbsent(key, () => []).add(ep);
     }
 
     for (final group in grouped.values) {
       group.sort((a, b) {
-        final sa = a.parentIndexNumber ?? 0;
-        final sb = b.parentIndexNumber ?? 0;
+        final sa = a.media.parentIndexNumber ?? 0;
+        final sb = b.media.parentIndexNumber ?? 0;
         if (sa != sb) return sa.compareTo(sb);
-        final ea = a.indexNumber ?? 0;
-        final eb = b.indexNumber ?? 0;
+        final ea = a.media.indexNumber ?? 0;
+        final eb = b.media.indexNumber ?? 0;
         return ea.compareTo(eb);
       });
     }

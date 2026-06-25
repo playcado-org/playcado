@@ -2,18 +2,21 @@ part of '../views/downloads_screen.dart';
 
 class _ActiveDownloadCard extends StatelessWidget {
   const _ActiveDownloadCard({required this.item});
-  final DownloadItem item;
+  final ActiveDownload item;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isPaused = item.status == DownloadStatus.paused;
-    final isError = item.status == DownloadStatus.error;
-    final isDownloading = item.status == DownloadStatus.downloading;
+    final urlService = context.read<MediaUrlService>();
+    final isPaused = item.status == ActiveDownloadStatus.paused;
+    final isError = item.status == ActiveDownloadStatus.error;
+    final isDownloading = item.status == ActiveDownloadStatus.downloading;
 
     // Indeterminate if downloading but total size is unknown/0
     final isIndeterminate = isDownloading && item.totalBytes <= 0;
+
+    final imageUrl = urlService.getImageUrl(item.media.id);
 
     return Card(
       elevation: 0,
@@ -32,9 +35,9 @@ class _ActiveDownloadCard extends StatelessWidget {
                   child: SizedBox(
                     width: 60,
                     height: 90,
-                    child: item.imageUrl != null
+                    child: imageUrl.isNotEmpty
                         ? PlaycadoNetworkImage(
-                            imageUrl: item.imageUrl!,
+                            imageUrl: imageUrl,
                             errorWidget: (context, url, error) => ColoredBox(
                               color: colorScheme.surfaceContainerHighest,
                               child: const PlaycadoIcon(
@@ -55,7 +58,7 @@ class _ActiveDownloadCard extends StatelessWidget {
                     children: [
                       const SizedBox(height: 4),
                       Text(
-                        item.name,
+                        item.media.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -119,8 +122,8 @@ class _ActiveDownloadCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (item.status == DownloadStatus.downloading ||
-                    item.status == DownloadStatus.queued)
+                if (item.status == ActiveDownloadStatus.downloading ||
+                    item.status == ActiveDownloadStatus.queued)
                   TextButton.icon(
                     onPressed: () {
                       context.read<DownloadsBloc>().add(
@@ -167,9 +170,9 @@ class _ActiveDownloadCard extends StatelessWidget {
 
   String _getProgressText(BuildContext context) {
     switch (item.status) {
-      case DownloadStatus.queued:
+      case ActiveDownloadStatus.queued:
         return context.l10n.queued;
-      case DownloadStatus.downloading:
+      case ActiveDownloadStatus.downloading:
         final percent = (item.progress * 100).toStringAsFixed(1);
         if (item.totalBytes > 0) {
           final current = Formatters.formatBytes(item.receivedBytes);
@@ -177,12 +180,10 @@ class _ActiveDownloadCard extends StatelessWidget {
           return '$percent% • $current of $total';
         }
         return '$percent%';
-      case DownloadStatus.paused:
+      case ActiveDownloadStatus.paused:
         return context.l10n.paused;
-      case DownloadStatus.error:
-        return context.l10n.failed;
-      case DownloadStatus.completed:
-        return context.l10n.completed;
+      case ActiveDownloadStatus.error:
+        return item.errorReason ?? context.l10n.failed;
     }
   }
 }

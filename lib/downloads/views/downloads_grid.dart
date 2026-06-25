@@ -6,9 +6,9 @@ class _DownloadsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = context.select<DownloadsBloc, List<DownloadItem>>(
-      (b) => b.state.completedDownloads
-          .where((d) => d.type == filterType)
+    final items = context.select<DownloadsBloc, List<DownloadedMediaItem>>(
+      (b) => b.state.offlineLibrary
+          .where((d) => d.media.type == filterType)
           .toList(),
     );
 

@@ -2,19 +2,21 @@ part of '../views/downloads_screen.dart';
 
 class _DownloadPoster extends StatelessWidget {
   const _DownloadPoster({required this.item});
-  final DownloadItem item;
+  final DownloadedMediaItem item;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final urlService = context.read<MediaUrlService>();
+    final imageUrl = urlService.getImageUrl(item.media.id);
 
     return Semantics(
       button: true,
-      label: item.name,
+      label: item.media.name,
       child: GestureDetector(
         onTap: () {
           unawaited(
-            Navigator.of(context).push(OfflineMediaDetailPage.route(item)),
+            context.push(AppRouter.offlineMediaDetailPath, extra: item),
           );
         },
         child: RepaintBoundary(
@@ -35,9 +37,9 @@ class _DownloadPoster extends StatelessWidget {
                     color: theme.colorScheme.surfaceContainerHighest,
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: item.imageUrl != null
+                  child: imageUrl.isNotEmpty
                       ? PlaycadoNetworkImage(
-                          imageUrl: item.imageUrl!,
+                          imageUrl: imageUrl,
                           width: double.infinity,
                           memCacheWidth: 240,
                           memCacheHeight: 360,
@@ -70,9 +72,12 @@ class _DownloadPoster extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                item.productionYear != null
-                    ? item.name.replaceAll(' (${item.productionYear})', '')
-                    : item.name,
+                item.media.productionYear != null
+                    ? item.media.name.replaceAll(
+                        ' (${item.media.productionYear})',
+                        '',
+                      )
+                    : item.media.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -80,7 +85,7 @@ class _DownloadPoster extends StatelessWidget {
                   letterSpacing: 0.2,
                 ),
               ),
-              if (item.productionYear case final year?)
+              if (item.media.productionYear case final year?)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(

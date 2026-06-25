@@ -5,47 +5,56 @@ abstract class DownloadsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class DownloadsDeleteRequested extends DownloadsEvent {
-  DownloadsDeleteRequested(this.id);
-  final String id;
-  @override
-  List<Object?> get props => [id];
-}
-
-class DownloadsInitialized extends DownloadsEvent {}
-
-class DownloadsPauseRequested extends DownloadsEvent {
-  DownloadsPauseRequested(this.id);
-  final String id;
-  @override
-  List<Object?> get props => [id];
-}
-
-class DownloadsResumeRequested extends DownloadsEvent {
-  DownloadsResumeRequested(this.id);
-  final String id;
-  @override
-  List<Object?> get props => [id];
-}
-
-class DownloadsStartRequested extends DownloadsEvent {
-  DownloadsStartRequested(this.item);
-  final DownloadItem item;
-  @override
-  List<Object?> get props => [item];
-}
-
 class DownloadsRequested extends DownloadsEvent {
   DownloadsRequested({required this.item});
+
   final MediaItem item;
 
   @override
   List<Object?> get props => [item];
 }
 
-class DownloadsUpdated extends DownloadsEvent {
-  DownloadsUpdated(this.items);
-  final List<DownloadItem> items;
+class DownloadsDeleteRequested extends DownloadsEvent {
+  DownloadsDeleteRequested(this.id);
+
+  final String id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class DownloadsPauseRequested extends DownloadsEvent {
+  DownloadsPauseRequested(this.id);
+
+  final String id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class DownloadsResumeRequested extends DownloadsEvent {
+  DownloadsResumeRequested(this.id);
+
+  final String id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class _ActiveUpdated extends DownloadsEvent {
+  _ActiveUpdated(this.items);
+
+  final List<ActiveDownload> items;
+
+  @override
+  List<Object?> get props => [items];
+}
+
+class _LibraryUpdated extends DownloadsEvent {
+  _LibraryUpdated(this.items);
+
+  final List<DownloadedMediaItem> items;
+
   @override
   List<Object?> get props => [items];
 }

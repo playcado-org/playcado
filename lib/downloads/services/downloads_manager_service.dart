@@ -3,313 +3,214 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
-import 'package:rxdart/rxdart.dart';
-import 'package:playcado/downloads/models/download_item.dart';
+import 'package:playcado/downloads/data/downloaded_media_database.dart';
+import 'package:playcado/downloads/models/active_download.dart';
+import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/media/models/media_item.dart';
+import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 
 class DownloadsManagerService {
-  DownloadsManagerService({required MediaUrlService urlGenerator})
-    : _urlGenerator = urlGenerator {
-    unawaited(_init());
+  DownloadsManagerService({
+    required MediaUrlService urlService,
+    required JellyfinClientService jellyfinClient,
+    required DownloadedMediaDatabase database,
+  }) : _urlService = urlService,
+       _jellyfinClient = jellyfinClient,
+       _database = database {
+    _init();
   }
-  final MediaUrlService _urlGenerator;
-  final _controller = StreamController<List<DownloadItem>>.broadcast();
-  final Map<String, DownloadItem> _downloadItems = {};
-  StreamSubscription<TaskUpdate>? _updatesSubscription;
 
-  bool _initialized = false;
+  final MediaUrlService _urlService;
+  final JellyfinClientService _jellyfinClient;
+  final DownloadedMediaDatabase _database;
 
-  /// Tracks IDs currently being deleted to prevent race conditions
-  /// where terminal updates resurrect the item in the UI.
-  final Set<String> _processingDeletions = {};
+  final Map<String, ActiveDownload> _activeCache = {};
+  final _activeController = StreamController<List<ActiveDownload>>.broadcast();
 
-  Stream<List<DownloadItem>> get downloads =>
-      _controller.stream.throttleTime(const Duration(milliseconds: 250));
-  List<DownloadItem> get currentDownloads => _downloadItems.values.toList();
-
-  void dispose() {
-    _initialized = false;
-    unawaited(_updatesSubscription?.cancel());
-    unawaited(_controller.close());
-  }
+  Stream<List<ActiveDownload>> get activeDownloadsStream =>
+      _activeController.stream;
+  Stream<List<DownloadedMediaItem>> get offlineLibraryStream =>
+      _database.watchOfflineLibrary();
 
   Future<void> _init() async {
-    if (_initialized) return;
-    _initialized = true;
+    await FileDownloader().configure(
+      globalConfig: [
+        (Config.requestTimeout, const Duration(seconds: 100)),
+        (Config.runInForegroundIfFileLargerThan, 500),
+      ],
+    );
 
-    try {
-      await FileDownloader().configure(
-        globalConfig: [(Config.requestTimeout, const Duration(seconds: 100))],
-      );
+    FileDownloader().updates.listen(_onUpdate);
 
-      _updatesSubscription = FileDownloader().updates.listen(_onUpdate);
+    await FileDownloader().trackTasks();
+    final records = await FileDownloader().database.allRecords();
 
-      await FileDownloader().trackTasks();
-      await FileDownloader().start();
+    for (final record in records) {
+      if (record.status == TaskStatus.complete) continue;
 
-      final records = await FileDownloader().database.allRecords();
-
-      for (final record in records) {
-        try {
-          if (record.task.metaData.isNotEmpty) {
-            final jsonMap =
-                jsonDecode(record.task.metaData) as Map<String, dynamic>;
-            final item = DownloadItem.fromJson(jsonMap);
-            final path = await record.task.filePath();
-
-            _downloadItems[record.taskId] = item.copyWith(
-              status: _mapStatus(record.status),
-              progress: record.progress,
-              localPath: path,
-            );
-          }
-        } on Exception catch (e, s) {
-          LoggerService.downloads.warning(
-            'Failed to parse download record: ${record.taskId}',
-            e,
-            s,
-          );
-        }
+      if (record.task.metaData.isNotEmpty) {
+        final media = MediaItem.fromJson(
+          jsonDecode(record.task.metaData) as Map<String, dynamic>,
+        );
+        _activeCache[record.taskId] = ActiveDownload(
+          media: media,
+          status: _mapStatus(record.status),
+          progress: record.progress,
+        );
       }
-      if (_downloadItems.isNotEmpty) _emit();
-    } on Exception catch (e, s) {
-      LoggerService.downloads.severe(
-        'DownloadsManagerService init failed',
-        e,
-        s,
-      );
     }
-  }
-
-  DownloadStatus _mapStatus(TaskStatus status) {
-    switch (status) {
-      case TaskStatus.enqueued:
-      case TaskStatus.waitingToRetry:
-        return DownloadStatus.queued;
-      case TaskStatus.running:
-        return DownloadStatus.downloading;
-      case TaskStatus.complete:
-        return DownloadStatus.completed;
-      case TaskStatus.paused:
-        return DownloadStatus.paused;
-      case TaskStatus.canceled:
-      case TaskStatus.failed:
-      case TaskStatus.notFound:
-        return DownloadStatus.error;
-    }
+    _emitActive();
   }
 
   Future<void> addMediaDownload(MediaItem item) async {
-    final downloadItem = DownloadItem(
-      id: item.id,
-      name: item.formattedFileName,
-      overview: item.overview,
-      imageUrl: _urlGenerator.getImageUrl(item.id),
-      type: item.type,
-      productionYear: item.productionYear,
-      seriesName: item.seriesName,
-      indexNumber: item.indexNumber,
-      parentIndexNumber: item.parentIndexNumber,
-      downloadUrl: _urlGenerator.getDownloadUrl(item.id),
-      localPath: '',
-    );
+    _activeCache[item.id] = ActiveDownload(media: item);
+    _emitActive();
 
-    return addDownload(downloadItem);
-  }
+    final token = _jellyfinClient.accessToken;
+    final deviceId = _jellyfinClient.deviceId;
+    final headers = {
+      'X-Emby-Authorization':
+          'MediaBrowser Client="Playcado", Device="Flutter", DeviceId="$deviceId", Version="1.0.0", Token="$token"',
+    };
 
-  Future<void> addDownload(DownloadItem item) async {
     final task = DownloadTask(
       taskId: item.id,
-      url: item.downloadUrl,
+      url: _urlService.getDownloadUrl(item.id),
       filename: '${item.id}.mp4',
+      headers: headers,
       baseDirectory: BaseDirectory.applicationSupport,
+      directory: 'offline_media',
       updates: Updates.statusAndProgress,
       allowPause: true,
+      retries: 3,
+      metaData: jsonEncode(item.toJson()),
     );
 
-    final absolutePath = await task.filePath();
-    final itemWithPath = item.copyWith(
-      localPath: absolutePath,
-      status: DownloadStatus.queued,
-    );
-
-    final metaString = jsonEncode(itemWithPath.toJson());
-    final taskWithMeta = task.copyWith(metaData: metaString);
-
-    _downloadItems[item.id] = itemWithPath;
-    _emit();
-
-    try {
-      await FileDownloader().enqueue(taskWithMeta);
-    } catch (e, s) {
-      LoggerService.downloads.severe('Failed to enqueue task', e, s);
-      _downloadItems.remove(item.id);
-      _emit();
-      rethrow;
-    }
+    await FileDownloader().enqueue(task);
   }
 
-  /// Cancels and completely removes a download.
-  ///
-  /// The order of operations is critical here to prevent
-  /// "resurrection" of the task in the UI via the stream listener.
   Future<void> deleteDownload(String id) async {
-    _processingDeletions.add(id);
+    LoggerService.downloads.info('Deleting media: $id');
+
+    await _database.removeOfflineMedia(id);
+
+    _activeCache.remove(id);
+    _emitActive();
+
+    await FileDownloader().cancelTaskWithId(id);
+    await FileDownloader().database.deleteRecordWithId(id);
 
     try {
-      final item = _downloadItems[id];
-
-      if (item != null && item.localPath.isNotEmpty) {
-        final file = File(item.localPath);
-        if (file.existsSync()) {
-          await file.delete();
-        }
+      final task = await FileDownloader().taskForId(id);
+      if (task != null) {
+        final path = await task.filePath();
+        final file = File(path);
+        if (await file.exists()) await file.delete();
       }
-
-      _downloadItems.remove(id);
-      _emit();
-
-      await FileDownloader().database.deleteRecordWithId(id);
-      await FileDownloader().cancelTaskWithId(id);
-    } catch (e, s) {
-      LoggerService.downloads.severe('Failed to delete download', e, s);
-    } finally {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _processingDeletions.remove(id);
-      });
+    } catch (e) {
+      LoggerService.downloads.warning('Failed to delete file for $id', e);
     }
-  }
-
-  Future<void> pauseDownload(String id) async {
-    final task = await FileDownloader().taskForId(id);
-    if (task is DownloadTask) {
-      await FileDownloader().pause(task);
-    }
-  }
-
-  Future<void> resumeDownload(String id) async {
-    final task = await FileDownloader().taskForId(id);
-    if (task is DownloadTask) {
-      await FileDownloader().resume(task);
-    }
-  }
-
-  Future<void> clearAll() async {
-    _downloadItems.clear();
-    _emit();
-
-    await FileDownloader().database.deleteAllRecords();
-    await FileDownloader().cancelAll();
   }
 
   Future<void> _onUpdate(TaskUpdate update) async {
     final taskId = update.task.taskId;
 
-    if (_processingDeletions.contains(taskId)) return;
+    if (!_activeCache.containsKey(taskId)) return;
 
-    if (update is TaskStatusUpdate && _isTerminalStatus(update.status)) {
-      await _handleTerminalStatus(taskId);
-      return;
-    }
+    final cachedItem = _activeCache[taskId]!;
 
-    final item = await _getOrCreateItem(taskId, update);
-    if (item == null) return;
+    if (update is TaskStatusUpdate) {
+      if (update.status == TaskStatus.complete) {
+        final filePath = await update.task.filePath();
+        final file = File(filePath);
+        final size = await file.exists() ? await file.length() : 0;
 
-    final updatedItem = _updateItem(item, update);
-    if (updatedItem == null) return;
+        await _database.saveOfflineMedia(
+          DownloadedMediaItem(
+            media: cachedItem.media,
+            localPath: filePath,
+            totalBytes: size,
+            downloadedAt: DateTime.now(),
+          ),
+        );
 
-    _downloadItems[taskId] = updatedItem;
-    _emit();
-  }
+        _activeCache.remove(taskId);
+        FileDownloader().database.deleteRecordWithId(taskId);
+      } else if (update.status == TaskStatus.canceled) {
+        _activeCache.remove(taskId);
+      } else {
+        String? errorReason;
+        if (update.status == TaskStatus.failed ||
+            update.status == TaskStatus.notFound) {
+          if (update.exception is TaskHttpException) {
+            final code =
+                (update.exception as TaskHttpException).httpResponseCode;
+            errorReason = code == 401 ? 'Auth expired' : 'Server Error ($code)';
+          } else {
+            errorReason = update.exception?.description ?? 'Network error';
+          }
+        }
 
-  bool _isTerminalStatus(TaskStatus status) {
-    return status == TaskStatus.canceled || status == TaskStatus.notFound;
-  }
-
-  Future<void> _handleTerminalStatus(String taskId) async {
-    _downloadItems.remove(taskId);
-    _emit();
-    await FileDownloader().database.deleteRecordWithId(taskId);
-  }
-
-  /// Gets the item from the cache or creates it from the database
-  Future<DownloadItem?> _getOrCreateItem(
-    String taskId,
-    TaskUpdate update,
-  ) async {
-    final existing = _downloadItems[taskId];
-    if (existing != null) return existing;
-
-    LoggerService.downloads.info('Item not in memory cache: $taskId');
-
-    final record = await FileDownloader().database.recordForId(taskId);
-
-    if (record == null) {
-      LoggerService.downloads.info('No record exists for $taskId');
-      return null;
-    }
-
-    if (update.task.metaData.isEmpty) return null;
-
-    try {
-      LoggerService.downloads.info(
-        'Reconstructing item from metadata: $taskId',
+        _activeCache[taskId] = cachedItem.copyWith(
+          status: _mapStatus(update.status),
+          errorReason: errorReason,
+        );
+      }
+    } else if (update is TaskProgressUpdate) {
+      _activeCache[taskId] = cachedItem.copyWith(
+        progress: update.progress,
+        networkSpeed: update.networkSpeed,
+        totalBytes: update.expectedFileSize,
+        receivedBytes: (update.expectedFileSize * update.progress).round(),
       );
-
-      final jsonMap = jsonDecode(update.task.metaData) as Map<String, dynamic>;
-      final path = await update.task.filePath();
-      final item = DownloadItem.fromJson(jsonMap).copyWith(localPath: path);
-      _downloadItems[taskId] = item;
-      return item;
-    } on Exception catch (_) {
-      LoggerService.downloads.warning(
-        'Failed to reconstruct item from metadata: $taskId',
-      );
-      return null;
     }
+
+    _emitActive();
   }
 
-  /// Applies an update to the item
-  DownloadItem? _updateItem(DownloadItem item, TaskUpdate update) {
-    switch (update) {
-      case TaskStatusUpdate():
-        LoggerService.downloads.info(
-          'Status update: ${update.task.taskId} → ${update.status}',
-        );
-        final status = _mapStatus(update.status);
-        return item.copyWith(
-          status: status,
-          progress: status == DownloadStatus.completed ? 1.0 : item.progress,
-          networkSpeed: status == DownloadStatus.completed
-              ? 0
-              : item.networkSpeed,
-        );
-
-      case TaskProgressUpdate():
-        LoggerService.downloads.info(
-          'Progress update: ${update.task.taskId} → ${update.progress}',
-        );
-
-        final total = update.expectedFileSize > 0
-            ? update.expectedFileSize
-            : item.totalBytes;
-
-        final received = update.progress >= 0
-            ? (total * update.progress).round()
-            : item.receivedBytes;
-
-        return item.copyWith(
-          progress: update.progress >= 0 ? update.progress : item.progress,
-          networkSpeed: update.networkSpeed > 0
-              ? update.networkSpeed * 1024 * 1024
-              : 0,
-          totalBytes: total,
-          receivedBytes: received,
-        );
-    }
+  ActiveDownloadStatus _mapStatus(TaskStatus status) {
+    return switch (status) {
+      TaskStatus.enqueued ||
+      TaskStatus.waitingToRetry => ActiveDownloadStatus.queued,
+      TaskStatus.running => ActiveDownloadStatus.downloading,
+      TaskStatus.paused => ActiveDownloadStatus.paused,
+      TaskStatus.failed || TaskStatus.notFound => ActiveDownloadStatus.error,
+      _ => ActiveDownloadStatus.queued,
+    };
   }
 
-  void _emit() => _controller.add(_downloadItems.values.toList());
+  void _emitActive() => _activeController.add(_activeCache.values.toList());
+
+  Future<void> pauseDownload(String id) async {
+    final task = await FileDownloader().taskForId(id);
+    if (task is DownloadTask) await FileDownloader().pause(task);
+  }
+
+  Future<void> resumeDownload(String id) async {
+    final task = await FileDownloader().taskForId(id);
+    if (task is DownloadTask) await FileDownloader().resume(task);
+  }
+
+  void dispose() {
+    _activeController.close();
+  }
+
+  Future<void> clearAll() async {
+    _activeCache.clear();
+    _emitActive();
+
+    final records = await FileDownloader().database.allRecords();
+    for (final record in records) {
+      try {
+        final path = await record.task.filePath();
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
+
+    await FileDownloader().database.deleteAllRecords();
+    await FileDownloader().cancelAll();
+  }
 }

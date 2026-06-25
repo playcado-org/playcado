@@ -7,7 +7,7 @@ import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/cast/widgets/cast_dialog.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads/models/download_item.dart';
+import 'package:playcado/downloads/models/active_download.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/widgets/widgets.dart';
@@ -43,40 +43,43 @@ class MediaDetailsActions extends StatelessWidget {
 
     return BlocBuilder<DownloadsBloc, DownloadsState>(
       builder: (context, downloadsState) {
-        final downloadItem = downloadsState.downloads
+        final isDownloaded = downloadsState.offlineLibrary.any(
+          (d) => d.id == item.id,
+        );
+        final activeDownload = downloadsState.activeDownloads
             .where((d) => d.id == item.id)
-            .fold<DownloadItem?>(null, (prev, elem) => elem);
+            .fold<ActiveDownload?>(null, (prev, elem) => elem);
 
         Widget downloadIcon = const PlaycadoIcon(PlaycadoIcons.download);
         var downloadLabel = context.l10n.download;
         Color? downloadIconColor;
 
-        if (downloadItem != null) {
-          switch (downloadItem.status) {
-            case DownloadStatus.queued:
+        if (isDownloaded) {
+          downloadIcon = PlaycadoIcon(
+            PlaycadoIcons.check,
+            color: theme.colorScheme.primary,
+          );
+          downloadLabel = context.l10n.downloaded;
+          downloadIconColor = theme.colorScheme.primary;
+        } else if (activeDownload != null) {
+          switch (activeDownload.status) {
+            case ActiveDownloadStatus.queued:
               downloadIcon = PlaycadoIcon(
                 PlaycadoIcons.clock,
                 color: theme.colorScheme.primary,
               );
               downloadLabel = context.l10n.queued;
-            case DownloadStatus.downloading:
+            case ActiveDownloadStatus.downloading:
               downloadIcon = PlaycadoIcon(
                 PlaycadoIcons.download,
                 color: theme.colorScheme.primary,
               );
-              downloadLabel = '${(downloadItem.progress * 100).toInt()}%';
+              downloadLabel = '${(activeDownload.progress * 100).toInt()}%';
               downloadIconColor = theme.colorScheme.primary;
-            case DownloadStatus.completed:
-              downloadIcon = PlaycadoIcon(
-                PlaycadoIcons.check,
-                color: theme.colorScheme.primary,
-              );
-              downloadLabel = context.l10n.downloaded;
-              downloadIconColor = theme.colorScheme.primary;
-            case DownloadStatus.paused:
+            case ActiveDownloadStatus.paused:
               downloadIcon = const PlaycadoIcon(PlaycadoIcons.pauseCircle);
               downloadLabel = context.l10n.paused;
-            case DownloadStatus.error:
+            case ActiveDownloadStatus.error:
               downloadIcon = const PlaycadoIcon(PlaycadoIcons.alert);
               downloadLabel = context.l10n.failed;
               downloadIconColor = theme.colorScheme.error;
@@ -120,8 +123,15 @@ class MediaDetailsActions extends StatelessWidget {
                             'E${item.indexNumber}'
                       : downloadLabel,
                   onTap: () {
-                    if (downloadItem == null ||
-                        downloadItem.status == DownloadStatus.error) {
+                    if (isDownloaded) {
+                      final downloadedItem = downloadsState.offlineLibrary
+                          .firstWhere((d) => d.id == item.id);
+                      context.push(
+                        AppRouter.offlineMediaDetailPath,
+                        extra: downloadedItem,
+                      );
+                    } else if (activeDownload == null ||
+                        activeDownload.status == ActiveDownloadStatus.error) {
                       context.read<DownloadsBloc>().add(
                         DownloadsRequested(item: item),
                       );
@@ -131,8 +141,8 @@ class MediaDetailsActions extends StatelessWidget {
                           context.l10n.downloadingEpisode,
                         );
                       }
+                      context.go(AppRouter.downloadsPath);
                     }
-                    context.go(AppRouter.downloadsPath);
                   },
                 ),
               ),
