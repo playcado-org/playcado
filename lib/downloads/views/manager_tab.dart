@@ -16,8 +16,6 @@ class ManagerTab extends StatelessWidget {
             a.downloadedAt.millisecondsSinceEpoch,
           ),
         );
-    if (completed.length > 10) completed.length = 10;
-
     final hasActive = active.isNotEmpty;
     final hasCompleted = completed.isNotEmpty;
 
