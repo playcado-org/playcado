@@ -1,38 +1,18 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/core/extensions.dart';
-import 'package:playcado/core/formatters.dart';
-import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads/models/active_download.dart';
-import 'package:playcado/downloads/models/downloaded_media_item.dart';
+import 'package:playcado/downloads/views/downloads_screen.dart';
 import 'package:playcado/media/models/media_item.dart';
-import 'package:playcado/player/bloc/player_bloc.dart';
-import 'package:playcado/services/media_url/media_url_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
-import 'downloaded_series_details_page.dart';
-
-part 'downloaded_tv_grid.dart';
-part 'downloads_grid.dart';
-part 'manager_tab.dart';
-part '../widgets/active_download_card.dart';
-part '../widgets/completed_download_card.dart';
-part '../widgets/download_poster.dart';
-part '../widgets/empty_state.dart';
-part '../widgets/section_header.dart';
-
-class DownloadsScreen extends StatefulWidget {
-  const DownloadsScreen({super.key});
+class OfflineDownloadsScreen extends StatefulWidget {
+  const OfflineDownloadsScreen({super.key});
 
   @override
-  State<DownloadsScreen> createState() => _DownloadsScreenState();
+  State<OfflineDownloadsScreen> createState() => _OfflineDownloadsScreenState();
 }
 
-class _DownloadsScreenState extends State<DownloadsScreen>
+class _OfflineDownloadsScreenState extends State<OfflineDownloadsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -52,6 +32,7 @@ class _DownloadsScreenState extends State<DownloadsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: () => context.pop()),
         title: IconTitle(title: context.l10n.downloads),
         centerTitle: false,
         bottom: TabBar(

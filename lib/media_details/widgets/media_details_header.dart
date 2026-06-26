@@ -16,12 +16,14 @@ class MediaDetailsHeader extends StatelessWidget {
     required this.heroTag,
     super.key,
     this.playingItem,
+    this.localBackdropPath,
   });
   final MediaItem item;
   final bool isItemPlaying;
   final MediaItem? playingItem;
   final PlayerState playerState;
   final String heroTag;
+  final String? localBackdropPath;
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +67,9 @@ class MediaDetailsHeader extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    PlaycadoNetworkImage(
+                    PlaycadoImage(
                       imageUrl: backdropUrl,
+                      localFile: localBackdropPath,
                       placeholder: (context, url) => ColoredBox(
                         color: theme.colorScheme.surfaceContainerHighest,
                         child: Center(

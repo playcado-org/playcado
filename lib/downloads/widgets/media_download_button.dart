@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/models/download_item.dart';
+import 'package:playcado/downloads/models/active_download.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/widgets/widgets.dart';
 
@@ -16,20 +16,16 @@ class MediaDownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<DownloadsBloc, DownloadsState>(
       builder: (context, state) {
-        final downloadItem = state.downloads
+        final isDownloaded = state.offlineLibrary.any((d) => d.id == item.id);
+        final activeDownload = state.activeDownloads
             .where((d) => d.id == item.id)
-            .fold<DownloadItem?>(null, (prev, elem) => elem);
-
-        final status = downloadItem?.status;
-        final isDownloaded = status == DownloadStatus.completed;
-        final isDownloading =
-            status == DownloadStatus.downloading ||
-            status == DownloadStatus.queued;
+            .fold<ActiveDownload?>(null, (prev, elem) => elem);
+        final isDownloading = activeDownload != null;
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
 
         if (isDownloading) {
-          final progress = downloadItem?.progress ?? 0.0;
+          final progress = activeDownload.progress;
           return Container(
             width: 40,
             height: 40,

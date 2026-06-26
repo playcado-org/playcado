@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/formatters.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/widgets/widgets.dart';
@@ -36,11 +36,11 @@ class MoviePlayButton extends StatelessWidget {
 
     return BlocBuilder<DownloadsBloc, DownloadsState>(
       builder: (context, state) {
-        final downloadItem = state.downloads
+        final downloadItem = state.offlineLibrary
             .where((d) => d.id == item.id)
-            .fold<DownloadItem?>(null, (prev, elem) => elem);
+            .fold<DownloadedMediaItem?>(null, (prev, elem) => elem);
 
-        final isDownloaded = downloadItem?.status == DownloadStatus.completed;
+        final isDownloaded = downloadItem != null;
 
         String labelText;
         final ticks = item.playbackPositionTicks ?? 0;
@@ -67,8 +67,7 @@ class MoviePlayButton extends StatelessWidget {
 
         return LargePlayButton(
           label: labelText,
-          onPressed: () =>
-              onPlay(isDownloaded ? downloadItem?.localPath : null),
+          onPressed: () => onPlay(isDownloaded ? downloadItem.localPath : null),
         );
       },
     );

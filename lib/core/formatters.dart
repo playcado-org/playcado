@@ -34,6 +34,7 @@ class Formatters {
     if (bytesPerSec <= 0) return '';
     const suffixes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
     var i = (log(bytesPerSec) / log(1024)).floor();
+    if (i < 0) i = 0;
     if (i >= suffixes.length) i = suffixes.length - 1;
     return '${(bytesPerSec / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
   }

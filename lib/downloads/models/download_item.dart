@@ -14,6 +14,10 @@ class DownloadItem extends Equatable {
     this.overview,
     this.imageUrl,
     this.type,
+    this.productionYear,
+    this.seriesName,
+    this.indexNumber,
+    this.parentIndexNumber,
     this.status = DownloadStatus.queued,
     this.progress = 0.0,
     this.receivedBytes = 0,
@@ -31,6 +35,10 @@ class DownloadItem extends Equatable {
       type: json['type'] != null
           ? MediaItemType.fromString(json['type'] as String)
           : null,
+      productionYear: json['productionYear'] as String?,
+      seriesName: json['seriesName'] as String?,
+      indexNumber: json['indexNumber'] as int?,
+      parentIndexNumber: json['parentIndexNumber'] as int?,
       downloadUrl: json['downloadUrl'] as String,
       localPath: json['localPath'] as String,
       status: DownloadStatus.values[(json['status'] as int?) ?? 0],
@@ -46,6 +54,10 @@ class DownloadItem extends Equatable {
   final String? overview;
   final String? imageUrl;
   final MediaItemType? type;
+  final String? productionYear;
+  final String? seriesName;
+  final int? indexNumber;
+  final int? parentIndexNumber;
   final String downloadUrl;
   final String localPath;
   final DownloadStatus status;
@@ -60,6 +72,10 @@ class DownloadItem extends Equatable {
     String? overview,
     String? imageUrl,
     MediaItemType? type,
+    String? productionYear,
+    String? seriesName,
+    int? indexNumber,
+    int? parentIndexNumber,
     String? downloadUrl,
     String? localPath,
     DownloadStatus? status,
@@ -75,6 +91,10 @@ class DownloadItem extends Equatable {
       overview: overview ?? this.overview,
       imageUrl: imageUrl ?? this.imageUrl,
       type: type ?? this.type,
+      productionYear: productionYear ?? this.productionYear,
+      seriesName: seriesName ?? this.seriesName,
+      indexNumber: indexNumber ?? this.indexNumber,
+      parentIndexNumber: parentIndexNumber ?? this.parentIndexNumber,
       downloadUrl: downloadUrl ?? this.downloadUrl,
       localPath: localPath ?? this.localPath,
       status: status ?? this.status,
@@ -93,6 +113,10 @@ class DownloadItem extends Equatable {
       'overview': overview,
       'imageUrl': imageUrl,
       'type': type?.name,
+      'productionYear': productionYear,
+      'seriesName': seriesName,
+      'indexNumber': indexNumber,
+      'parentIndexNumber': parentIndexNumber,
       'downloadUrl': downloadUrl,
       'localPath': localPath,
       'status': status.index,
@@ -117,6 +141,10 @@ class DownloadItem extends Equatable {
     overview,
     imageUrl,
     type,
+    productionYear,
+    seriesName,
+    indexNumber,
+    parentIndexNumber,
     downloadUrl,
     localPath,
     status,
