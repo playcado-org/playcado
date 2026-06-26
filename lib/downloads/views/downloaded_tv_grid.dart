@@ -5,11 +5,19 @@ class DownloadedTvGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final episodes = context.select<DownloadsBloc, List<DownloadedMediaItem>>(
-      (b) => b.state.offlineLibrary
-          .where((d) => d.media.type == MediaItemType.episode)
-          .toList(),
-    );
+    final (:List<DownloadedMediaItem> episodes, :bool isLoading) = context
+        .select(
+          (DownloadsBloc bloc) => (
+            isLoading: bloc.state.isLoading,
+            episodes: bloc.state.offlineLibrary
+                .where((d) => d.media.type == MediaItemType.episode)
+                .toList(),
+          ),
+        );
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (episodes.isEmpty) {
       return _EmptyState(

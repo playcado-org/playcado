@@ -5,21 +5,28 @@ class ManagerTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<DownloadsBloc, List<ActiveDownload>>(
-      (b) => b.state.activeDownloads,
+    final (
+      :List<ActiveDownload> active,
+      :List<DownloadedMediaItem> completed,
+      :bool isLoading,
+    ) = context.select(
+      (DownloadsBloc bloc) => (
+        active: bloc.state.activeDownloads,
+        completed: List<DownloadedMediaItem>.of(bloc.state.offlineLibrary)
+          ..sort(
+            (a, b) => b.downloadedAt.millisecondsSinceEpoch.compareTo(
+              a.downloadedAt.millisecondsSinceEpoch,
+            ),
+          ),
+        isLoading: bloc.state.isLoading,
+      ),
     );
-    final completed =
-        List<DownloadedMediaItem>.of(
-          context.select<DownloadsBloc, List<DownloadedMediaItem>>(
-            (b) => b.state.offlineLibrary,
-          ),
-        )..sort(
-          (a, b) => b.downloadedAt.millisecondsSinceEpoch.compareTo(
-            a.downloadedAt.millisecondsSinceEpoch,
-          ),
-        );
     final hasActive = active.isNotEmpty;
     final hasCompleted = completed.isNotEmpty;
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (!hasActive && !hasCompleted) {
       return _EmptyState(
