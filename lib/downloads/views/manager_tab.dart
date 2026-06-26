@@ -45,7 +45,7 @@ class ManagerTab extends StatelessWidget {
           ...active.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _ActiveDownloadCard(item: item),
+              child: _ActiveDownloadCard(itemId: item.media.id),
             ),
           ),
         ],

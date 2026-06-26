@@ -28,6 +28,7 @@ class DownloadsManagerService {
 
   final Map<String, ActiveDownload> _activeCache = {};
   final _activeController = StreamController<List<ActiveDownload>>.broadcast();
+  Timer? _emitThrottleTimer;
 
   Stream<List<ActiveDownload>> get activeDownloadsStream =>
       _activeController.stream;
@@ -181,7 +182,17 @@ class DownloadsManagerService {
     };
   }
 
-  void _emitActive() => _activeController.add(_activeCache.values.toList());
+  void _emitActive() {
+    if (_emitThrottleTimer != null) return;
+    _emitThrottleTimer = Timer(const Duration(milliseconds: 200), _emitNow);
+  }
+
+  void _emitNow() {
+    _emitThrottleTimer = null;
+    if (!_activeController.isClosed) {
+      _activeController.add(_activeCache.values.toList());
+    }
+  }
 
   Future<void> pauseDownload(String id) async {
     final task = await FileDownloader().taskForId(id);
@@ -194,6 +205,7 @@ class DownloadsManagerService {
   }
 
   void dispose() {
+    _emitThrottleTimer?.cancel();
     _activeController.close();
   }
 
