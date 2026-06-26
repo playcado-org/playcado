@@ -59,7 +59,7 @@ class ServerManagementScreen extends StatelessWidget {
                               const SizedBox(height: 16),
                               OutlinedButton.icon(
                                 onPressed: () {
-                                  context.go(AppRouter.offlineDownloadsPath);
+                                  context.push(AppRouter.offlineDownloadsPath);
                                 },
                                 icon: const PlaycadoIcon(
                                   PlaycadoIcons.download,
