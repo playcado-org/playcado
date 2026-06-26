@@ -112,7 +112,7 @@ class _SeriesPoster extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => DownloadedSeriesEpisodesPage(
+                builder: (_) => DownloadedSeriesDetailsPage(
                   seriesId: group.seriesId,
                   seriesName: group.seriesName,
                 ),

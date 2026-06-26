@@ -14,7 +14,7 @@ import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
-import 'downloaded_series_episodes_page.dart';
+import 'downloaded_series_details_page.dart';
 
 part 'downloaded_tv_grid.dart';
 part 'downloads_grid.dart';
