@@ -7,15 +7,26 @@ class DownloadedMediaItem extends Equatable {
     required this.localPath,
     required this.totalBytes,
     required this.downloadedAt,
+    this.localPosterPath,
+    this.localBackdropPath,
   });
 
   final MediaItem media;
   final String localPath;
   final int totalBytes;
   final DateTime downloadedAt;
+  final String? localPosterPath;
+  final String? localBackdropPath;
 
   String get id => media.id;
 
   @override
-  List<Object?> get props => [media, localPath, totalBytes, downloadedAt];
+  List<Object?> get props => [
+    media,
+    localPath,
+    totalBytes,
+    downloadedAt,
+    localPosterPath,
+    localBackdropPath,
+  ];
 }

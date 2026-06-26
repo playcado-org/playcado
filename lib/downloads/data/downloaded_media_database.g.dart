@@ -62,6 +62,28 @@ class $DownloadedMediaTableTable extends DownloadedMediaTable
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _posterPathMeta = const VerificationMeta(
+    'posterPath',
+  );
+  @override
+  late final GeneratedColumn<String> posterPath = GeneratedColumn<String>(
+    'poster_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _backdropPathMeta = const VerificationMeta(
+    'backdropPath',
+  );
+  @override
+  late final GeneratedColumn<String> backdropPath = GeneratedColumn<String>(
+    'backdrop_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -69,6 +91,8 @@ class $DownloadedMediaTableTable extends DownloadedMediaTable
     localPath,
     totalBytes,
     downloadedAt,
+    posterPath,
+    backdropPath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -122,6 +146,21 @@ class $DownloadedMediaTableTable extends DownloadedMediaTable
     } else if (isInserting) {
       context.missing(_downloadedAtMeta);
     }
+    if (data.containsKey('poster_path')) {
+      context.handle(
+        _posterPathMeta,
+        posterPath.isAcceptableOrUnknown(data['poster_path']!, _posterPathMeta),
+      );
+    }
+    if (data.containsKey('backdrop_path')) {
+      context.handle(
+        _backdropPathMeta,
+        backdropPath.isAcceptableOrUnknown(
+          data['backdrop_path']!,
+          _backdropPathMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -154,6 +193,14 @@ class $DownloadedMediaTableTable extends DownloadedMediaTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}downloaded_at'],
       )!,
+      posterPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}poster_path'],
+      ),
+      backdropPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}backdrop_path'],
+      ),
     );
   }
 
@@ -170,12 +217,16 @@ class DownloadedMediaTableData extends DataClass
   final String localPath;
   final int totalBytes;
   final DateTime downloadedAt;
+  final String? posterPath;
+  final String? backdropPath;
   const DownloadedMediaTableData({
     required this.id,
     required this.mediaJson,
     required this.localPath,
     required this.totalBytes,
     required this.downloadedAt,
+    this.posterPath,
+    this.backdropPath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -185,6 +236,12 @@ class DownloadedMediaTableData extends DataClass
     map['local_path'] = Variable<String>(localPath);
     map['total_bytes'] = Variable<int>(totalBytes);
     map['downloaded_at'] = Variable<DateTime>(downloadedAt);
+    if (!nullToAbsent || posterPath != null) {
+      map['poster_path'] = Variable<String>(posterPath);
+    }
+    if (!nullToAbsent || backdropPath != null) {
+      map['backdrop_path'] = Variable<String>(backdropPath);
+    }
     return map;
   }
 
@@ -195,6 +252,12 @@ class DownloadedMediaTableData extends DataClass
       localPath: Value(localPath),
       totalBytes: Value(totalBytes),
       downloadedAt: Value(downloadedAt),
+      posterPath: posterPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(posterPath),
+      backdropPath: backdropPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backdropPath),
     );
   }
 
@@ -209,6 +272,8 @@ class DownloadedMediaTableData extends DataClass
       localPath: serializer.fromJson<String>(json['localPath']),
       totalBytes: serializer.fromJson<int>(json['totalBytes']),
       downloadedAt: serializer.fromJson<DateTime>(json['downloadedAt']),
+      posterPath: serializer.fromJson<String?>(json['posterPath']),
+      backdropPath: serializer.fromJson<String?>(json['backdropPath']),
     );
   }
   @override
@@ -220,6 +285,8 @@ class DownloadedMediaTableData extends DataClass
       'localPath': serializer.toJson<String>(localPath),
       'totalBytes': serializer.toJson<int>(totalBytes),
       'downloadedAt': serializer.toJson<DateTime>(downloadedAt),
+      'posterPath': serializer.toJson<String?>(posterPath),
+      'backdropPath': serializer.toJson<String?>(backdropPath),
     };
   }
 
@@ -229,12 +296,16 @@ class DownloadedMediaTableData extends DataClass
     String? localPath,
     int? totalBytes,
     DateTime? downloadedAt,
+    Value<String?> posterPath = const Value.absent(),
+    Value<String?> backdropPath = const Value.absent(),
   }) => DownloadedMediaTableData(
     id: id ?? this.id,
     mediaJson: mediaJson ?? this.mediaJson,
     localPath: localPath ?? this.localPath,
     totalBytes: totalBytes ?? this.totalBytes,
     downloadedAt: downloadedAt ?? this.downloadedAt,
+    posterPath: posterPath.present ? posterPath.value : this.posterPath,
+    backdropPath: backdropPath.present ? backdropPath.value : this.backdropPath,
   );
   DownloadedMediaTableData copyWithCompanion(
     DownloadedMediaTableCompanion data,
@@ -249,6 +320,12 @@ class DownloadedMediaTableData extends DataClass
       downloadedAt: data.downloadedAt.present
           ? data.downloadedAt.value
           : this.downloadedAt,
+      posterPath: data.posterPath.present
+          ? data.posterPath.value
+          : this.posterPath,
+      backdropPath: data.backdropPath.present
+          ? data.backdropPath.value
+          : this.backdropPath,
     );
   }
 
@@ -259,14 +336,23 @@ class DownloadedMediaTableData extends DataClass
           ..write('mediaJson: $mediaJson, ')
           ..write('localPath: $localPath, ')
           ..write('totalBytes: $totalBytes, ')
-          ..write('downloadedAt: $downloadedAt')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('posterPath: $posterPath, ')
+          ..write('backdropPath: $backdropPath')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, mediaJson, localPath, totalBytes, downloadedAt);
+  int get hashCode => Object.hash(
+    id,
+    mediaJson,
+    localPath,
+    totalBytes,
+    downloadedAt,
+    posterPath,
+    backdropPath,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -275,7 +361,9 @@ class DownloadedMediaTableData extends DataClass
           other.mediaJson == this.mediaJson &&
           other.localPath == this.localPath &&
           other.totalBytes == this.totalBytes &&
-          other.downloadedAt == this.downloadedAt);
+          other.downloadedAt == this.downloadedAt &&
+          other.posterPath == this.posterPath &&
+          other.backdropPath == this.backdropPath);
 }
 
 class DownloadedMediaTableCompanion
@@ -285,6 +373,8 @@ class DownloadedMediaTableCompanion
   final Value<String> localPath;
   final Value<int> totalBytes;
   final Value<DateTime> downloadedAt;
+  final Value<String?> posterPath;
+  final Value<String?> backdropPath;
   final Value<int> rowid;
   const DownloadedMediaTableCompanion({
     this.id = const Value.absent(),
@@ -292,6 +382,8 @@ class DownloadedMediaTableCompanion
     this.localPath = const Value.absent(),
     this.totalBytes = const Value.absent(),
     this.downloadedAt = const Value.absent(),
+    this.posterPath = const Value.absent(),
+    this.backdropPath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DownloadedMediaTableCompanion.insert({
@@ -300,6 +392,8 @@ class DownloadedMediaTableCompanion
     required String localPath,
     required int totalBytes,
     required DateTime downloadedAt,
+    this.posterPath = const Value.absent(),
+    this.backdropPath = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        mediaJson = Value(mediaJson),
@@ -312,6 +406,8 @@ class DownloadedMediaTableCompanion
     Expression<String>? localPath,
     Expression<int>? totalBytes,
     Expression<DateTime>? downloadedAt,
+    Expression<String>? posterPath,
+    Expression<String>? backdropPath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -320,6 +416,8 @@ class DownloadedMediaTableCompanion
       if (localPath != null) 'local_path': localPath,
       if (totalBytes != null) 'total_bytes': totalBytes,
       if (downloadedAt != null) 'downloaded_at': downloadedAt,
+      if (posterPath != null) 'poster_path': posterPath,
+      if (backdropPath != null) 'backdrop_path': backdropPath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -330,6 +428,8 @@ class DownloadedMediaTableCompanion
     Value<String>? localPath,
     Value<int>? totalBytes,
     Value<DateTime>? downloadedAt,
+    Value<String?>? posterPath,
+    Value<String?>? backdropPath,
     Value<int>? rowid,
   }) {
     return DownloadedMediaTableCompanion(
@@ -338,6 +438,8 @@ class DownloadedMediaTableCompanion
       localPath: localPath ?? this.localPath,
       totalBytes: totalBytes ?? this.totalBytes,
       downloadedAt: downloadedAt ?? this.downloadedAt,
+      posterPath: posterPath ?? this.posterPath,
+      backdropPath: backdropPath ?? this.backdropPath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -360,6 +462,12 @@ class DownloadedMediaTableCompanion
     if (downloadedAt.present) {
       map['downloaded_at'] = Variable<DateTime>(downloadedAt.value);
     }
+    if (posterPath.present) {
+      map['poster_path'] = Variable<String>(posterPath.value);
+    }
+    if (backdropPath.present) {
+      map['backdrop_path'] = Variable<String>(backdropPath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -374,6 +482,8 @@ class DownloadedMediaTableCompanion
           ..write('localPath: $localPath, ')
           ..write('totalBytes: $totalBytes, ')
           ..write('downloadedAt: $downloadedAt, ')
+          ..write('posterPath: $posterPath, ')
+          ..write('backdropPath: $backdropPath, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -400,6 +510,8 @@ typedef $$DownloadedMediaTableTableCreateCompanionBuilder =
       required String localPath,
       required int totalBytes,
       required DateTime downloadedAt,
+      Value<String?> posterPath,
+      Value<String?> backdropPath,
       Value<int> rowid,
     });
 typedef $$DownloadedMediaTableTableUpdateCompanionBuilder =
@@ -409,6 +521,8 @@ typedef $$DownloadedMediaTableTableUpdateCompanionBuilder =
       Value<String> localPath,
       Value<int> totalBytes,
       Value<DateTime> downloadedAt,
+      Value<String?> posterPath,
+      Value<String?> backdropPath,
       Value<int> rowid,
     });
 
@@ -443,6 +557,16 @@ class $$DownloadedMediaTableTableFilterComposer
 
   ColumnFilters<DateTime> get downloadedAt => $composableBuilder(
     column: $table.downloadedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get posterPath => $composableBuilder(
+    column: $table.posterPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get backdropPath => $composableBuilder(
+    column: $table.backdropPath,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -480,6 +604,16 @@ class $$DownloadedMediaTableTableOrderingComposer
     column: $table.downloadedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get posterPath => $composableBuilder(
+    column: $table.posterPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get backdropPath => $composableBuilder(
+    column: $table.backdropPath,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DownloadedMediaTableTableAnnotationComposer
@@ -507,6 +641,16 @@ class $$DownloadedMediaTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get downloadedAt => $composableBuilder(
     column: $table.downloadedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get posterPath => $composableBuilder(
+    column: $table.posterPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get backdropPath => $composableBuilder(
+    column: $table.backdropPath,
     builder: (column) => column,
   );
 }
@@ -559,6 +703,8 @@ class $$DownloadedMediaTableTableTableManager
                 Value<String> localPath = const Value.absent(),
                 Value<int> totalBytes = const Value.absent(),
                 Value<DateTime> downloadedAt = const Value.absent(),
+                Value<String?> posterPath = const Value.absent(),
+                Value<String?> backdropPath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DownloadedMediaTableCompanion(
                 id: id,
@@ -566,6 +712,8 @@ class $$DownloadedMediaTableTableTableManager
                 localPath: localPath,
                 totalBytes: totalBytes,
                 downloadedAt: downloadedAt,
+                posterPath: posterPath,
+                backdropPath: backdropPath,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -575,6 +723,8 @@ class $$DownloadedMediaTableTableTableManager
                 required String localPath,
                 required int totalBytes,
                 required DateTime downloadedAt,
+                Value<String?> posterPath = const Value.absent(),
+                Value<String?> backdropPath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DownloadedMediaTableCompanion.insert(
                 id: id,
@@ -582,6 +732,8 @@ class $$DownloadedMediaTableTableTableManager
                 localPath: localPath,
                 totalBytes: totalBytes,
                 downloadedAt: downloadedAt,
+                posterPath: posterPath,
+                backdropPath: backdropPath,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

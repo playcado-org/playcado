@@ -120,6 +120,7 @@ class App extends StatelessWidget {
                     urlService: context.read<MediaUrlService>(),
                     jellyfinClient: config.jellyfinClientService,
                     database: context.read<DownloadedMediaDatabase>(),
+                    libraryRepository: context.read<LibraryRepository>(),
                   ),
                   dispose: (service) => service.dispose(),
                 ),

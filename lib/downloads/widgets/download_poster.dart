@@ -38,8 +38,9 @@ class _DownloadPoster extends StatelessWidget {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: imageUrl.isNotEmpty
-                      ? PlaycadoNetworkImage(
+                      ? PlaycadoImage(
                           imageUrl: imageUrl,
+                          localFile: item.localPosterPath,
                           width: double.infinity,
                           memCacheWidth: 240,
                           memCacheHeight: 360,

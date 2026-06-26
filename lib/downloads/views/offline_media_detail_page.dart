@@ -39,6 +39,7 @@ class OfflineMediaDetailPage extends StatelessWidget {
                 playingItem: playingItem,
                 playerState: playerState,
                 heroTag: heroTag,
+                localBackdropPath: item.localBackdropPath,
               ),
               SliverToBoxAdapter(
                 child: Padding(
@@ -84,6 +85,9 @@ class OfflineMediaDetailPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       MediaDetailsOverview(item: mediaItem),
+                      if (mediaItem.people case final people?
+                          when people.isNotEmpty)
+                        MediaDetailsCast(people: people),
                       SizedBox(
                         width: double.infinity,
                         height: 56,
