@@ -15,7 +15,9 @@ import 'package:playcado/player/bloc/player_bloc.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
-part 'downloaded_tv_list.dart';
+import 'downloaded_series_episodes_page.dart';
+
+part 'downloaded_tv_grid.dart';
 part 'downloads_grid.dart';
 part 'manager_tab.dart';
 part 'offline_body.dart';
@@ -23,9 +25,7 @@ part '../widgets/active_download_card.dart';
 part '../widgets/completed_download_card.dart';
 part '../widgets/download_poster.dart';
 part '../widgets/empty_state.dart';
-part '../widgets/episode_tile.dart';
 part '../widgets/section_header.dart';
-part '../widgets/series_header.dart';
 
 class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
@@ -89,7 +89,7 @@ class _DownloadsScreenState extends State<DownloadsScreen>
         children: [
           const ManagerTab(),
           const DownloadsGrid(filterType: MediaItemType.movie),
-          const DownloadedTvList(),
+          const DownloadedTvGrid(),
         ],
       ),
     );
