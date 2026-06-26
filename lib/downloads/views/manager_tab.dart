@@ -9,8 +9,10 @@ class ManagerTab extends StatelessWidget {
       (b) => b.state.activeDownloads,
     );
     final completed =
-        context.select<DownloadsBloc, List<DownloadedMediaItem>>(
-          (b) => b.state.offlineLibrary,
+        List<DownloadedMediaItem>.of(
+          context.select<DownloadsBloc, List<DownloadedMediaItem>>(
+            (b) => b.state.offlineLibrary,
+          ),
         )..sort(
           (a, b) => b.downloadedAt.millisecondsSinceEpoch.compareTo(
             a.downloadedAt.millisecondsSinceEpoch,

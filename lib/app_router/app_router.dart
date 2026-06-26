@@ -9,6 +9,7 @@ import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/devtools/views/dev_tools_screen.dart';
 import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/downloads/views/downloads_screen.dart';
+import 'package:playcado/downloads/views/offline_downloads_screen.dart';
 import 'package:playcado/downloads/views/offline_media_detail_page.dart';
 import 'package:playcado/home/views/home_screen.dart';
 import 'package:playcado/libraries/views/library_browse_screen.dart';
@@ -43,6 +44,7 @@ class AppRouter {
   static const videoPlayerPath = '/player';
   static const searchPath = '/search';
   static const libraryPath = '/library';
+  static const offlineDownloadsPath = '/offline-downloads';
   static const offlineMediaDetailPath = '/offline-media';
 
   late final GoRouter router = GoRouter(
@@ -122,6 +124,11 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: offlineDownloadsPath,
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: OfflineDownloadsScreen()),
+      ),
+      GoRoute(
         path: serverManagementPath,
         builder: (context, state) => const ServerManagementScreen(),
       ),
@@ -164,10 +171,11 @@ class AppRouter {
       final isFirstRun = onboardingCubit.state;
       final authState = authBloc.state;
       final isLoggedIn = authState.user.isSuccess;
-      final isOfflineMode = authState.isOfflineMode;
 
       final isGoingToOnboarding = state.matchedLocation == onboardingPath;
       final isGoingToLogin = state.matchedLocation == serverManagementPath;
+      final isGoingToOfflineDownloads =
+          state.matchedLocation == offlineDownloadsPath;
 
       // 1. Priority: Onboarding
       if (isFirstRun) {
@@ -175,28 +183,13 @@ class AppRouter {
       }
 
       // 2. Priority: Auth
-      if (!isLoggedIn && !isOfflineMode && !authState.isDemoMode) {
+      if (!isLoggedIn && !authState.isDemoMode) {
         // If coming from Onboarding (just finished), fall through
-        if (isGoingToLogin) return null;
+        if (isGoingToLogin || isGoingToOfflineDownloads) return null;
         return serverManagementPath;
       }
 
-      // 3. Priority: Offline Mode - restrict to downloads and settings
-      if (isOfflineMode && !isLoggedIn) {
-        final location = state.matchedLocation;
-        // Allow access to downloads, settings, and video player
-        if (location == downloadsPath ||
-            location == settingsPath ||
-            location == videoPlayerPath ||
-            location == detailsPath ||
-            location == offlineMediaDetailPath) {
-          return null;
-        }
-        // Default to downloads for any other route
-        return downloadsPath;
-      }
-
-      // 4. Priority: Authenticated User Navigation
+      // 3. Priority: Authenticated User Navigation
       if (isLoggedIn && (isGoingToLogin || isGoingToOnboarding)) {
         return basePath;
       }

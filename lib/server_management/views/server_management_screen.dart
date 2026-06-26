@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:playcado/app_router/app_router.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/auth_repository/auth_repository.dart';
 import 'package:playcado/core/extensions.dart';
@@ -57,9 +59,7 @@ class ServerManagementScreen extends StatelessWidget {
                               const SizedBox(height: 16),
                               OutlinedButton.icon(
                                 onPressed: () {
-                                  context.read<AuthBloc>().add(
-                                    AuthEnterOfflineModeRequested(),
-                                  );
+                                  context.go(AppRouter.offlineDownloadsPath);
                                 },
                                 icon: const PlaycadoIcon(
                                   PlaycadoIcons.download,
