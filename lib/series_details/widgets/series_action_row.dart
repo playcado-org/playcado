@@ -64,7 +64,7 @@ class SeriesActionRow extends StatelessWidget {
                     context,
                     context.l10n.downloadingSeason,
                   );
-                  context.go(AppRouter.downloadsPath, extra: 0);
+                  context.go(AppRouter.downloadsPath);
                 }
               };
             }

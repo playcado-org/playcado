@@ -183,12 +183,13 @@ class AppRouter {
 
       // 3. Priority: Offline Mode - restrict to downloads and settings
       if (isOfflineMode && !isLoggedIn) {
+        final location = state.matchedLocation;
         // Allow access to downloads, settings, and video player
-        if (state.matchedLocation == downloadsPath ||
-            state.matchedLocation == settingsPath ||
-            state.matchedLocation == videoPlayerPath ||
-            state.matchedLocation == detailsPath ||
-            state.matchedLocation == offlineMediaDetailPath) {
+        if (location == downloadsPath ||
+            location == settingsPath ||
+            location == videoPlayerPath ||
+            location == detailsPath ||
+            location == offlineMediaDetailPath) {
           return null;
         }
         // Default to downloads for any other route

@@ -37,41 +37,17 @@ class DownloadsScreen extends StatefulWidget {
 class _DownloadsScreenState extends State<DownloadsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  bool _tabForcedByExtra = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(_onTabChanged);
-    _applyTabFromRoute();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _applyTabFromRoute();
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _onTabChanged() {
-    if (_tabForcedByExtra && !_tabController.indexIsChanging) {
-      _tabForcedByExtra = false;
-    }
-  }
-
-  void _applyTabFromRoute() {
-    final extra = GoRouterState.of(context).extra;
-    if (extra is int && extra >= 0 && extra < 3) {
-      _tabController.index = extra;
-      _tabForcedByExtra = true;
-    }
   }
 
   @override
@@ -111,9 +87,9 @@ class _DownloadsScreenState extends State<DownloadsScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          const _ManagerTab(),
-          const _DownloadsGrid(filterType: MediaItemType.movie),
-          const _DownloadedTvList(),
+          const ManagerTab(),
+          const DownloadsGrid(filterType: MediaItemType.movie),
+          const DownloadedTvList(),
         ],
       ),
     );

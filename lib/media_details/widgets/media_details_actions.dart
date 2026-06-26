@@ -143,7 +143,7 @@ class MediaDetailsActions extends StatelessWidget {
                           );
                         }
                       }
-                      context.go(AppRouter.downloadsPath, extra: 0);
+                      context.go(AppRouter.downloadsPath);
                     }
                   },
                 ),

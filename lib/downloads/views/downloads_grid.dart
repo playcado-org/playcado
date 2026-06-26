@@ -1,7 +1,7 @@
 part of 'downloads_screen.dart';
 
-class _DownloadsGrid extends StatelessWidget {
-  const _DownloadsGrid({required this.filterType});
+class DownloadsGrid extends StatelessWidget {
+  const DownloadsGrid({required this.filterType});
   final MediaItemType filterType;
 
   @override

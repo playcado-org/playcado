@@ -1,7 +1,7 @@
 part of 'downloads_screen.dart';
 
-class _ManagerTab extends StatelessWidget {
-  const _ManagerTab();
+class ManagerTab extends StatelessWidget {
+  const ManagerTab();
 
   @override
   Widget build(BuildContext context) {

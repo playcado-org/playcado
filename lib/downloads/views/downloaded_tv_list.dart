@@ -1,7 +1,7 @@
 part of 'downloads_screen.dart';
 
-class _DownloadedTvList extends StatelessWidget {
-  const _DownloadedTvList();
+class DownloadedTvList extends StatelessWidget {
+  const DownloadedTvList();
 
   @override
   Widget build(BuildContext context) {
