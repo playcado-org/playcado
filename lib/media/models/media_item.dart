@@ -55,7 +55,7 @@ enum MediaItemType {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class MediaItem extends Equatable {
   const MediaItem({
     required this.id,
@@ -99,7 +99,6 @@ class MediaItem extends Equatable {
   final int? childCount;
   final bool isPlayed;
   final String? mediaSourceId;
-  @JsonKey(includeFromJson: false, includeToJson: false)
   final List<MediaPerson>? people;
   final int? introStartTicks;
   final int? introEndTicks;
@@ -254,11 +253,18 @@ class MediaItem extends Equatable {
   }
 }
 
+@JsonSerializable()
 class MediaPerson extends Equatable {
   const MediaPerson({required this.id, required this.name, this.role});
+
+  factory MediaPerson.fromJson(Map<String, dynamic> json) =>
+      _$MediaPersonFromJson(json);
+
   final String id;
   final String name;
   final String? role;
+
+  Map<String, dynamic> toJson() => _$MediaPersonToJson(this);
 
   @override
   List<Object?> get props => [id, name, role];

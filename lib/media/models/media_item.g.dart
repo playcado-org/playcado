@@ -23,6 +23,9 @@ MediaItem _$MediaItemFromJson(Map<String, dynamic> json) => MediaItem(
   childCount: (json['childCount'] as num?)?.toInt(),
   isPlayed: json['isPlayed'] as bool? ?? false,
   mediaSourceId: json['mediaSourceId'] as String?,
+  people: (json['people'] as List<dynamic>?)
+      ?.map((e) => MediaPerson.fromJson(e as Map<String, dynamic>))
+      .toList(),
   introStartTicks: (json['introStartTicks'] as num?)?.toInt(),
   introEndTicks: (json['introEndTicks'] as num?)?.toInt(),
   playbackPositionTicks: (json['playbackPositionTicks'] as num?)?.toInt(),
@@ -46,6 +49,7 @@ Map<String, dynamic> _$MediaItemToJson(MediaItem instance) => <String, dynamic>{
   'childCount': instance.childCount,
   'isPlayed': instance.isPlayed,
   'mediaSourceId': instance.mediaSourceId,
+  'people': instance.people?.map((e) => e.toJson()).toList(),
   'introStartTicks': instance.introStartTicks,
   'introEndTicks': instance.introEndTicks,
   'playbackPositionTicks': instance.playbackPositionTicks,
@@ -63,3 +67,16 @@ const _$MediaItemTypeEnumMap = {
   MediaItemType.video: 'Video',
   MediaItemType.other: 'Other',
 };
+
+MediaPerson _$MediaPersonFromJson(Map<String, dynamic> json) => MediaPerson(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  role: json['role'] as String?,
+);
+
+Map<String, dynamic> _$MediaPersonToJson(MediaPerson instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'role': instance.role,
+    };

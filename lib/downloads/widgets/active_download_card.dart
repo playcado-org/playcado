@@ -1,7 +1,21 @@
 part of '../views/downloads_screen.dart';
 
 class _ActiveDownloadCard extends StatelessWidget {
-  const _ActiveDownloadCard({required this.item});
+  const _ActiveDownloadCard({required this.itemId});
+  final String itemId;
+
+  @override
+  Widget build(BuildContext context) {
+    final item = context.select<DownloadsBloc, ActiveDownload?>(
+      (b) => b.state.activeDownloads.where((d) => d.id == itemId).firstOrNull,
+    );
+    if (item == null) return const SizedBox.shrink();
+    return _ActiveDownloadCardContent(item: item);
+  }
+}
+
+class _ActiveDownloadCardContent extends StatelessWidget {
+  const _ActiveDownloadCardContent({required this.item});
   final ActiveDownload item;
 
   @override
@@ -13,7 +27,6 @@ class _ActiveDownloadCard extends StatelessWidget {
     final isError = item.status == ActiveDownloadStatus.error;
     final isDownloading = item.status == ActiveDownloadStatus.downloading;
 
-    // Indeterminate if downloading but total size is unknown/0
     final isIndeterminate = isDownloading && item.totalBytes <= 0;
 
     final imageUrl = urlService.getImageUrl(item.media.id);

@@ -1,25 +1,32 @@
 part of 'downloads_screen.dart';
 
-class _ManagerTab extends StatelessWidget {
-  const _ManagerTab();
+class ManagerTab extends StatelessWidget {
+  const ManagerTab();
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<DownloadsBloc, List<ActiveDownload>>(
-      (b) => b.state.activeDownloads,
-    );
-    final completed =
-        context.select<DownloadsBloc, List<DownloadedMediaItem>>(
-          (b) => b.state.offlineLibrary,
-        )..sort(
-          (a, b) => b.downloadedAt.millisecondsSinceEpoch.compareTo(
-            a.downloadedAt.millisecondsSinceEpoch,
+    final (
+      :List<ActiveDownload> active,
+      :List<DownloadedMediaItem> completed,
+      :bool isLoading,
+    ) = context.select(
+      (DownloadsBloc bloc) => (
+        active: bloc.state.activeDownloads,
+        completed: List<DownloadedMediaItem>.of(bloc.state.offlineLibrary)
+          ..sort(
+            (a, b) => b.downloadedAt.millisecondsSinceEpoch.compareTo(
+              a.downloadedAt.millisecondsSinceEpoch,
+            ),
           ),
-        );
-    if (completed.length > 10) completed.length = 10;
-
+        isLoading: bloc.state.isLoading,
+      ),
+    );
     final hasActive = active.isNotEmpty;
     final hasCompleted = completed.isNotEmpty;
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (!hasActive && !hasCompleted) {
       return _EmptyState(
@@ -45,7 +52,7 @@ class _ManagerTab extends StatelessWidget {
           ...active.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _ActiveDownloadCard(item: item),
+              child: _ActiveDownloadCard(itemId: item.media.id),
             ),
           ),
         ],

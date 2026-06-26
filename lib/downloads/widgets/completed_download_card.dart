@@ -39,22 +39,16 @@ class _CompletedDownloadCard extends StatelessWidget {
                     child: SizedBox(
                       width: 80,
                       height: 50,
-                      child: imageUrl.isNotEmpty
-                          ? PlaycadoNetworkImage(
-                              imageUrl: imageUrl,
-                              errorWidget: (context, url, error) => ColoredBox(
-                                color: colorScheme.surfaceContainerHighest,
-                                child: const PlaycadoIcon(
-                                  PlaycadoIcons.imageNotFound,
-                                ),
-                              ),
-                            )
-                          : ColoredBox(
-                              color: colorScheme.surfaceContainerHighest,
-                              child: const PlaycadoIcon(
-                                PlaycadoIcons.placeholderImage,
-                              ),
-                            ),
+                      child: PlaycadoImage(
+                        imageUrl: imageUrl,
+                        localFile: item.localPosterPath,
+                        errorWidget: (context, url, error) => ColoredBox(
+                          color: colorScheme.surfaceContainerHighest,
+                          child: const PlaycadoIcon(
+                            PlaycadoIcons.imageNotFound,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   Container(

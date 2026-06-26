@@ -37,37 +37,30 @@ class _DownloadPoster extends StatelessWidget {
                     color: theme.colorScheme.surfaceContainerHighest,
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: imageUrl.isNotEmpty
-                      ? PlaycadoNetworkImage(
-                          imageUrl: imageUrl,
-                          width: double.infinity,
-                          memCacheWidth: 240,
-                          memCacheHeight: 360,
-                          placeholder: (context, url) => ColoredBox(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            child: Center(
-                              child: PlaycadoIcon(
-                                PlaycadoIcons.movie,
-                                color: theme.colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.2),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Center(
-                            child: PlaycadoIcon(
-                              PlaycadoIcons.imageNotFound,
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: PlaycadoIcon(
-                            PlaycadoIcons.movie,
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.3),
-                            size: 48,
+                  child: PlaycadoImage(
+                    imageUrl: imageUrl,
+                    localFile: item.localPosterPath,
+                    width: double.infinity,
+                    memCacheWidth: 240,
+                    memCacheHeight: 360,
+                    placeholder: (context, url) => ColoredBox(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: Center(
+                        child: PlaycadoIcon(
+                          PlaycadoIcons.movie,
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.2,
                           ),
                         ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Center(
+                      child: PlaycadoIcon(
+                        PlaycadoIcons.imageNotFound,
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),

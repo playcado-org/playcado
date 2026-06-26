@@ -14,6 +14,8 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
   DownloadsBloc({required DownloadsManagerService downloadsManagerService})
     : _downloadsManagerService = downloadsManagerService,
       super(const DownloadsState()) {
+    unawaited(downloadsManagerService.ensureInitialized());
+
     on<DownloadsRequested>((event, emit) async {
       await _downloadsManagerService.addMediaDownload(event.item);
     });
@@ -26,17 +28,31 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     on<DownloadsResumeRequested>((event, emit) async {
       await _downloadsManagerService.resumeDownload(event.id);
     });
-    on<_ActiveUpdated>(
-      (event, emit) => emit(state.copyWith(activeDownloads: event.items)),
-    );
-    on<_LibraryUpdated>(
-      (event, emit) => emit(state.copyWith(offlineLibrary: event.items)),
-    );
+    on<_ActiveUpdated>((event, emit) {
+      _activeLoaded = true;
+      emit(
+        state.copyWith(
+          activeDownloads: event.items,
+          isLoading: !(_activeLoaded && _libraryLoaded),
+        ),
+      );
+    });
+    on<_LibraryUpdated>((event, emit) {
+      _libraryLoaded = true;
+      emit(
+        state.copyWith(
+          offlineLibrary: event.items,
+          isLoading: !(_activeLoaded && _libraryLoaded),
+        ),
+      );
+    });
 
     _initListeners();
   }
 
   final DownloadsManagerService _downloadsManagerService;
+  bool _activeLoaded = false;
+  bool _libraryLoaded = false;
   StreamSubscription<List<ActiveDownload>>? _activeSub;
   StreamSubscription<List<DownloadedMediaItem>>? _libSub;
 

@@ -3,46 +3,54 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:playcado/downloads/data/downloaded_media_database.dart';
 import 'package:playcado/downloads/models/active_download.dart';
 import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/media/models/media_item.dart';
+import 'package:playcado/media/repositories/library_repository.dart';
 import 'package:playcado/services/jellyfin_client_service.dart';
 import 'package:playcado/services/logger_service.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
+import 'package:rxdart/rxdart.dart';
 
 class DownloadsManagerService {
   DownloadsManagerService({
     required MediaUrlService urlService,
     required JellyfinClientService jellyfinClient,
     required DownloadedMediaDatabase database,
-  }) : _urlService = urlService,
+    required Stream<TaskUpdate> downloadUpdatesStream,
+    required LibraryRepository libraryRepository,
+  }) : _downloadUpdatesStream = downloadUpdatesStream,
+       _urlService = urlService,
        _jellyfinClient = jellyfinClient,
-       _database = database {
-    _init();
-  }
+       _database = database,
+       _libraryRepository = libraryRepository;
 
   final MediaUrlService _urlService;
   final JellyfinClientService _jellyfinClient;
   final DownloadedMediaDatabase _database;
+  final LibraryRepository _libraryRepository;
+  final Stream<TaskUpdate> _downloadUpdatesStream;
+
+  StreamSubscription<TaskUpdate>? _updatesSubscription;
+  bool _initialized = false;
 
   final Map<String, ActiveDownload> _activeCache = {};
-  final _activeController = StreamController<List<ActiveDownload>>.broadcast();
+  final _activeController = BehaviorSubject<List<ActiveDownload>>.seeded([]);
 
   Stream<List<ActiveDownload>> get activeDownloadsStream =>
-      _activeController.stream;
+      _activeController.throttleTime(const Duration(milliseconds: 200));
   Stream<List<DownloadedMediaItem>> get offlineLibraryStream =>
       _database.watchOfflineLibrary();
 
-  Future<void> _init() async {
-    await FileDownloader().configure(
-      globalConfig: [
-        (Config.requestTimeout, const Duration(seconds: 100)),
-        (Config.runInForegroundIfFileLargerThan, 500),
-      ],
-    );
+  Future<void> ensureInitialized() async {
+    if (_initialized) return;
+    _initialized = true;
 
-    FileDownloader().updates.listen(_onUpdate);
+    _updatesSubscription ??= _downloadUpdatesStream.listen(_onUpdate);
 
     await FileDownloader().trackTasks();
     final records = await FileDownloader().database.allRecords();
@@ -51,9 +59,9 @@ class DownloadsManagerService {
       if (record.status == TaskStatus.complete) continue;
 
       if (record.task.metaData.isNotEmpty) {
-        final media = MediaItem.fromJson(
-          jsonDecode(record.task.metaData) as Map<String, dynamic>,
-        );
+        final data = jsonDecode(record.task.metaData) as Map<String, dynamic>;
+        final mediaData = data['media'] as Map<String, dynamic>;
+        final media = MediaItem.fromJson(mediaData);
         _activeCache[record.taskId] = ActiveDownload(
           media: media,
           status: _mapStatus(record.status),
@@ -75,6 +83,79 @@ class DownloadsManagerService {
           'MediaBrowser Client="Playcado", Device="Flutter", DeviceId="$deviceId", Version="1.0.0", Token="$token"',
     };
 
+    MediaItem fullItem = item;
+    try {
+      fullItem = await _fetchFullItem(item.id);
+    } catch (e) {
+      LoggerService.downloads.warning(
+        'Failed to fetch full metadata for ${item.id}: $e',
+      );
+    }
+
+    String? localPosterPath;
+    String? localBackdropPath;
+    try {
+      localPosterPath = await _downloadImage(
+        url: _urlService.getItemImageUrl(fullItem),
+        itemId: fullItem.id,
+        suffix: 'poster',
+        width: 600,
+      );
+    } catch (e) {
+      LoggerService.downloads.warning(
+        'Failed to download poster for ${fullItem.id}: $e',
+      );
+    }
+    try {
+      localBackdropPath = await _downloadImage(
+        url: _urlService.getItemBackdropUrl(fullItem),
+        itemId: fullItem.id,
+        suffix: 'backdrop',
+        width: 1280,
+      );
+    } catch (e) {
+      LoggerService.downloads.warning(
+        'Failed to download backdrop for ${fullItem.id}: $e',
+      );
+    }
+    try {
+      final seriesId = fullItem.seriesId;
+      if (seriesId != null && seriesId.isNotEmpty) {
+        await _downloadImage(
+          url: _urlService.getImageUrl(seriesId),
+          itemId: seriesId,
+          suffix: 'series_poster',
+          width: 600,
+        );
+      }
+    } catch (e) {
+      LoggerService.downloads.warning(
+        'Failed to download series poster for ${fullItem.id}: $e',
+      );
+    }
+    if (fullItem.people case final people? when people.isNotEmpty) {
+      for (final person in people) {
+        try {
+          await _downloadImage(
+            url: _urlService.getImageUrl(person.id),
+            itemId: person.id,
+            suffix: 'cast',
+            width: 200,
+          );
+        } catch (e) {
+          LoggerService.downloads.warning(
+            'Failed to download cast image for ${person.id}: $e',
+          );
+        }
+      }
+    }
+
+    final metaDataMap = {
+      'media': fullItem.toJson(),
+      'localPosterPath': localPosterPath,
+      'localBackdropPath': localBackdropPath,
+    };
+
     final task = DownloadTask(
       taskId: item.id,
       url: _urlService.getDownloadUrl(item.id),
@@ -85,33 +166,10 @@ class DownloadsManagerService {
       updates: Updates.statusAndProgress,
       allowPause: true,
       retries: 3,
-      metaData: jsonEncode(item.toJson()),
+      metaData: jsonEncode(metaDataMap),
     );
 
     await FileDownloader().enqueue(task);
-  }
-
-  Future<void> deleteDownload(String id) async {
-    LoggerService.downloads.info('Deleting media: $id');
-
-    await _database.removeOfflineMedia(id);
-
-    _activeCache.remove(id);
-    _emitActive();
-
-    await FileDownloader().cancelTaskWithId(id);
-    await FileDownloader().database.deleteRecordWithId(id);
-
-    try {
-      final task = await FileDownloader().taskForId(id);
-      if (task != null) {
-        final path = await task.filePath();
-        final file = File(path);
-        if (await file.exists()) await file.delete();
-      }
-    } catch (e) {
-      LoggerService.downloads.warning('Failed to delete file for $id', e);
-    }
   }
 
   Future<void> _onUpdate(TaskUpdate update) async {
@@ -127,12 +185,84 @@ class DownloadsManagerService {
         final file = File(filePath);
         final size = await file.exists() ? await file.length() : 0;
 
+        final metaDataMap =
+            jsonDecode(update.task.metaData) as Map<String, dynamic>;
+        final media = MediaItem.fromJson(
+          metaDataMap['media'] as Map<String, dynamic>,
+        );
+        String? localPosterPath = metaDataMap['localPosterPath'] as String?;
+        String? localBackdropPath = metaDataMap['localBackdropPath'] as String?;
+
+        if (localPosterPath == null) {
+          try {
+            localPosterPath = await _downloadImage(
+              url: _urlService.getItemImageUrl(media),
+              itemId: media.id,
+              suffix: 'poster',
+              width: 600,
+            );
+          } catch (e) {
+            LoggerService.downloads.warning(
+              'Failed to download poster for ${media.id}: $e',
+            );
+          }
+        }
+        if (localBackdropPath == null) {
+          try {
+            localBackdropPath = await _downloadImage(
+              url: _urlService.getItemBackdropUrl(media),
+              itemId: media.id,
+              suffix: 'backdrop',
+              width: 1280,
+            );
+          } catch (e) {
+            LoggerService.downloads.warning(
+              'Failed to download backdrop for ${media.id}: $e',
+            );
+          }
+        }
+
+        try {
+          final seriesId = media.seriesId;
+          if (seriesId != null && seriesId.isNotEmpty) {
+            await _downloadImage(
+              url: _urlService.getImageUrl(seriesId),
+              itemId: seriesId,
+              suffix: 'series_poster',
+              width: 600,
+            );
+          }
+        } catch (e) {
+          LoggerService.downloads.warning(
+            'Failed to download series poster for ${media.id}: $e',
+          );
+        }
+
+        if (media.people case final people? when people.isNotEmpty) {
+          for (final person in people) {
+            try {
+              await _downloadImage(
+                url: _urlService.getImageUrl(person.id),
+                itemId: person.id,
+                suffix: 'cast',
+                width: 200,
+              );
+            } catch (e) {
+              LoggerService.downloads.warning(
+                'Failed to download cast image for ${person.id}: $e',
+              );
+            }
+          }
+        }
+
         await _database.saveOfflineMedia(
           DownloadedMediaItem(
-            media: cachedItem.media,
+            media: media,
             localPath: filePath,
             totalBytes: size,
             downloadedAt: DateTime.now(),
+            localPosterPath: localPosterPath,
+            localBackdropPath: localBackdropPath,
           ),
         );
 
@@ -181,7 +311,11 @@ class DownloadsManagerService {
     };
   }
 
-  void _emitActive() => _activeController.add(_activeCache.values.toList());
+  void _emitActive() {
+    if (!_activeController.isClosed) {
+      _activeController.add(_activeCache.values.toList());
+    }
+  }
 
   Future<void> pauseDownload(String id) async {
     final task = await FileDownloader().taskForId(id);
@@ -193,7 +327,33 @@ class DownloadsManagerService {
     if (task is DownloadTask) await FileDownloader().resume(task);
   }
 
+  Future<void> deleteDownload(String id) async {
+    LoggerService.downloads.info('Deleting media: $id');
+
+    await _database.removeOfflineMedia(id);
+    await _deleteLocalImages(id);
+
+    _activeCache.remove(id);
+    _emitActive();
+
+    await FileDownloader().cancelTaskWithId(id);
+    await FileDownloader().database.deleteRecordWithId(id);
+
+    try {
+      final task = await FileDownloader().taskForId(id);
+      if (task != null) {
+        final path = await task.filePath();
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      }
+    } catch (e) {
+      LoggerService.downloads.warning('Failed to delete file for $id', e);
+    }
+  }
+
   void dispose() {
+    _updatesSubscription?.cancel();
+    _updatesSubscription = null;
     _activeController.close();
   }
 
@@ -210,7 +370,77 @@ class DownloadsManagerService {
       } catch (_) {}
     }
 
+    await _deleteAllLocalImages();
+
     await FileDownloader().database.deleteAllRecords();
     await FileDownloader().cancelAll();
+  }
+
+  Future<MediaItem> _fetchFullItem(String itemId) async {
+    return _libraryRepository.getItem(itemId);
+  }
+
+  Future<String> _downloadImage({
+    required String url,
+    required String itemId,
+    required String suffix,
+    int? width,
+  }) async {
+    if (url.isEmpty) throw Exception('Image URL is empty');
+    final client = _jellyfinClient.client;
+    if (client == null) throw Exception('No authenticated client');
+
+    final imageDir = await _getImageDirectory();
+    const ext = 'jpg';
+    final filePath = p.join(imageDir.path, '${itemId}_$suffix.$ext');
+    final file = File(filePath);
+
+    if (await file.exists()) return filePath;
+
+    String imageUrl = url;
+    if (width != null) {
+      final separator = url.contains('?') ? '&' : '?';
+      imageUrl = '$url${separator}width=$width&quality=80';
+    }
+
+    final response = await client.dio.get(
+      imageUrl,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    await file.writeAsBytes(response.data as List<int>);
+    return filePath;
+  }
+
+  Future<Directory> _getImageDirectory() async {
+    final dir = await getApplicationSupportDirectory();
+    final imageDir = Directory(p.join(dir.path, 'offline_images'));
+    if (!await imageDir.exists()) {
+      await imageDir.create(recursive: true);
+    }
+    return imageDir;
+  }
+
+  Future<void> _deleteLocalImages(String itemId) async {
+    try {
+      final imageDir = await _getImageDirectory();
+      for (final suffix in ['poster', 'backdrop', 'series_poster']) {
+        final file = File(p.join(imageDir.path, '${itemId}_$suffix.jpg'));
+        if (await file.exists()) await file.delete();
+      }
+    } catch (e) {
+      LoggerService.downloads.warning('Failed to delete images for $itemId', e);
+    }
+  }
+
+  Future<void> _deleteAllLocalImages() async {
+    try {
+      final imageDir = await _getImageDirectory();
+      if (await imageDir.exists()) {
+        await imageDir.delete(recursive: true);
+      }
+    } catch (e) {
+      LoggerService.downloads.warning('Failed to delete all images', e);
+    }
   }
 }

@@ -7,8 +7,8 @@ import 'package:playcado/auth_repository/auth_repository.dart';
 import 'package:playcado/cast/services/cast_device_service.dart';
 import 'package:playcado/core/bootstrap.dart';
 import 'package:playcado/core/extensions.dart';
-import 'package:playcado/downloads/data/downloaded_media_database.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
+import 'package:playcado/downloads/data/downloaded_media_database.dart';
 import 'package:playcado/downloads/services/downloads_manager_service.dart';
 import 'package:playcado/l10n/app_localizations.dart';
 import 'package:playcado/libraries/bloc/libraries_bloc.dart';
@@ -120,6 +120,8 @@ class App extends StatelessWidget {
                     urlService: context.read<MediaUrlService>(),
                     jellyfinClient: config.jellyfinClientService,
                     database: context.read<DownloadedMediaDatabase>(),
+                    downloadUpdatesStream: config.downloadUpdatesStream,
+                    libraryRepository: context.read<LibraryRepository>(),
                   ),
                   dispose: (service) => service.dispose(),
                 ),

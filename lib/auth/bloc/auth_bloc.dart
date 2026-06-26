@@ -19,7 +19,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           credentials: authRepository.currentCredentials,
         ),
       ) {
-    on<AuthEnterOfflineModeRequested>(_onAuthEnterOfflineModeRequested);
     on<AuthLoadAccountsRequested>(_onAuthLoadAccountsRequested);
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
@@ -65,13 +64,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onAuthEnterOfflineModeRequested(
-    AuthEnterOfflineModeRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(state.copyWith(isOfflineMode: true));
-  }
-
   Future<void> _onAuthLogoutRequested(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
@@ -81,7 +73,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(
       state.copyWith(
         user: const StatusInitial(),
-        isOfflineMode: false,
         isDemoMode: false,
         credentials: () => null,
       ),

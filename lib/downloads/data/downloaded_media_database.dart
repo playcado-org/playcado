@@ -16,6 +16,8 @@ class DownloadedMediaTable extends Table {
   TextColumn get localPath => text()();
   IntColumn get totalBytes => integer()();
   DateTimeColumn get downloadedAt => dateTime()();
+  TextColumn get posterPath => text().nullable()();
+  TextColumn get backdropPath => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -26,7 +28,23 @@ class DownloadedMediaDatabase extends _$DownloadedMediaDatabase {
   DownloadedMediaDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from == 1) {
+        await migrator.addColumn(
+          downloadedMediaTable,
+          downloadedMediaTable.posterPath,
+        );
+        await migrator.addColumn(
+          downloadedMediaTable,
+          downloadedMediaTable.backdropPath,
+        );
+      }
+    },
+  );
 
   Stream<List<DownloadedMediaItem>> watchOfflineLibrary() {
     return select(downloadedMediaTable).watch().map((rows) {
@@ -36,6 +54,8 @@ class DownloadedMediaDatabase extends _$DownloadedMediaDatabase {
           localPath: row.localPath,
           totalBytes: row.totalBytes,
           downloadedAt: row.downloadedAt,
+          localPosterPath: row.posterPath,
+          localBackdropPath: row.backdropPath,
         );
       }).toList();
     });
@@ -49,6 +69,8 @@ class DownloadedMediaDatabase extends _$DownloadedMediaDatabase {
         localPath: item.localPath,
         totalBytes: item.totalBytes,
         downloadedAt: item.downloadedAt,
+        posterPath: Value(item.localPosterPath),
+        backdropPath: Value(item.localBackdropPath),
       ),
       mode: InsertMode.insertOrReplace,
     );

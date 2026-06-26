@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/formatters.dart';
 import 'package:playcado/downloads/bloc/downloads_bloc.dart';
 import 'package:playcado/downloads/models/downloaded_media_item.dart';
+import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/media_details/widgets/widgets.dart';
 import 'package:playcado/movie_details/widgets/widgets.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
@@ -39,6 +42,7 @@ class OfflineMediaDetailPage extends StatelessWidget {
                 playingItem: playingItem,
                 playerState: playerState,
                 heroTag: heroTag,
+                localBackdropPath: item.localBackdropPath,
               ),
               SliverToBoxAdapter(
                 child: Padding(
@@ -84,6 +88,15 @@ class OfflineMediaDetailPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       MediaDetailsOverview(item: mediaItem),
+                      if (mediaItem.people case final people?
+                          when people.isNotEmpty)
+                        MediaDetailsCast(
+                          people: people,
+                          localImagePaths: _buildLocalCastImagePaths(
+                            item,
+                            people,
+                          ),
+                        ),
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -121,4 +134,22 @@ class OfflineMediaDetailPage extends StatelessWidget {
       ),
     );
   }
+}
+
+Map<String, String>? _buildLocalCastImagePaths(
+  DownloadedMediaItem item,
+  List<MediaPerson> people,
+) {
+  final localPosterPath = item.localPosterPath;
+  if (localPosterPath == null) return null;
+
+  final dir = Directory(localPosterPath).parent.path;
+  final paths = <String, String>{};
+  for (final person in people) {
+    final castPath = '$dir/${person.id}_cast.jpg';
+    if (File(castPath).existsSync()) {
+      paths[person.id] = castPath;
+    }
+  }
+  return paths.isNotEmpty ? paths : null;
 }

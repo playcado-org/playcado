@@ -1,16 +1,23 @@
 part of 'downloads_screen.dart';
 
-class _DownloadsGrid extends StatelessWidget {
-  const _DownloadsGrid({required this.filterType});
+class DownloadsGrid extends StatelessWidget {
+  const DownloadsGrid({required this.filterType});
   final MediaItemType filterType;
 
   @override
   Widget build(BuildContext context) {
-    final items = context.select<DownloadsBloc, List<DownloadedMediaItem>>(
-      (b) => b.state.offlineLibrary
-          .where((d) => d.media.type == filterType)
-          .toList(),
+    final (:bool isLoading, :List<DownloadedMediaItem> items) = context.select(
+      (DownloadsBloc bloc) => (
+        isLoading: bloc.state.isLoading,
+        items: bloc.state.offlineLibrary
+            .where((d) => d.media.type == filterType)
+            .toList(),
+      ),
     );
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (items.isEmpty) {
       return _EmptyState(

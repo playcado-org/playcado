@@ -88,7 +88,7 @@ class MediaDownloadButton extends StatelessWidget {
           onPressed: () {
             context.read<DownloadsBloc>().add(DownloadsRequested(item: item));
             SnackbarHelper.showInfo(context, context.l10n.downloadStarted);
-            context.go(AppRouter.downloadsPath, extra: 0);
+            context.go(AppRouter.downloadsPath, extra: Object());
           },
           tooltip: context.l10n.download,
         );
