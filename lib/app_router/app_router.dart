@@ -180,6 +180,7 @@ class AppRouter {
           state.matchedLocation == offlineDownloadsPath;
       final isGoingToOfflineMedia =
           state.matchedLocation == offlineMediaDetailPath;
+      final isGoingToVideoPlayer = state.matchedLocation == videoPlayerPath;
 
       // 1. Priority: Onboarding
       if (isFirstRun) {
@@ -191,7 +192,8 @@ class AppRouter {
         // If coming from Onboarding (just finished), fall through
         if (isGoingToLogin ||
             isGoingToOfflineDownloads ||
-            isGoingToOfflineMedia)
+            isGoingToOfflineMedia ||
+            isGoingToVideoPlayer)
           return null;
         return serverManagementPath;
       }

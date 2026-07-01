@@ -330,6 +330,8 @@ class DownloadsManagerService {
   Future<void> deleteDownload(String id) async {
     LoggerService.downloads.info('Deleting media: $id');
 
+    final existing = await _database.getOfflineMedia(id);
+
     await _database.removeOfflineMedia(id);
     await _deleteLocalImages(id);
 
@@ -339,15 +341,9 @@ class DownloadsManagerService {
     await FileDownloader().cancelTaskWithId(id);
     await FileDownloader().database.deleteRecordWithId(id);
 
-    try {
-      final task = await FileDownloader().taskForId(id);
-      if (task != null) {
-        final path = await task.filePath();
-        final file = File(path);
-        if (await file.exists()) await file.delete();
-      }
-    } catch (e) {
-      LoggerService.downloads.warning('Failed to delete file for $id', e);
+    if (existing != null) {
+      final file = File(existing.localPath);
+      if (await file.exists()) await file.delete();
     }
   }
 
@@ -361,6 +357,12 @@ class DownloadsManagerService {
     _activeCache.clear();
     _emitActive();
 
+    final items = await _database.getAllOfflineMedia();
+    for (final item in items) {
+      final file = File(item.localPath);
+      if (await file.exists()) await file.delete();
+    }
+
     final records = await FileDownloader().database.allRecords();
     for (final record in records) {
       try {
@@ -372,6 +374,7 @@ class DownloadsManagerService {
 
     await _deleteAllLocalImages();
 
+    await _database.clearAllMedia();
     await FileDownloader().database.deleteAllRecords();
     await FileDownloader().cancelAll();
   }

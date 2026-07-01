@@ -76,8 +76,42 @@ class DownloadedMediaDatabase extends _$DownloadedMediaDatabase {
     );
   }
 
+  Future<DownloadedMediaItem?> getOfflineMedia(String id) async {
+    final rows = await (select(
+      downloadedMediaTable,
+    )..where((t) => t.id.equals(id))).get();
+    if (rows.isEmpty) return null;
+    final row = rows.first;
+    return DownloadedMediaItem(
+      media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
+      localPath: row.localPath,
+      totalBytes: row.totalBytes,
+      downloadedAt: row.downloadedAt,
+      localPosterPath: row.posterPath,
+      localBackdropPath: row.backdropPath,
+    );
+  }
+
+  Future<List<DownloadedMediaItem>> getAllOfflineMedia() async {
+    final rows = await select(downloadedMediaTable).get();
+    return rows.map((row) {
+      return DownloadedMediaItem(
+        media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
+        localPath: row.localPath,
+        totalBytes: row.totalBytes,
+        downloadedAt: row.downloadedAt,
+        localPosterPath: row.posterPath,
+        localBackdropPath: row.backdropPath,
+      );
+    }).toList();
+  }
+
   Future<void> removeOfflineMedia(String id) {
     return (delete(downloadedMediaTable)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> clearAllMedia() {
+    return delete(downloadedMediaTable).go();
   }
 }
 
