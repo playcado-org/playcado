@@ -40,7 +40,9 @@ class AuthRepository {
     required String password,
     bool rememberCredentials = false,
   }) async {
-    LoggerService.auth.info('Starting login on server: $serverUrl');
+    LoggerService.auth.info(
+      '[Auth: LoginInitiated] [Server: $serverUrl] [User: $username]',
+    );
 
     final trimmedUrl = serverUrl.trim();
     final hadNoScheme =
@@ -56,7 +58,9 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       if (hadNoScheme && _isConnectionError(e)) {
-        LoggerService.auth.info('HTTPS connection failed, retrying with HTTP');
+        LoggerService.auth.info(
+          '[Auth: HttpsFailed] [Action: RetryingWithHttp] [Server: $trimmedUrl]',
+        );
         try {
           return await _attemptLogin(
             effectiveServerUrl: 'http://$trimmedUrl',
@@ -84,6 +88,15 @@ class AuthRepository {
     required bool rememberCredentials,
   }) async {
     final newClient = JellyfinDart(basePathOverride: effectiveServerUrl);
+    newClient.dio.interceptors.add(
+      LogInterceptor(
+        logPrint: (obj) => LoggerService.api.fine(obj.toString()),
+        requestHeader: true,
+        error: true,
+        requestBody: false,
+        responseBody: false,
+      ),
+    );
 
     final deviceId = 'playcado-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -109,7 +122,9 @@ class AuthRepository {
     final userId = user?.id;
 
     if (user != null && token != null && userId != null) {
-      LoggerService.auth.info('Authentication successful');
+      LoggerService.auth.info(
+        '[Auth: LoginSucceeded] [Server: $effectiveServerUrl] [User: $username]',
+      );
       newClient.setToken(token);
 
       final credentials = ServerCredentials(
@@ -128,14 +143,18 @@ class AuthRepository {
       );
 
       if (rememberCredentials) {
-        LoggerService.auth.info('Saving credentials securely (token-based)');
+        LoggerService.auth.info(
+          '[Auth: CredentialsSaved] [Server: $effectiveServerUrl] [User: $username]',
+        );
         await _secureStorage.storeCredentials(credentials);
         await _secureStorage.saveAccount(credentials);
       }
       return _currentUser!;
     }
 
-    LoggerService.auth.warning('Authentication returned null result/token');
+    LoggerService.auth.warning(
+      '[Auth: LoginFailed] [Server: $effectiveServerUrl] [Reason: NullResult]',
+    );
     throw Exception('Authentication returned null result or token');
   }
 
@@ -155,16 +174,25 @@ class AuthRepository {
     required String token,
   }) async {
     LoggerService.auth.info(
-      'Attempting to restore session on server: $serverUrl',
+      '[Auth: TokenLogin] [Server: $serverUrl] [User: $username]',
     );
-    try {
-      var effectiveServerUrl = serverUrl.trim();
-      if (!effectiveServerUrl.startsWith('http://') &&
-          !effectiveServerUrl.startsWith('https://')) {
-        effectiveServerUrl = 'https://$effectiveServerUrl';
-      }
+    var effectiveServerUrl = serverUrl.trim();
+    if (!effectiveServerUrl.startsWith('http://') &&
+        !effectiveServerUrl.startsWith('https://')) {
+      effectiveServerUrl = 'https://$effectiveServerUrl';
+    }
 
+    try {
       final newClient = JellyfinDart(basePathOverride: effectiveServerUrl);
+      newClient.dio.interceptors.add(
+        LogInterceptor(
+          logPrint: (obj) => LoggerService.api.fine(obj.toString()),
+          requestHeader: true,
+          error: true,
+          requestBody: false,
+          responseBody: false,
+        ),
+      );
       final deviceId = 'playcado-${DateTime.now().millisecondsSinceEpoch}';
 
       newClient
@@ -183,7 +211,9 @@ class AuthRepository {
       final userId = jellyfinUser?.id;
 
       if (jellyfinUser != null && userId != null) {
-        LoggerService.auth.info('Session restored successfully');
+        LoggerService.auth.info(
+          '[Auth: TokenLoginSucceeded] [Server: $effectiveServerUrl]',
+        );
         final credentials = ServerCredentials(
           serverName: effectiveServerUrl,
           username: username,
@@ -210,25 +240,27 @@ class AuthRepository {
       }
 
       LoggerService.auth.warning(
-        'Token verification failed — token may be expired',
+        '[Auth: TokenRejected] [Server: $serverUrl] [Reason: VerifyFailed]',
       );
       _clearSession();
       await _secureStorage.clearCredentials();
       throw Exception('Token verification failed — token may be expired');
     } on Exception catch (e) {
-      LoggerService.auth.severe('Token login failed', e);
+      LoggerService.auth.severe(
+        '[Auth: TokenLoginFailed] [Server: $effectiveServerUrl]',
+        e,
+      );
       _clearSession();
 
       if (e is DioException &&
           (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
         LoggerService.auth.warning(
-          'Token rejected by server, clearing credentials',
+          '[Auth: TokenRejected] [Server: $effectiveServerUrl] [Reason: Unauthorized]',
         );
         await _secureStorage.clearCredentials();
       } else {
         LoggerService.auth.warning(
-          'Network or server error during token '
-          'verification, keeping credentials',
+          '[Auth: TokenLoginFailed] [Server: $effectiveServerUrl] [Reason: NetworkError]',
         );
       }
 
@@ -237,14 +269,14 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
-    LoggerService.auth.info('Logging out user');
+    LoggerService.auth.info('[Auth: Logout]');
     _jellyfinClientService.clear();
     _currentUser = null;
     await _secureStorage.clearCredentials();
   }
 
   Future<void> removeAccount(String id) async {
-    LoggerService.auth.info('Removing saved account: $id');
+    LoggerService.auth.info('[Auth: AccountRemoved] [Id: $id]');
     await _secureStorage.removeAccount(id);
   }
 
@@ -255,8 +287,7 @@ class AuthRepository {
         return null;
       }
       LoggerService.auth.info(
-        'Found stored credentials for '
-        '${storedCredentials.username}, attempting login',
+        '[Auth: AutoLoginAttempt] [Server: ${storedCredentials.serverName}] [User: ${storedCredentials.username}]',
       );
       return await loginWithToken(
         serverUrl: storedCredentials.serverName,
@@ -264,7 +295,7 @@ class AuthRepository {
         token: storedCredentials.accessToken!,
       );
     } on Exception catch (e) {
-      LoggerService.auth.warning('Auto-login failed', e);
+      LoggerService.auth.warning('[Auth: AutoLoginFailed]', e);
       return null;
     }
   }
