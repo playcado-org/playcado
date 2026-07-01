@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,6 +40,7 @@ class BootstrapConfig {
     required this.playerTracker,
     required this.preferencesService,
     required this.searchRepository,
+    required this.downloadUpdatesStream,
     required this.secureStorageService,
   });
 
@@ -55,6 +57,7 @@ class BootstrapConfig {
   final PlayerTrackerRepository playerTracker;
   final PreferencesService preferencesService;
   final SearchRepository searchRepository;
+  final Stream<TaskUpdate> downloadUpdatesStream;
   final SecureStorageService secureStorageService;
 }
 
@@ -132,6 +135,13 @@ Future<BootstrapConfig> _initializeServices() async {
   final localPlayerService = LocalPlayerService();
   final castPlayerService = CastPlayerService();
   final preferencesService = PreferencesService();
+  await FileDownloader().configure(
+    globalConfig: [
+      (Config.requestTimeout, const Duration(seconds: 100)),
+      (Config.runInForegroundIfFileLargerThan, 500),
+    ],
+  );
+  final downloadUpdatesStream = FileDownloader().updates.asBroadcastStream();
 
   final (isFirstRun, savedThemeColor) = await (
     preferencesService.isFirstRun(),
@@ -161,6 +171,7 @@ Future<BootstrapConfig> _initializeServices() async {
     mediaUrlService: mediaUrlService,
     playerTracker: playerTracker,
     preferencesService: preferencesService,
+    downloadUpdatesStream: downloadUpdatesStream,
     searchRepository: searchRepository,
     secureStorageService: secureStorage,
   );

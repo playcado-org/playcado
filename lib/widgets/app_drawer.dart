@@ -18,14 +18,9 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (isOfflineMode, isDemoMode, isLoggedIn, credentials) = context
-        .select<AuthBloc, (bool, bool, bool, ServerCredentials?)>(
-          (b) => (
-            b.state.isOfflineMode,
-            b.state.isDemoMode,
-            b.state.isLoggedIn,
-            b.state.credentials,
-          ),
+    final (isDemoMode, isLoggedIn, credentials) = context
+        .select<AuthBloc, (bool, bool, ServerCredentials?)>(
+          (b) => (b.state.isDemoMode, b.state.isLoggedIn, b.state.credentials),
         );
     final librariesState = context.watch<LibrariesBloc>().state;
     final libraries = librariesState.libraries.value ?? [];
@@ -65,7 +60,7 @@ class AppDrawer extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildHeader(context, username, server, isOfflineMode, isDemoMode),
+            _buildHeader(context, username, server, isDemoMode),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -73,7 +68,7 @@ class AppDrawer extends StatelessWidget {
                   vertical: 8,
                 ),
                 children: [
-                  if (isLoggedIn && !isOfflineMode) ...[
+                  if (isLoggedIn) ...[
                     _DrawerItem(
                       icon: PlaycadoIcons.home,
                       label: context.l10n.home,
@@ -132,7 +127,7 @@ class AppDrawer extends StatelessWidget {
                     isSelected: false,
                     onTap: () => _navigate(context, AppRouter.downloadsPath),
                   ),
-                  if (kDebugMode && isLoggedIn && !isOfflineMode) ...[
+                  if (kDebugMode && isLoggedIn) ...[
                     _DrawerItem(
                       icon: PlaycadoIcons.developer,
                       label: context.l10n.devTools,
@@ -178,8 +173,6 @@ class AppDrawer extends StatelessWidget {
                       icon: PlaycadoIcons.logout,
                       label: isDemoMode
                           ? 'Exit Demo Mode'
-                          : isOfflineMode
-                          ? context.l10n.exitOfflineMode
                           : context.l10n.manageServers,
                       isSelected: false,
                       isDestructive: true,
@@ -202,7 +195,6 @@ class AppDrawer extends StatelessWidget {
     BuildContext context,
     String username,
     String server,
-    bool isOfflineMode,
     bool isDemoMode,
   ) {
     final theme = Theme.of(context);
@@ -232,16 +224,6 @@ class AppDrawer extends StatelessWidget {
                       color: colorScheme.primary,
                     ),
                   )
-                : isOfflineMode
-                ? CircleAvatar(
-                    radius: 28,
-                    backgroundColor: colorScheme.surface,
-                    child: PlaycadoIcon(
-                      PlaycadoIcons.wifiOff,
-                      size: 28,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  )
                 : const CircleLogo(radius: 28),
           ),
           const SizedBox(width: 16),
@@ -251,11 +233,7 @@ class AppDrawer extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isDemoMode
-                      ? 'Demo Mode'
-                      : isOfflineMode
-                      ? context.l10n.offlineMode
-                      : username,
+                  isDemoMode ? 'Demo Mode' : username,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -266,20 +244,14 @@ class AppDrawer extends StatelessWidget {
                 Row(
                   children: [
                     PlaycadoIcon(
-                      isOfflineMode
-                          ? PlaycadoIcons.download
-                          : PlaycadoIcons.smartTv,
+                      PlaycadoIcons.smartTv,
                       size: 12,
                       color: colorScheme.primary,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        isDemoMode
-                            ? 'Creative Commons Content'
-                            : isOfflineMode
-                            ? context.l10n.downloadedContentOnly
-                            : server,
+                        isDemoMode ? 'Creative Commons Content' : server,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),

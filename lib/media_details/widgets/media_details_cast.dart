@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/extensions.dart';
@@ -5,8 +8,13 @@ import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 
 class MediaDetailsCast extends StatelessWidget {
-  const MediaDetailsCast({required this.people, super.key});
+  const MediaDetailsCast({
+    required this.people,
+    super.key,
+    this.localImagePaths,
+  });
   final List<MediaPerson> people;
+  final Map<String, String>? localImagePaths;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +57,11 @@ class MediaDetailsCast extends StatelessWidget {
                       radius: avatarRadius,
                       backgroundColor:
                           theme.colorScheme.surfaceContainerHighest,
-                      backgroundImage: NetworkImage(imageUrl),
+                      backgroundImage:
+                          localImagePaths?.containsKey(person.id) == true
+                          ? FileImage(File(localImagePaths![person.id]!))
+                          : CachedNetworkImageProvider(imageUrl)
+                                as ImageProvider,
                     ),
                     const SizedBox(height: 8),
                     Text(

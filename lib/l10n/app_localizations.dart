@@ -496,6 +496,12 @@ abstract class AppLocalizations {
   /// **'Manage Servers'**
   String get manageServers;
 
+  /// No description provided for @manager.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get manager;
+
   /// No description provided for @mediaType.
   ///
   /// In en, this message translates to:
@@ -537,6 +543,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No active downloads'**
   String get noActiveDownloads;
+
+  /// No description provided for @noDownloadedEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'No downloaded episodes'**
+  String get noDownloadedEpisodes;
+
+  /// No description provided for @noDownloadedMovies.
+  ///
+  /// In en, this message translates to:
+  /// **'No downloaded movies'**
+  String get noDownloadedMovies;
 
   /// No description provided for @noDownloadsYet.
   ///

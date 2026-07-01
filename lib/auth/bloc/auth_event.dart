@@ -43,6 +43,4 @@ class AuthSwitchAccountRequested extends AuthEvent {
   List<Object> get props => [credentials];
 }
 
-class AuthEnterOfflineModeRequested extends AuthEvent {}
-
 class AuthDemoModeRequested extends AuthEvent {}

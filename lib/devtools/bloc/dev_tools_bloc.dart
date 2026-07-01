@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:playcado/cast/services/cast_device_service.dart';
-import 'package:playcado/downloads_repository/downloads_repository.dart';
+import 'package:playcado/downloads/services/downloads_manager_service.dart';
 import 'package:playcado/player/models/playable_media.dart';
 import 'package:playcado/player/services/cast_player_service.dart';
 import 'package:playcado/services/preferences_service.dart';
@@ -17,12 +17,12 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   DevToolsBloc({
     required CastDeviceService castDeviceService,
     required CastPlayerService castPlayerService,
-    required DownloadsRepository downloadsRepository,
+    required DownloadsManagerService downloadsManagerService,
     required PreferencesService preferencesService,
     required SecureStorageService secureStorage,
   }) : _castDeviceService = castDeviceService,
        _castPlayerService = castPlayerService,
-       _downloadsRepository = downloadsRepository,
+       _downloadsManagerService = downloadsManagerService,
        _preferencesService = preferencesService,
        _secureStorage = secureStorage,
        super(const DevToolsState()) {
@@ -38,7 +38,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
   final CastDeviceService _castDeviceService;
   final CastPlayerService _castPlayerService;
   StreamSubscription<GoogleCastSession?>? _castSubscription;
-  final DownloadsRepository _downloadsRepository;
+  final DownloadsManagerService _downloadsManagerService;
   final PreferencesService _preferencesService;
   final SecureStorageService _secureStorage;
 
@@ -93,7 +93,7 @@ class DevToolsBloc extends Bloc<DevToolsEvent, DevToolsState> {
     Emitter<DevToolsState> emit,
   ) async {
     try {
-      await _downloadsRepository.clearAll();
+      await _downloadsManagerService.clearAll();
       emit(
         state.copyWith(
           status: DevToolsStatus.success,
