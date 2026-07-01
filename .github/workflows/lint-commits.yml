@@ -1,4 +1,4 @@
-name: Lint commits
+name: Lint PR title
 
 on:
   pull_request:
@@ -12,14 +12,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  commit-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v6
-
   pr-title-lint:
     runs-on: ubuntu-latest
     steps:
