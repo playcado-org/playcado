@@ -124,12 +124,7 @@ class MediaDetailsActions extends StatelessWidget {
                       : downloadLabel,
                   onTap: () {
                     if (isDownloaded) {
-                      final downloadedItem = downloadsState.offlineLibrary
-                          .firstWhere((d) => d.id == item.id);
-                      context.push(
-                        AppRouter.offlineMediaDetailPath,
-                        extra: downloadedItem,
-                      );
+                      context.go(AppRouter.downloadsPath, extra: Object());
                     } else {
                       if (activeDownload == null ||
                           activeDownload.status == ActiveDownloadStatus.error) {
