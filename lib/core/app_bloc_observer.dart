@@ -7,14 +7,16 @@ class AppBlocObserver extends BlocObserver {
   @override
   void onEvent(Bloc<dynamic, dynamic> bloc, Object? event) {
     super.onEvent(bloc, event);
-    LoggerService.bloc.info('EVENT  [${bloc.runtimeType}] $event');
+    LoggerService.bloc.info(
+      '[Bloc: ${bloc.runtimeType}] [Event: ${event.runtimeType}]',
+    );
   }
 
   @override
   void onError(BlocBase<dynamic> bloc, Object error, StackTrace stackTrace) {
     super.onError(bloc, error, stackTrace);
     LoggerService.bloc.severe(
-      'ERROR  [${bloc.runtimeType}] $error',
+      '[Bloc: ${bloc.runtimeType}] [Error] $error',
       error,
       stackTrace,
     );
@@ -37,15 +39,12 @@ class AppBlocObserver extends BlocObserver {
 
     // Skip logging auth state changes to avoid leaking credentials
     if (bloc is AuthBloc) {
-      LoggerService.bloc.fine('CHANGE [AuthBloc] (state redacted)');
+      LoggerService.bloc.fine('[Bloc: AuthBloc] [Transition] (state redacted)');
       return;
     }
 
-    // Multi-line logging for easier diffing
     LoggerService.bloc.fine(
-      'CHANGE [${bloc.runtimeType}]\n'
-      '   Curr: ${change.currentState}\n'
-      '   Next: ${change.nextState}',
+      '[Bloc: ${bloc.runtimeType}] [Transition] [From: ${change.currentState.runtimeType}] [To: ${change.nextState.runtimeType}]',
     );
   }
 

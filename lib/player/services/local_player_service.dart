@@ -107,7 +107,9 @@ class LocalPlayerService implements PlayerService {
 
   @override
   Future<void> load(PlayableMedia media) async {
-    LoggerService.player.info('LocalPlayerService loading: ${media.title}');
+    LoggerService.player.info(
+      '[Player: LoadLocal] [URL: ${media.streamUrl}] [StartPosition: ${media.startPosition.inSeconds}s]',
+    );
 
     _currentState = const PlayerServiceState();
 
@@ -132,13 +134,24 @@ class LocalPlayerService implements PlayerService {
   }
 
   @override
-  Future<void> pause() async => _lazyPlayer.pause();
+  Future<void> pause() async {
+    LoggerService.player.fine('[Player: Pause]');
+    await _lazyPlayer.pause();
+  }
 
   @override
-  Future<void> play() async => _lazyPlayer.play();
+  Future<void> play() async {
+    LoggerService.player.fine('[Player: Play]');
+    await _lazyPlayer.play();
+  }
 
   @override
-  Future<void> seek(Duration position) async => _lazyPlayer.seek(position);
+  Future<void> seek(Duration position) async {
+    LoggerService.player.fine(
+      '[Player: Seek] [Position: ${position.inSeconds}s]',
+    );
+    await _lazyPlayer.seek(position);
+  }
 
   @override
   Future<void> setAudioTrack(int index) async {
@@ -209,6 +222,13 @@ class LocalPlayerService implements PlayerService {
     });
     _durationSub = player.stream.duration.listen((duration) {
       _updateState(duration: duration);
+      if (duration > Duration.zero) {
+        final audioTracks = player.state.tracks.audio;
+        final subtitleTracks = player.state.tracks.subtitle;
+        LoggerService.player.info(
+          '[Player: TracksLoaded] [AudioCount: ${audioTracks.length}] [SubCount: ${subtitleTracks.length}]',
+        );
+      }
     });
     _completedSub = player.stream.completed.listen((isCompleted) {
       _updateState(isCompleted: isCompleted);

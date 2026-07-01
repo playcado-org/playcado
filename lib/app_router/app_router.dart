@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/main_navigation_shell.dart';
+import 'package:playcado/app_router/app_router_observer.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 
 import 'package:playcado/devtools/views/dev_tools_screen.dart';
@@ -54,6 +55,7 @@ class AppRouter {
       _GoRouterRefreshStream(authBloc.stream),
       _GoRouterRefreshStream(onboardingCubit.stream),
     ]),
+    observers: [AppRouterObserver()],
     debugLogDiagnostics: kDebugMode,
     routes: [
       StatefulShellRoute.indexedStack(

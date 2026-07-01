@@ -88,7 +88,7 @@ class DownloadsManagerService {
       fullItem = await _fetchFullItem(item.id);
     } catch (e) {
       LoggerService.downloads.warning(
-        'Failed to fetch full metadata for ${item.id}: $e',
+        '[Download: MetadataFailed] [ItemId: ${item.id}] [Error: $e]',
       );
     }
 
@@ -103,7 +103,7 @@ class DownloadsManagerService {
       );
     } catch (e) {
       LoggerService.downloads.warning(
-        'Failed to download poster for ${fullItem.id}: $e',
+        '[Download: ImageFailed] [ItemId: ${fullItem.id}] [Type: poster] [Error: $e]',
       );
     }
     try {
@@ -115,7 +115,7 @@ class DownloadsManagerService {
       );
     } catch (e) {
       LoggerService.downloads.warning(
-        'Failed to download backdrop for ${fullItem.id}: $e',
+        '[Download: ImageFailed] [ItemId: ${fullItem.id}] [Type: backdrop] [Error: $e]',
       );
     }
     try {
@@ -130,7 +130,7 @@ class DownloadsManagerService {
       }
     } catch (e) {
       LoggerService.downloads.warning(
-        'Failed to download series poster for ${fullItem.id}: $e',
+        '[Download: ImageFailed] [ItemId: ${fullItem.id}] [Type: series_poster] [Error: $e]',
       );
     }
     if (fullItem.people case final people? when people.isNotEmpty) {
@@ -144,7 +144,7 @@ class DownloadsManagerService {
           );
         } catch (e) {
           LoggerService.downloads.warning(
-            'Failed to download cast image for ${person.id}: $e',
+            '[Download: ImageFailed] [ItemId: ${person.id}] [Type: cast] [Error: $e]',
           );
         }
       }
@@ -180,10 +180,17 @@ class DownloadsManagerService {
     final cachedItem = _activeCache[taskId]!;
 
     if (update is TaskStatusUpdate) {
+      LoggerService.downloads.fine(
+        '[Download: StatusUpdate] [TaskId: $taskId] [Status: ${update.status.name}]',
+      );
       if (update.status == TaskStatus.complete) {
         final filePath = await update.task.filePath();
         final file = File(filePath);
         final size = await file.exists() ? await file.length() : 0;
+
+        LoggerService.downloads.info(
+          '[Download: Completed] [TaskId: $taskId] [Path: $filePath] [Size: $size bytes]',
+        );
 
         final metaDataMap =
             jsonDecode(update.task.metaData) as Map<String, dynamic>;
@@ -203,7 +210,7 @@ class DownloadsManagerService {
             );
           } catch (e) {
             LoggerService.downloads.warning(
-              'Failed to download poster for ${media.id}: $e',
+              '[Download: ImageFailed] [ItemId: ${media.id}] [Type: poster] [Error: $e]',
             );
           }
         }
@@ -217,7 +224,7 @@ class DownloadsManagerService {
             );
           } catch (e) {
             LoggerService.downloads.warning(
-              'Failed to download backdrop for ${media.id}: $e',
+              '[Download: ImageFailed] [ItemId: ${media.id}] [Type: backdrop] [Error: $e]',
             );
           }
         }
@@ -234,7 +241,7 @@ class DownloadsManagerService {
           }
         } catch (e) {
           LoggerService.downloads.warning(
-            'Failed to download series poster for ${media.id}: $e',
+            '[Download: ImageFailed] [ItemId: ${media.id}] [Type: series_poster] [Error: $e]',
           );
         }
 
@@ -249,7 +256,7 @@ class DownloadsManagerService {
               );
             } catch (e) {
               LoggerService.downloads.warning(
-                'Failed to download cast image for ${person.id}: $e',
+                '[Download: ImageFailed] [ItemId: ${person.id}] [Type: cast] [Error: $e]',
               );
             }
           }
@@ -328,7 +335,7 @@ class DownloadsManagerService {
   }
 
   Future<void> deleteDownload(String id) async {
-    LoggerService.downloads.info('Deleting media: $id');
+    LoggerService.downloads.info('[Download: Deleting] [Id: $id]');
 
     final existing = await _database.getOfflineMedia(id);
 
@@ -432,7 +439,10 @@ class DownloadsManagerService {
         if (await file.exists()) await file.delete();
       }
     } catch (e) {
-      LoggerService.downloads.warning('Failed to delete images for $itemId', e);
+      LoggerService.downloads.warning(
+        '[Download: ImageDeleteFailed] [ItemId: $itemId]',
+        e,
+      );
     }
   }
 
@@ -443,7 +453,7 @@ class DownloadsManagerService {
         await imageDir.delete(recursive: true);
       }
     } catch (e) {
-      LoggerService.downloads.warning('Failed to delete all images', e);
+      LoggerService.downloads.warning('[Download: AllImageDeleteFailed]', e);
     }
   }
 }

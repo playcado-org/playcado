@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
+import 'package:playcado/core/secrets.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class LoggerService {
   static final Logger _preferencesServiceLogger = Logger('AppPrefs');
@@ -22,22 +24,14 @@ class LoggerService {
     // Enable hierarchical logging to allow distinct control if needed,
     // but primarily to reset the root logger cleanly.
     hierarchicalLoggingEnabled = true;
-    Logger.root.level = Level.INFO;
+    Logger.root.level = kDebugMode ? Level.ALL : Level.INFO;
 
     // Remove any existing listeners (fixes duplicate logs on hot restart)
     Logger.root.clearListeners();
 
     Logger.root.onRecord.listen((record) {
-      // Format: 10:53:03.566
-      final time = record.time.toIso8601String().split('T').last;
-      final timestamp = time.substring(0, 12);
-
-      final level = record.level.name.padRight(7);
-      final name = record.loggerName.padRight(12);
-
-      // debugPrint handles the system output.
-      // We format strictly: TIME LEVEL [TAG] MESSAGE
-      final message = '$timestamp $level $name ${record.message}';
+      final message =
+          '[Domain: ${record.loggerName}] [Level: ${record.level.name}] ${record.message}';
 
       if (record.error != null) {
         debugPrint('$message\nError: ${record.error}');
@@ -47,7 +41,24 @@ class LoggerService {
       } else {
         debugPrint(message);
       }
+
+      if (Secrets.isSentryEnabled) {
+        Sentry.addBreadcrumb(
+          Breadcrumb(
+            message: record.message,
+            category: record.loggerName,
+            level: _mapSentryLevel(record.level),
+          ),
+        );
+      }
     });
+  }
+
+  static SentryLevel _mapSentryLevel(Level level) {
+    if (level == Level.SEVERE) return SentryLevel.error;
+    if (level == Level.WARNING) return SentryLevel.warning;
+    if (level == Level.INFO) return SentryLevel.info;
+    return SentryLevel.debug;
   }
 
   static Logger get preferencesService => _preferencesServiceLogger;

@@ -40,7 +40,9 @@ class CastPlayerService implements PlayerService {
 
   @override
   Future<void> load(PlayableMedia media) async {
-    LoggerService.player.info('CastPlayerService loading: ${media.title}');
+    LoggerService.player.info(
+      '[Cast: LoadMedia] [ContentId: ${media.streamUrl}] [MimeType: application/x-mpegURL] [Title: ${media.title}]',
+    );
     _updateState(isBuffering: true);
 
     _mediaStatusSub?.cancel();
@@ -87,7 +89,9 @@ class CastPlayerService implements PlayerService {
         mediaInfo,
         playPosition: media.startPosition,
       );
-      LoggerService.player.info('Cast loadMedia sent successfully');
+      LoggerService.player.info(
+        '[Cast: LoadMediaSucceeded] [Title: ${media.title}]',
+      );
       _updateState(isPlaying: true, isBuffering: false);
     } on Exception catch (e, stack) {
       LoggerService.player.severe('Failed to load media on Cast', e, stack);

@@ -194,7 +194,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerCastRequested event,
     Emitter<PlayerState> emit,
   ) async {
-    LoggerService.player.info('Cast requested for ${event.item.name}');
+    LoggerService.player.info(
+      '[Player: CastRequested] [Id: ${event.item.id}] [Name: ${event.item.name}]',
+    );
 
     if (_activeService != null && !state.isCasting) {
       await _activeService!.stop();
@@ -283,7 +285,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerPlayRequested event,
     Emitter<PlayerState> emit,
   ) async {
-    LoggerService.player.info('Play requested for ${event.item.name}');
+    LoggerService.player.info(
+      '[Player: PlayRequested] [Id: ${event.item.id}] [Type: ${event.item.type?.name}] [IsLocal: ${event.localPath != null}]',
+    );
 
     final useCast = _castDeviceService.isConnected;
 

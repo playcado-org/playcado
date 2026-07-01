@@ -15,11 +15,17 @@ Future<T> retryWithBackoff<T extends Object>(
 
   for (var attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await action();
+      final stopwatch = Stopwatch()..start();
+      final result = await action();
+      stopwatch.stop();
+      LoggerService.api.fine(
+        '[API: ${label ?? 'Unknown'}] [Status: Success] [Latency: ${stopwatch.elapsedMilliseconds}ms]',
+      );
+      return result;
     } on Exception catch (e, s) {
       if (attempt == maxAttempts) {
         LoggerService.api.severe(
-          '${label ?? 'API call'} failed after $maxAttempts attempts',
+          '[Retry: ${label ?? 'API'}] [Status: Exhausted] [Attempts: $maxAttempts]',
           e,
           s,
         );
@@ -31,8 +37,7 @@ Future<T> retryWithBackoff<T extends Object>(
       final totalDelay = Duration(milliseconds: delayMs + jitter);
 
       LoggerService.api.info(
-        '${label ?? 'API call'} attempt $attempt failed, '
-        'retrying in ${totalDelay.inMilliseconds}ms',
+        '[Retry: ${label ?? 'API'}] [Attempt: $attempt] [Delay: ${totalDelay.inMilliseconds}ms]',
       );
 
       await Future<void>.delayed(totalDelay);

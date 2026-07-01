@@ -30,7 +30,7 @@ class CastDeviceService {
   Future<void> initialize() async {
     if (!_isSupportedPlatform || _isInitialized) return;
 
-    LoggerService.castDeviceService.info('Initializing Google Cast Options');
+    LoggerService.castDeviceService.info('[Cast: Initializing]');
     const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
 
     GoogleCastOptions? options;
@@ -51,19 +51,13 @@ class CastDeviceService {
 
     currentSessionStream.listen((session) {
       LoggerService.castDeviceService.info(
-        'Cast Session: '
-        'ConnectionState:${session?.connectionState}, '
-        'Device:${session?.device?.friendlyName}, '
-        'SessionID:${session?.sessionID}, '
-        'Muted:${session?.currentDeviceMuted}, '
-        'Volume:${session?.currentDeviceVolume}, '
-        'Status:${session?.deviceStatusText}',
+        '[Cast: SessionUpdate] [State: ${session?.connectionState}] [Device: ${session?.device?.friendlyName}] [SessionId: ${session?.sessionID}]',
       );
     });
 
     devicesStream.listen((devices) {
       LoggerService.castDeviceService.info(
-        'Discovered devices: ${devices.length}',
+        '[Cast: DevicesDiscovered] [Count: ${devices.length}]',
       );
     });
   }
@@ -71,13 +65,13 @@ class CastDeviceService {
   Future<void> connect(GoogleCastDevice device) async {
     if (!_isSupportedPlatform) return;
     LoggerService.castDeviceService.info(
-      'Connecting to Cast device: ${device.friendlyName}',
+      '[Cast: Connecting] [Device: ${device.friendlyName}]',
     );
     try {
       await _sessionManager.startSessionWithDevice(device);
     } on Exception catch (e, stack) {
       LoggerService.castDeviceService.severe(
-        'Failed to connect to Cast device',
+        '[Cast: ConnectFailed] [Device: ${device.friendlyName}]',
         e,
         stack,
       );
@@ -86,12 +80,12 @@ class CastDeviceService {
 
   Future<void> disconnect() async {
     if (!_isSupportedPlatform) return;
-    LoggerService.castDeviceService.info('Disconnecting from Cast device...');
+    LoggerService.castDeviceService.info('[Cast: Disconnecting]');
     try {
       await _sessionManager.endSessionAndStopCasting();
     } on Exception catch (e, stack) {
       LoggerService.castDeviceService.severe(
-        'Failed to disconnect Cast',
+        '[Cast: DisconnectFailed]',
         e,
         stack,
       );
@@ -111,10 +105,8 @@ class CastDeviceService {
           )
           .timeout(timeout);
       return true;
-    } on Exception catch (e) {
-      LoggerService.castDeviceService.warning(
-        'Wait for connection timed out: $e',
-      );
+    } on Exception {
+      LoggerService.castDeviceService.warning('[Cast: ConnectionTimeout]');
       return false;
     }
   }
