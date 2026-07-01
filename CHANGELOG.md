@@ -2,6 +2,18 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.1.0]
+
+### Added
+- Persist downloads to Drift SQLite, replace DownloadsRepository with DownloadsManagerService, simplify offline routing (#10)
+
+### Fixed
+- Improve logging across services (#11)
+- Navigate to downloads manager tab when clicking downloaded button (#12)
+
+### Changed
+- Remove github MCP from project config, alphabetize keys (#9)
+
 ## [1.0.5]
 
 ### Fixed
