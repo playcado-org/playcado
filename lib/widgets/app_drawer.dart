@@ -127,6 +127,23 @@ class AppDrawer extends StatelessWidget {
                     isSelected: false,
                     onTap: () => _navigate(context, AppRouter.downloadsPath),
                   ),
+                  _DrawerItem(
+                    icon: PlaycadoIcons.feedback,
+                    label: context.l10n.sendFeedback,
+                    isSelected: false,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      final uri = Uri.parse(
+                        'https://forms.gle/YGNwucckHREJf8ET9',
+                      );
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                  ),
                   if (kDebugMode && isLoggedIn) ...[
                     _DrawerItem(
                       icon: PlaycadoIcons.developer,

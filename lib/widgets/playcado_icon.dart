@@ -42,6 +42,7 @@ enum PlaycadoIcons {
   developer(HugeIcons.strokeRoundedSourceCode),
   download(HugeIcons.strokeRoundedDownload01),
   error(HugeIcons.strokeRoundedAlertCircle),
+  feedback(HugeIcons.strokeRoundedMessageEdit01),
   folder(HugeIcons.strokeRoundedFolder01),
   forward10(HugeIcons.strokeRoundedGoForward10Sec),
   fullscreen(HugeIcons.strokeRoundedArrowExpand),
