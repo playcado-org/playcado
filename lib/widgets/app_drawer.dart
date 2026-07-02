@@ -314,7 +314,6 @@ class _LegalLink extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: () {
-        Navigator.of(context).pop();
         context.push(
           AppRouter.webViewPath,
           extra: <String, String>{'url': url, 'title': label},
