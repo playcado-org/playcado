@@ -2,12 +2,14 @@ part of 'auth_bloc.dart';
 
 class AuthState extends Equatable {
   const AuthState({
-    this.availableAccounts = const [],
+    this.availableAccounts,
     this.user = const StatusInitial(),
     this.isDemoMode = false,
     this.credentials,
   });
-  final List<ServerCredentials> availableAccounts;
+
+  /// `null` while accounts are being loaded for the first time.
+  final List<ServerCredentials>? availableAccounts;
   final StatusWrapper<User> user;
   final bool isDemoMode;
   final ServerCredentials? credentials;
