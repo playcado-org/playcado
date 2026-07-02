@@ -6,3 +6,4 @@ export 'playcado_image.dart';
 export 'playcado_network_image.dart';
 export 'playcado_shimmer.dart';
 export 'snackbar_helper.dart';
+export 'web_view_page.dart';

@@ -8,7 +8,7 @@ import 'package:playcado/app_router/app_router_observer.dart';
 import 'package:playcado/auth/bloc/auth_bloc.dart';
 
 import 'package:playcado/devtools/views/dev_tools_screen.dart';
-import 'package:playcado/feedback/views/feedback_screen.dart';
+
 import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/downloads/views/downloads_screen.dart';
 import 'package:playcado/downloads/views/offline_downloads_screen.dart';
@@ -43,7 +43,7 @@ class AppRouter {
   static const tvPath = '/tv';
   static const downloadsPath = '/downloads';
   static const devtoolsPath = '/devtools';
-  static const feedbackPath = '/feedback';
+  static const webViewPath = '/webview';
   static const detailsPath = '/details';
   static const settingsPath = '/settings';
   static const videoPlayerPath = '/player';
@@ -159,8 +159,11 @@ class AppRouter {
           builder: (context, state) => const DevToolsScreen(),
         ),
       GoRoute(
-        path: feedbackPath,
-        builder: (context, state) => const FeedbackScreen(),
+        path: webViewPath,
+        builder: (context, state) {
+          final extra = state.extra! as Map<String, String>;
+          return WebViewPage(url: extra['url']!, title: extra['title']);
+        },
       ),
       GoRoute(
         path: videoPlayerPath,

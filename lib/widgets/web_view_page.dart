@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:playcado/core/extensions.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-class FeedbackScreen extends StatefulWidget {
-  const FeedbackScreen({super.key});
+class WebViewPage extends StatefulWidget {
+  const WebViewPage({super.key, required this.url, this.title});
+
+  final String url;
+  final String? title;
 
   @override
-  State<FeedbackScreen> createState() => _FeedbackScreenState();
+  State<WebViewPage> createState() => _WebViewPageState();
 }
 
-class _FeedbackScreenState extends State<FeedbackScreen> {
+class _WebViewPageState extends State<WebViewPage> {
   late final WebViewController _controller;
   var _isLoading = true;
 
@@ -30,13 +32,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://forms.gle/YGNwucckHREJf8ET9'));
+      ..loadRequest(Uri.parse(widget.url));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.sendFeedback)),
+      appBar: AppBar(title: Text(widget.title ?? '')),
       body: Column(
         children: [
           if (_isLoading) const LinearProgressIndicator(),
