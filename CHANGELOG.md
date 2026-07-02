@@ -2,6 +2,14 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.1.1]
+
+### Added
+- Add in-app WebView for feedback and legal links (#16)
+
+### Fixed
+- Wait for saved accounts to load before showing login screen (#15)
+
 ## [1.1.0]
 
 ### Added
