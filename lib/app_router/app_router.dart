@@ -24,6 +24,7 @@ import 'package:playcado/server_management/views/server_management_screen.dart';
 import 'package:playcado/settings/views/settings_screen.dart';
 import 'package:playcado/tv/views/tv_shows_screen.dart';
 import 'package:playcado/player/views/fullscreen_player_screen.dart';
+import 'package:playcado/widgets/widgets.dart';
 
 class AppRouter {
   AppRouter({required this.authBloc, required this.onboardingCubit});
@@ -36,6 +37,7 @@ class AppRouter {
   static const basePath = '/';
   static const serverManagementPath = '/server_management';
   static const onboardingPath = '/onboarding';
+  static const splashPath = '/splash';
   static const moviesPath = '/movies';
   static const tvPath = '/tv';
   static const downloadsPath = '/downloads';
@@ -137,6 +139,10 @@ class AppRouter {
         builder: (context, state) => const ServerManagementScreen(),
       ),
       GoRoute(
+        path: splashPath,
+        builder: (context, state) => const Scaffold(body: LoadingIndicator()),
+      ),
+      GoRoute(
         path: onboardingPath,
         builder: (context, state) => const OnboardingScreen(),
       ),
@@ -176,6 +182,7 @@ class AppRouter {
       final authState = authBloc.state;
       final isLoggedIn = authState.user.isSuccess;
 
+      final isGoingToSplash = state.matchedLocation == splashPath;
       final isGoingToOnboarding = state.matchedLocation == onboardingPath;
       final isGoingToLogin = state.matchedLocation == serverManagementPath;
       final isGoingToOfflineDownloads =
@@ -183,6 +190,11 @@ class AppRouter {
       final isGoingToOfflineMedia =
           state.matchedLocation == offlineMediaDetailPath;
       final isGoingToVideoPlayer = state.matchedLocation == videoPlayerPath;
+
+      // 0. Priority: Wait for accounts to load before showing login
+      if (authState.availableAccounts == null && !isFirstRun && !isLoggedIn) {
+        return isGoingToSplash ? null : splashPath;
+      }
 
       // 1. Priority: Onboarding
       if (isFirstRun) {

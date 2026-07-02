@@ -43,7 +43,9 @@ class ServerManagementScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SavedAccountsList(accounts: authState.availableAccounts),
+                      SavedAccountsList(
+                        accounts: authState.availableAccounts ?? [],
+                      ),
                       BlocBuilder<ServerManagementBloc, ServerManagementState>(
                         builder: (context, formState) {
                           if (formState.isLoading && shouldLoadLastUsed) {
