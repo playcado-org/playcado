@@ -375,6 +375,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectADevice => 'Select a Device';
 
   @override
+  String get sendFeedback => 'Send Feedback';
+
+  @override
   String get serverUrlLabel => 'Server URL (http://...)';
 
   @override

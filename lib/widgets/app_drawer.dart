@@ -11,7 +11,6 @@ import 'package:playcado/core/extensions.dart';
 import 'package:playcado/libraries/bloc/libraries_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/widgets/widgets.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -127,6 +126,21 @@ class AppDrawer extends StatelessWidget {
                     isSelected: false,
                     onTap: () => _navigate(context, AppRouter.downloadsPath),
                   ),
+                  _DrawerItem(
+                    icon: PlaycadoIcons.feedback,
+                    label: context.l10n.sendFeedback,
+                    isSelected: false,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push(
+                        AppRouter.webViewPath,
+                        extra: <String, String>{
+                          'url': 'https://forms.gle/YGNwucckHREJf8ET9',
+                          'title': context.l10n.sendFeedback,
+                        },
+                      );
+                    },
+                  ),
                   if (kDebugMode && isLoggedIn) ...[
                     _DrawerItem(
                       icon: PlaycadoIcons.developer,
@@ -153,7 +167,8 @@ class AppDrawer extends StatelessWidget {
                       children: [
                         _LegalLink(
                           label: context.l10n.privacyPolicy,
-                          url: 'https://JchrisM12.github.io/playcado-privacy/',
+                          url:
+                              'https://playcado-org.github.io/playcado-privacy/',
                         ),
                         Text(
                           '•',
@@ -164,7 +179,7 @@ class AppDrawer extends StatelessWidget {
                         ),
                         _LegalLink(
                           label: context.l10n.termsOfService,
-                          url: 'https://JchrisM12.github.io/playcado-terms/',
+                          url: 'https://playcado-org.github.io/playcado-terms/',
                         ),
                       ],
                     ),
@@ -298,11 +313,11 @@ class _LegalLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      onTap: () async {
-        final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
+      onTap: () {
+        context.push(
+          AppRouter.webViewPath,
+          extra: <String, String>{'url': url, 'title': label},
+        );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

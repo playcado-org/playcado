@@ -790,6 +790,12 @@ abstract class AppLocalizations {
   /// **'Select a Device'**
   String get selectADevice;
 
+  /// No description provided for @sendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Feedback'**
+  String get sendFeedback;
+
   /// No description provided for @serverUrlLabel.
   ///
   /// In en, this message translates to:
