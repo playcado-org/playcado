@@ -1,0 +1,20 @@
+Playcado is a beautiful way to watch your personal movie and TV collection on your phone or tablet. It works with Jellyfin, your own private media server.
+
+HIGHLIGHTS
+
+• Browse your library -- Pick up where you left off with Continue Watching, see what's coming up next, and discover recently added movies and shows. Search makes finding anything fast.
+
+• Smooth video playback -- Watch your movies and TV shows with great quality. Switch between audio tracks and subtitles on the fly. Skip past show intros with one tap. A handy mini player lets you browse for something else without stopping your show.
+
+• Watch offline -- Download movies and episodes to your device so you can watch without an internet connection. Downloads keep going even if you switch apps.
+
+• Cast to your TV -- Send videos from your phone to your Chromecast or Android TV. Playcado finds Cast devices on your network automatically.
+
+• Multiple servers -- Connect to more than one Jellyfin server and switch between accounts easily. Your login is stored safely on your device.
+
+• Make it yours -- Pick from 13 accent colors to give the app your own look. Dark theme makes for cozy late-night watching.
+
+• Your privacy matters -- No ads, no tracking, no data collection. Playcado is open source and always will be.
+
+NOTE
+You need a Jellyfin media server (version 10.8 or newer) already set up to use Playcado. It does not provide its own content.
