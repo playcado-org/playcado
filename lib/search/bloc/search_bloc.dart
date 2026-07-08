@@ -15,23 +15,16 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     required SearchRepository searchRepository,
   }) : _preferencesService = preferencesService,
        _searchRepository = searchRepository,
-       super(const SearchState()) {
+       super(
+         SearchState(recentSearches: preferencesService.getRecentSearches()),
+       ) {
     on<SearchClearRequested>(_onClearRequested);
     on<SearchQueryChanged>(_onQueryChanged);
     on<SearchRecentSearchesCleared>(_onRecentSearchesCleared);
     on<SearchRecentSearchRemoved>(_onRecentSearchRemoved);
-    on<_SearchRecentSearchesRequested>(
-      (event, emit) => _loadRecentSearches(emit),
-    );
-    add(const _SearchRecentSearchesRequested());
   }
   final PreferencesService _preferencesService;
   final SearchRepository _searchRepository;
-
-  Future<void> _loadRecentSearches(Emitter<SearchState> emit) async {
-    final searches = await _preferencesService.getRecentSearches();
-    emit(state.copyWith(recentSearches: searches));
-  }
 
   void _onClearRequested(
     SearchClearRequested event,
@@ -98,8 +91,4 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     emit(state.copyWith(recentSearches: const []));
     _preferencesService.saveRecentSearches(const []);
   }
-}
-
-class _SearchRecentSearchesRequested extends SearchEvent {
-  const _SearchRecentSearchesRequested();
 }

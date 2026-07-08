@@ -134,7 +134,8 @@ Future<BootstrapConfig> _initializeServices() async {
   final castDeviceService = CastDeviceService();
   final localPlayerService = LocalPlayerService();
   final castPlayerService = CastPlayerService();
-  final preferencesService = PreferencesService();
+
+  final preferencesService = await PreferencesService.create();
   await FileDownloader().configure(
     globalConfig: [
       (Config.requestTimeout, const Duration(seconds: 100)),
@@ -143,10 +144,8 @@ Future<BootstrapConfig> _initializeServices() async {
   );
   final downloadUpdatesStream = FileDownloader().updates.asBroadcastStream();
 
-  final (isFirstRun, savedThemeColor) = await (
-    preferencesService.isFirstRun(),
-    preferencesService.getThemeColor(),
-  ).wait;
+  final isFirstRun = preferencesService.isFirstRun();
+  final savedThemeColor = preferencesService.getThemeColor();
 
   // Start Cast discovery in background (nothing downstream blocks on it)
   unawaited(castDeviceService.initialize());
