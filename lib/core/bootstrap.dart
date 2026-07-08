@@ -144,8 +144,8 @@ Future<BootstrapConfig> _initializeServices() async {
   );
   final downloadUpdatesStream = FileDownloader().updates.asBroadcastStream();
 
-  final isFirstRun = preferencesService.isFirstRun();
-  final savedThemeColor = preferencesService.getThemeColor();
+  final isFirstRun = preferencesService.readIsFirstRun();
+  final savedThemeColor = preferencesService.readThemeColor();
 
   // Start Cast discovery in background (nothing downstream blocks on it)
   unawaited(castDeviceService.initialize());

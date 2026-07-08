@@ -13,10 +13,16 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   SearchBloc({
     required PreferencesService preferencesService,
     required SearchRepository searchRepository,
+    required String userId,
   }) : _preferencesService = preferencesService,
        _searchRepository = searchRepository,
        super(
-         SearchState(recentSearches: preferencesService.getRecentSearches()),
+         SearchState(
+           recentSearches: preferencesService.readRecentSearches(
+             userId: userId,
+           ),
+           userId: userId,
+         ),
        ) {
     on<SearchClearRequested>(_onClearRequested);
     on<SearchQueryChanged>(_onQueryChanged);
@@ -60,7 +66,10 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
           recentSearches: recentSearches,
         ),
       );
-      _preferencesService.saveRecentSearches(recentSearches);
+      _preferencesService.writeRecentSearches(
+        searches: recentSearches,
+        userId: state.userId,
+      );
     } on Exception catch (error) {
       LoggerService.api.severe('Failed to search media', error);
       emit(state.copyWith(items: const StatusError('Failed to search media')));
@@ -81,7 +90,10 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final searches = List<String>.from(state.recentSearches);
     searches.remove(event.query);
     emit(state.copyWith(recentSearches: searches));
-    _preferencesService.saveRecentSearches(searches);
+    _preferencesService.writeRecentSearches(
+      searches: searches,
+      userId: state.userId,
+    );
   }
 
   void _onRecentSearchesCleared(
@@ -89,6 +101,9 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     Emitter<SearchState> emit,
   ) {
     emit(state.copyWith(recentSearches: const []));
-    _preferencesService.saveRecentSearches(const []);
+    _preferencesService.writeRecentSearches(
+      searches: const [],
+      userId: state.userId,
+    );
   }
 }

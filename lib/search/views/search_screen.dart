@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
@@ -15,10 +16,15 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String userId = context.select((AuthBloc bloc) {
+      final user = bloc.state.user;
+      return user.isSuccess ? user.value!.id : '';
+    });
     return BlocProvider(
       create: (context) => SearchBloc(
         preferencesService: context.read<PreferencesService>(),
         searchRepository: context.read<SearchRepository>(),
+        userId: userId,
       ),
       child: const _SearchView(),
     );
