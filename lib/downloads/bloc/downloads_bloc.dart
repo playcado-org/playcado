@@ -30,17 +30,24 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     });
     on<_ActiveUpdated>((event, emit) {
       _activeLoaded = true;
+      final offlineIds = state.offlineLibrary.map((e) => e.id).toSet();
       emit(
         state.copyWith(
-          activeDownloads: event.items,
+          activeDownloads: event.items
+              .where((e) => !offlineIds.contains(e.id))
+              .toList(),
           isLoading: !(_activeLoaded && _libraryLoaded),
         ),
       );
     });
     on<_LibraryUpdated>((event, emit) {
       _libraryLoaded = true;
+      final offlineIds = event.items.map((e) => e.id).toSet();
       emit(
         state.copyWith(
+          activeDownloads: state.activeDownloads
+              .where((e) => !offlineIds.contains(e.id))
+              .toList(),
           offlineLibrary: event.items,
           isLoading: !(_activeLoaded && _libraryLoaded),
         ),
