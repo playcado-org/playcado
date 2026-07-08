@@ -41,8 +41,8 @@ class DownloadsManagerService {
   final Map<String, ActiveDownload> _activeCache = {};
   final _activeController = BehaviorSubject<List<ActiveDownload>>.seeded([]);
 
-  Stream<List<ActiveDownload>> get activeDownloadsStream =>
-      _activeController.throttleTime(const Duration(milliseconds: 200));
+  Stream<List<ActiveDownload>> get activeDownloadsStream => _activeController
+      .throttleTime(const Duration(milliseconds: 200), trailing: true);
   Stream<List<DownloadedMediaItem>> get offlineLibraryStream =>
       _database.watchOfflineLibrary();
 
