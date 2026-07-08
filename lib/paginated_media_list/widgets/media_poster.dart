@@ -22,6 +22,7 @@ class MediaPoster extends StatelessWidget {
     this.customCacheWidth,
     this.customCacheHeight,
     this.isLoading = false,
+    this.onItemTapped,
     this.width,
   }) : assert(
          isLoading || item != null,
@@ -33,6 +34,7 @@ class MediaPoster extends StatelessWidget {
   final int? customCacheWidth;
   final int? customCacheHeight;
   final bool isLoading;
+  final VoidCallback? onItemTapped;
   final double? width;
 
   @override
@@ -65,6 +67,7 @@ class MediaPoster extends StatelessWidget {
       label: title,
       child: GestureDetector(
         onTap: () {
+          onItemTapped?.call();
           unawaited(
             context.push(
               AppRouter.detailsPath,

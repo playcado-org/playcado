@@ -7,6 +7,7 @@ import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
 import 'package:playcado/search/bloc/search_bloc.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
+import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class SearchScreen extends StatelessWidget {
@@ -15,8 +16,10 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          SearchBloc(searchRepository: context.read<SearchRepository>()),
+      create: (context) => SearchBloc(
+        preferencesService: context.read<PreferencesService>(),
+        searchRepository: context.read<SearchRepository>(),
+      ),
       child: const _SearchView(),
     );
   }
@@ -80,6 +83,27 @@ class _SearchViewState extends State<_SearchView> {
       ),
       body: BlocBuilder<SearchBloc, SearchState>(
         builder: (context, state) {
+          if (state.query.isEmpty && state.recentSearches.isNotEmpty) {
+            return _RecentSearches(
+              recentSearches: state.recentSearches,
+              onTap: (query) {
+                _controller.text = query;
+                _controller.selection = TextSelection.fromPosition(
+                  TextPosition(offset: query.length),
+                );
+                _onSearchChanged(query);
+              },
+              onRemove: (query) {
+                context.read<SearchBloc>().add(
+                  SearchRecentSearchRemoved(query),
+                );
+              },
+              onClear: () {
+                context.read<SearchBloc>().add(SearchRecentSearchesCleared());
+              },
+            );
+          }
+
           return switch (state.items) {
             StatusLoading() => const LoadingIndicator(),
             StatusError(:final message) => Center(
@@ -120,7 +144,14 @@ class _SearchViewState extends State<_SearchView> {
               ),
               itemCount: value.length,
               itemBuilder: (context, index) {
-                return MediaPoster(item: value[index]);
+                return MediaPoster(
+                  item: value[index],
+                  onItemTapped: () {
+                    context.read<SearchBloc>().add(
+                      SearchResultTapped(value[index].name),
+                    );
+                  },
+                );
               },
             ),
             StatusInitial() => Center(
@@ -140,6 +171,71 @@ class _SearchViewState extends State<_SearchView> {
           };
         },
       ),
+    );
+  }
+}
+
+class _RecentSearches extends StatelessWidget {
+  const _RecentSearches({
+    required this.onTap,
+    required this.onRemove,
+    required this.onClear,
+    required this.recentSearches,
+  });
+
+  final VoidCallback onClear;
+  final ValueSetter<String> onRemove;
+  final ValueSetter<String> onTap;
+  final List<String> recentSearches;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Recent Searches',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onClear,
+                child: Text(
+                  'Clear',
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (final query in recentSearches)
+          InkWell(
+            onTap: () => onTap(query),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: ListTile(
+                leading: PlaycadoIcon(
+                  PlaycadoIcons.search,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                title: Text(query, overflow: TextOverflow.ellipsis),
+                trailing: IconButton(
+                  icon: const PlaycadoIcon(PlaycadoIcons.close, size: 18),
+                  onPressed: () => onRemove(query),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

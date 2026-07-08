@@ -9,6 +9,7 @@ class PreferencesService {
   static const String _firstRunFileName = '.onboarding_completed';
   static const String _settingsFileName = 'app_settings.json';
 
+  static const String _recentSearchesKey = 'recentSearches';
   static const String _themeColorKey = 'themeColor';
 
   Future<File> get _firstRunFile async {
@@ -99,6 +100,54 @@ class PreferencesService {
       );
     }
     return null;
+  }
+
+  Future<List<String>> getRecentSearches() async {
+    try {
+      final file = await _settingsFile;
+      if (file.existsSync()) {
+        final content = file.readAsStringSync();
+        final settings = jsonDecode(content) as Map<String, dynamic>;
+        if (settings.containsKey(_recentSearchesKey)) {
+          return List<String>.from(settings[_recentSearchesKey] as List);
+        }
+      }
+    } on Exception catch (e, s) {
+      LoggerService.preferencesService.warning(
+        'Failed to load recent searches',
+        e,
+        s,
+      );
+    }
+    return [];
+  }
+
+  Future<void> saveRecentSearches(List<String> searches) async {
+    try {
+      final file = await _settingsFile;
+      var settings = <String, dynamic>{};
+
+      if (file.existsSync()) {
+        try {
+          final content = file.readAsStringSync();
+          settings = jsonDecode(content) as Map<String, dynamic>;
+        } on Exception catch (e) {
+          LoggerService.preferencesService.warning(
+            'Failed to parse settings file, overwriting',
+            e,
+          );
+        }
+      }
+
+      settings[_recentSearchesKey] = searches;
+      file.writeAsStringSync(jsonEncode(settings));
+    } on Exception catch (e, s) {
+      LoggerService.preferencesService.severe(
+        'Failed to save recent searches',
+        e,
+        s,
+      );
+    }
   }
 
   Future<void> resetAll() async {

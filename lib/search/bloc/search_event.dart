@@ -16,3 +16,21 @@ class SearchQueryChanged extends SearchEvent {
 }
 
 class SearchClearRequested extends SearchEvent {}
+
+class SearchRecentSearchRemoved extends SearchEvent {
+  const SearchRecentSearchRemoved(this.query);
+  final String query;
+
+  @override
+  List<Object> get props => [query];
+}
+
+class SearchRecentSearchesCleared extends SearchEvent {}
+
+class SearchResultTapped extends SearchEvent {
+  const SearchResultTapped(this.mediaName);
+  final String mediaName;
+
+  @override
+  List<Object> get props => [mediaName];
+}
