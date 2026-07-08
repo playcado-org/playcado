@@ -144,14 +144,7 @@ class _SearchViewState extends State<_SearchView> {
               ),
               itemCount: value.length,
               itemBuilder: (context, index) {
-                return MediaPoster(
-                  item: value[index],
-                  onItemTapped: () {
-                    context.read<SearchBloc>().add(
-                      SearchResultTapped(value[index].name),
-                    );
-                  },
-                );
+                return MediaPoster(item: value[index]);
               },
             ),
             StatusInitial() => Center(

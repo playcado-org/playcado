@@ -20,7 +20,6 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<SearchQueryChanged>(_onQueryChanged);
     on<SearchRecentSearchesCleared>(_onRecentSearchesCleared);
     on<SearchRecentSearchRemoved>(_onRecentSearchRemoved);
-    on<SearchResultTapped>(_onResultTapped);
     on<_SearchRecentSearchesRequested>(
       (event, emit) => _loadRecentSearches(emit),
     );
@@ -98,21 +97,6 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   ) {
     emit(state.copyWith(recentSearches: const []));
     _preferencesService.saveRecentSearches(const []);
-  }
-
-  Future<void> _onResultTapped(
-    SearchResultTapped event,
-    Emitter<SearchState> emit,
-  ) async {
-    final searches = List<String>.from(state.recentSearches);
-    if (searches.isNotEmpty && searches.first == state.query) {
-      searches.removeAt(0);
-    }
-    searches.remove(event.mediaName);
-    searches.insert(0, event.mediaName);
-    final trimmed = searches.take(10).toList();
-    emit(state.copyWith(recentSearches: trimmed));
-    await _preferencesService.saveRecentSearches(trimmed);
   }
 }
 
