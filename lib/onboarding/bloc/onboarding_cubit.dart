@@ -12,7 +12,7 @@ class OnboardingCubit extends Cubit<bool> {
   final PreferencesService _preferencesService;
 
   Future<void> completeOnboarding() async {
-    await _preferencesService.setFirstRunCompleted();
+    await _preferencesService.writeIsFirstRun();
     emit(false); // Emits state change, Router picks this up immediately
   }
 }

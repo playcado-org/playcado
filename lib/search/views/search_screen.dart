@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:playcado/auth/bloc/auth_bloc.dart';
 import 'package:playcado/core/extensions.dart';
 import 'package:playcado/core/status_wrapper.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
 import 'package:playcado/search/bloc/search_bloc.dart';
 import 'package:playcado/search/repositories/search_repository.dart';
+import 'package:playcado/services/preferences_service.dart';
 import 'package:playcado/widgets/widgets.dart';
 
 class SearchScreen extends StatelessWidget {
@@ -14,9 +16,16 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String userId = context.select((AuthBloc bloc) {
+      final user = bloc.state.user;
+      return user.isSuccess ? user.value!.id : '';
+    });
     return BlocProvider(
-      create: (context) =>
-          SearchBloc(searchRepository: context.read<SearchRepository>()),
+      create: (context) => SearchBloc(
+        preferencesService: context.read<PreferencesService>(),
+        searchRepository: context.read<SearchRepository>(),
+        userId: userId,
+      ),
       child: const _SearchView(),
     );
   }
@@ -49,97 +58,206 @@ class _SearchViewState extends State<_SearchView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          autocorrect: false,
-          decoration: InputDecoration(
-            hintText: context.l10n.searchPlaceholder,
-            border: InputBorder.none,
-            hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          final query = _controller.text;
+          if (query.isNotEmpty) {
+            context.read<SearchBloc>().add(SearchSaveRequested(query));
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: TextField(
+            controller: _controller,
+            autofocus: true,
+            autocorrect: false,
+            decoration: InputDecoration(
+              hintText: context.l10n.searchPlaceholder,
+              border: InputBorder.none,
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 18,
-          ),
-          onChanged: _onSearchChanged,
-        ),
-        actions: [
-          IconButton(
-            icon: const PlaycadoIcon(PlaycadoIcons.close),
-            onPressed: () {
-              _controller.clear();
-              context.read<SearchBloc>().add(SearchClearRequested());
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 18,
+            ),
+            textInputAction: TextInputAction.search,
+            onChanged: _onSearchChanged,
+            onSubmitted: (value) {
+              context.read<SearchBloc>().add(SearchQuerySubmitted(value));
             },
           ),
-        ],
-      ),
-      body: BlocBuilder<SearchBloc, SearchState>(
-        builder: (context, state) {
-          return switch (state.items) {
-            StatusLoading() => const LoadingIndicator(),
-            StatusError(:final message) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const PlaycadoIcon(
-                    PlaycadoIcons.error,
-                    size: 48,
-                    color: Colors.red,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(message),
-                ],
-              ),
-            ),
-            StatusSuccess(:final value) when value.isEmpty => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  PlaycadoIcon(
-                    PlaycadoIcons.search,
-                    size: 48,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(context.l10n.noResultsFound),
-                ],
-              ),
-            ),
-            StatusSuccess(:final value) => GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 160,
-                childAspectRatio: 0.55,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: value.length,
-              itemBuilder: (context, index) {
-                return MediaPoster(item: value[index]);
+          actions: [
+            IconButton(
+              icon: const PlaycadoIcon(PlaycadoIcons.close),
+              onPressed: () {
+                _controller.clear();
+                context.read<SearchBloc>().add(SearchClearRequested());
               },
             ),
-            StatusInitial() => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  PlaycadoIcon(
-                    PlaycadoIcons.search,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outlineVariant,
+          ],
+        ),
+        body: BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            if (state.query.isEmpty && state.recentSearches.isNotEmpty) {
+              return _RecentSearches(
+                recentSearches: state.recentSearches,
+                onTap: (query) {
+                  _controller.text = query;
+                  _controller.selection = TextSelection.fromPosition(
+                    TextPosition(offset: query.length),
+                  );
+                  context.read<SearchBloc>().add(SearchQuerySubmitted(query));
+                },
+                onRemove: (query) {
+                  context.read<SearchBloc>().add(
+                    SearchRecentSearchRemoved(query),
+                  );
+                },
+                onClear: () {
+                  context.read<SearchBloc>().add(SearchRecentSearchesCleared());
+                },
+              );
+            }
+
+            return switch (state.items) {
+              StatusLoading() => const LoadingIndicator(),
+              StatusError(:final message) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const PlaycadoIcon(
+                      PlaycadoIcons.error,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(message),
+                  ],
+                ),
+              ),
+              StatusSuccess(:final value) when value.isEmpty => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PlaycadoIcon(
+                      PlaycadoIcons.search,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.noResultsFound),
+                  ],
+                ),
+              ),
+              StatusSuccess(:final value) => GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 160,
+                  childAspectRatio: 0.55,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: value.length,
+                itemBuilder: (context, index) {
+                  final item = value[index];
+                  return MediaPoster(
+                    item: item,
+                    onTap: () {
+                      context.read<SearchBloc>().add(
+                        SearchSaveRequested(item.name),
+                      );
+                    },
+                  );
+                },
+              ),
+              StatusInitial() => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PlaycadoIcon(
+                      PlaycadoIcons.search,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.typeToSearch),
+                  ],
+                ),
+              ),
+            };
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentSearches extends StatelessWidget {
+  const _RecentSearches({
+    required this.onTap,
+    required this.onRemove,
+    required this.onClear,
+    required this.recentSearches,
+  });
+
+  final VoidCallback onClear;
+  final ValueSetter<String> onRemove;
+  final ValueSetter<String> onTap;
+  final List<String> recentSearches;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l10n.recentSearches,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(height: 16),
-                  Text(context.l10n.typeToSearch),
-                ],
+                ),
+              ),
+              TextButton(
+                onPressed: onClear,
+                child: Text(
+                  context.l10n.clear,
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (final query in recentSearches)
+          InkWell(
+            onTap: () => onTap(query),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: ListTile(
+                leading: PlaycadoIcon(
+                  PlaycadoIcons.search,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                title: Text(query, overflow: TextOverflow.ellipsis),
+                trailing: IconButton(
+                  icon: const PlaycadoIcon(PlaycadoIcons.close, size: 18),
+                  onPressed: () => onRemove(query),
+                ),
               ),
             ),
-          };
-        },
-      ),
+          ),
+      ],
     );
   }
 }

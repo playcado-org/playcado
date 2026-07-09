@@ -73,6 +73,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get castingToDevice => 'Casting to device';
 
   @override
+  String get clear => 'Clear';
+
+  @override
   String get completed => 'Completed';
 
   @override
@@ -330,6 +333,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get queued => 'Queued...';
+
+  @override
+  String get recentSearches => 'Recent Searches';
 
   @override
   String get recentlyAddedMovies => 'Recently Added Movies';

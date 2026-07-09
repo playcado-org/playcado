@@ -220,6 +220,12 @@ abstract class AppLocalizations {
   /// **'Casting to device'**
   String get castingToDevice;
 
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
   /// No description provided for @completed.
   ///
   /// In en, this message translates to:
@@ -705,6 +711,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Queued...'**
   String get queued;
+
+  /// No description provided for @recentSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Searches'**
+  String get recentSearches;
 
   /// No description provided for @recentlyAddedMovies.
   ///

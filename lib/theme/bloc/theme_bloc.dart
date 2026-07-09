@@ -22,6 +22,6 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     Emitter<ThemeState> emit,
   ) async {
     emit(state.copyWith(themeColor: event.color));
-    await _preferencesService.saveThemeColor(event.color);
+    await _preferencesService.writeThemeColor(event.color);
   }
 }

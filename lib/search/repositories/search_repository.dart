@@ -39,8 +39,23 @@ class SearchRepository {
         ),
       ]);
 
+      final queryLower = query.toLowerCase();
+
       final items = [...results[0], ...results[1]]
         ..sort((a, b) {
+          final aName = a.name.toLowerCase();
+          final bName = b.name.toLowerCase();
+
+          final aExact = aName == queryLower;
+          final bExact = bName == queryLower;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          final aStarts = aName.startsWith(queryLower);
+          final bStarts = bName.startsWith(queryLower);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
           int priority(MediaItemType? type) {
             switch (type) {
               case MediaItemType.movie:
@@ -60,7 +75,10 @@ class SearchRepository {
             }
           }
 
-          return priority(a.type).compareTo(priority(b.type));
+          final typeCompare = priority(a.type).compareTo(priority(b.type));
+          if (typeCompare != 0) return typeCompare;
+
+          return aName.compareTo(bName);
         });
 
       return items;
