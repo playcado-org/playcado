@@ -60,7 +60,7 @@ class _SearchViewState extends State<_SearchView> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
           final query = _controller.text;
           if (query.isNotEmpty) {
@@ -223,7 +223,7 @@ class _RecentSearches extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Recent Searches',
+                  context.l10n.recentSearches,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -232,7 +232,7 @@ class _RecentSearches extends StatelessWidget {
               TextButton(
                 onPressed: onClear,
                 child: Text(
-                  'Clear',
+                  context.l10n.clear,
                   style: TextStyle(color: theme.colorScheme.primary),
                 ),
               ),
