@@ -2,13 +2,22 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.2.0]
+
+### Added
+- Recent searches now appear below the search bar, making it easy to revisit what you've been looking for (#21)
+- Playcado is now live on the Play Store with a full listing, descriptions, and screenshots (#19, #18)
+
+### Fixed
+- Fixed a rare bug where a completed download could briefly show up in both active and completed sections at the same time (#20)
+
 ## [1.1.1]
 
 ### Added
-- Add in-app WebView for feedback and legal links (#16)
+- Tap links for feedback and legal pages — they now open right in the app instead of sending you to your browser (#16)
 
 ### Fixed
-- Wait for saved accounts to load before showing login screen (#15)
+- Login screen no longer flashes before your saved accounts have loaded (#15)
 
 ## [1.1.0]
 
