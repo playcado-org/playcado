@@ -136,7 +136,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final searches = List<String>.from(state.recentSearches);
     searches.remove(query);
     searches.insert(0, query);
-    return searches.take(4).toList();
+    return searches.take(10).toList();
   }
 
   void _onRecentSearchRemoved(
