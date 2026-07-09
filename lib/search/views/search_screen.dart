@@ -59,14 +59,13 @@ class _SearchViewState extends State<_SearchView> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: true,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
+        if (didPop) {
           final query = _controller.text;
           if (query.isNotEmpty) {
             context.read<SearchBloc>().add(SearchSaveRequested(query));
           }
-          Navigator.of(context).pop();
         }
       },
       child: Scaffold(
