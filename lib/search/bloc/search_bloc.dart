@@ -26,21 +26,77 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
        ) {
     on<SearchClearRequested>(_onClearRequested);
     on<SearchQueryChanged>(_onQueryChanged);
+    on<SearchQuerySubmitted>(_onQuerySubmitted);
+    on<SearchSaveRequested>(_onSaveRequested);
     on<SearchRecentSearchesCleared>(_onRecentSearchesCleared);
     on<SearchRecentSearchRemoved>(_onRecentSearchRemoved);
   }
   final PreferencesService _preferencesService;
   final SearchRepository _searchRepository;
 
+  void _onSaveRequested(SearchSaveRequested event, Emitter<SearchState> emit) {
+    final query = event.query;
+    if (query.isEmpty) return;
+
+    final recentSearches = _recentSearchesWithAdded(query);
+    emit(state.copyWith(recentSearches: recentSearches));
+    _preferencesService.writeRecentSearches(
+      searches: recentSearches,
+      userId: state.userId,
+    );
+  }
+
   void _onClearRequested(
     SearchClearRequested event,
     Emitter<SearchState> emit,
   ) {
-    emit(const SearchState());
+    final recentSearches = state.query.isNotEmpty
+        ? _recentSearchesWithAdded(state.query)
+        : state.recentSearches;
+    emit(
+      state.copyWith(
+        items: const StatusInitial(),
+        query: '',
+        recentSearches: recentSearches,
+      ),
+    );
+    if (state.query.isNotEmpty) {
+      _preferencesService.writeRecentSearches(
+        searches: recentSearches,
+        userId: state.userId,
+      );
+    }
   }
 
   Future<void> _onQueryChanged(
     SearchQueryChanged event,
+    Emitter<SearchState> emit,
+  ) async {
+    final query = event.query;
+
+    if (query.isEmpty) {
+      emit(state.copyWith(query: query, items: const StatusInitial()));
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        query: query,
+        items: StatusLoading(previousValue: state.items.value),
+      ),
+    );
+
+    try {
+      final items = await _searchRepository.searchMedia(query);
+      emit(state.copyWith(items: StatusSuccess(items)));
+    } on Exception catch (error) {
+      LoggerService.api.severe('Failed to search media', error);
+      emit(state.copyWith(items: const StatusError('Failed to search media')));
+    }
+  }
+
+  Future<void> _onQuerySubmitted(
+    SearchQuerySubmitted event,
     Emitter<SearchState> emit,
   ) async {
     final query = event.query;
@@ -80,7 +136,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     final searches = List<String>.from(state.recentSearches);
     searches.remove(query);
     searches.insert(0, query);
-    return searches.take(10).toList();
+    return searches.take(4).toList();
   }
 
   void _onRecentSearchRemoved(

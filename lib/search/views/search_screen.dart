@@ -58,117 +58,133 @@ class _SearchViewState extends State<_SearchView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          autocorrect: false,
-          decoration: InputDecoration(
-            hintText: context.l10n.searchPlaceholder,
-            border: InputBorder.none,
-            hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          final query = _controller.text;
+          if (query.isNotEmpty) {
+            context.read<SearchBloc>().add(SearchSaveRequested(query));
+          }
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: TextField(
+            controller: _controller,
+            autofocus: true,
+            autocorrect: false,
+            decoration: InputDecoration(
+              hintText: context.l10n.searchPlaceholder,
+              border: InputBorder.none,
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 18,
-          ),
-          onChanged: _onSearchChanged,
-        ),
-        actions: [
-          IconButton(
-            icon: const PlaycadoIcon(PlaycadoIcons.close),
-            onPressed: () {
-              _controller.clear();
-              context.read<SearchBloc>().add(SearchClearRequested());
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 18,
+            ),
+            textInputAction: TextInputAction.search,
+            onChanged: _onSearchChanged,
+            onSubmitted: (value) {
+              context.read<SearchBloc>().add(SearchQuerySubmitted(value));
             },
           ),
-        ],
-      ),
-      body: BlocBuilder<SearchBloc, SearchState>(
-        builder: (context, state) {
-          if (state.query.isEmpty && state.recentSearches.isNotEmpty) {
-            return _RecentSearches(
-              recentSearches: state.recentSearches,
-              onTap: (query) {
-                _controller.text = query;
-                _controller.selection = TextSelection.fromPosition(
-                  TextPosition(offset: query.length),
-                );
-                _onSearchChanged(query);
+          actions: [
+            IconButton(
+              icon: const PlaycadoIcon(PlaycadoIcons.close),
+              onPressed: () {
+                _controller.clear();
+                context.read<SearchBloc>().add(SearchClearRequested());
               },
-              onRemove: (query) {
-                context.read<SearchBloc>().add(
-                  SearchRecentSearchRemoved(query),
-                );
-              },
-              onClear: () {
-                context.read<SearchBloc>().add(SearchRecentSearchesCleared());
-              },
-            );
-          }
+            ),
+          ],
+        ),
+        body: BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            if (state.query.isEmpty && state.recentSearches.isNotEmpty) {
+              return _RecentSearches(
+                recentSearches: state.recentSearches,
+                onTap: (query) {
+                  _controller.text = query;
+                  _controller.selection = TextSelection.fromPosition(
+                    TextPosition(offset: query.length),
+                  );
+                  context.read<SearchBloc>().add(SearchQuerySubmitted(query));
+                },
+                onRemove: (query) {
+                  context.read<SearchBloc>().add(
+                    SearchRecentSearchRemoved(query),
+                  );
+                },
+                onClear: () {
+                  context.read<SearchBloc>().add(SearchRecentSearchesCleared());
+                },
+              );
+            }
 
-          return switch (state.items) {
-            StatusLoading() => const LoadingIndicator(),
-            StatusError(:final message) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const PlaycadoIcon(
-                    PlaycadoIcons.error,
-                    size: 48,
-                    color: Colors.red,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(message),
-                ],
+            return switch (state.items) {
+              StatusLoading() => const LoadingIndicator(),
+              StatusError(:final message) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const PlaycadoIcon(
+                      PlaycadoIcons.error,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(message),
+                  ],
+                ),
               ),
-            ),
-            StatusSuccess(:final value) when value.isEmpty => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  PlaycadoIcon(
-                    PlaycadoIcons.search,
-                    size: 48,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(context.l10n.noResultsFound),
-                ],
+              StatusSuccess(:final value) when value.isEmpty => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PlaycadoIcon(
+                      PlaycadoIcons.search,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.noResultsFound),
+                  ],
+                ),
               ),
-            ),
-            StatusSuccess(:final value) => GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 160,
-                childAspectRatio: 0.55,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+              StatusSuccess(:final value) => GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 160,
+                  childAspectRatio: 0.55,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: value.length,
+                itemBuilder: (context, index) {
+                  return MediaPoster(item: value[index]);
+                },
               ),
-              itemCount: value.length,
-              itemBuilder: (context, index) {
-                return MediaPoster(item: value[index]);
-              },
-            ),
-            StatusInitial() => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  PlaycadoIcon(
-                    PlaycadoIcons.search,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(context.l10n.typeToSearch),
-                ],
+              StatusInitial() => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PlaycadoIcon(
+                      PlaycadoIcons.search,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(context.l10n.typeToSearch),
+                  ],
+                ),
               ),
-            ),
-          };
-        },
+            };
+          },
+        ),
       ),
     );
   }
