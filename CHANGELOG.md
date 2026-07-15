@@ -2,6 +2,13 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.0]
+
+### Changed
+- Upgraded Android Gradle Plugin to 9.0 and Gradle to 9.1.0 for optimized R8 resource shrinking (#23)
+- Migrated to AGP 9.0's built-in Kotlin support, removing the separate Kotlin Gradle Plugin (#23)
+- Enabled R8 full mode for more aggressive code shrinking and improved performance (#23)
+
 ## [1.2.0]
 
 ### Added
