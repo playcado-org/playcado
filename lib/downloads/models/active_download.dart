@@ -6,51 +6,51 @@ enum ActiveDownloadStatus { queued, downloading, paused, error }
 class ActiveDownload extends Equatable {
   const ActiveDownload({
     required this.media,
-    this.status = ActiveDownloadStatus.queued,
+    this.errorReason,
+    this.networkSpeed,
     this.progress = 0.0,
     this.receivedBytes = 0,
+    this.status = ActiveDownloadStatus.queued,
     this.totalBytes = 0,
-    this.networkSpeed,
-    this.errorReason,
   });
 
+  final String? errorReason;
   final MediaItem media;
-  final ActiveDownloadStatus status;
+  final double? networkSpeed;
   final double progress;
   final int receivedBytes;
+  final ActiveDownloadStatus status;
   final int totalBytes;
-  final double? networkSpeed;
-  final String? errorReason;
 
   String get id => media.id;
 
   ActiveDownload copyWith({
-    ActiveDownloadStatus? status,
+    String? errorReason,
+    double? networkSpeed,
     double? progress,
     int? receivedBytes,
+    ActiveDownloadStatus? status,
     int? totalBytes,
-    double? networkSpeed,
-    String? errorReason,
   }) {
     return ActiveDownload(
+      errorReason: errorReason ?? this.errorReason,
       media: media,
-      status: status ?? this.status,
+      networkSpeed: networkSpeed ?? this.networkSpeed,
       progress: progress ?? this.progress,
       receivedBytes: receivedBytes ?? this.receivedBytes,
+      status: status ?? this.status,
       totalBytes: totalBytes ?? this.totalBytes,
-      networkSpeed: networkSpeed ?? this.networkSpeed,
-      errorReason: errorReason ?? this.errorReason,
     );
   }
 
   @override
   List<Object?> get props => [
+    errorReason,
     media,
-    status,
+    networkSpeed,
     progress,
     receivedBytes,
+    status,
     totalBytes,
-    networkSpeed,
-    errorReason,
   ];
 }

@@ -7,124 +7,124 @@ class DownloadItem extends Equatable {
   // For calculating time deltas
 
   const DownloadItem({
-    required this.id,
-    required this.name,
     required this.downloadUrl,
+    required this.id,
     required this.localPath,
-    this.overview,
+    required this.name,
     this.imageUrl,
-    this.type,
-    this.productionYear,
-    this.seriesName,
     this.indexNumber,
+    this.lastUpdateTimeMs,
+    this.networkSpeed,
+    this.overview,
     this.parentIndexNumber,
-    this.status = DownloadStatus.queued,
+    this.productionYear,
     this.progress = 0.0,
     this.receivedBytes = 0,
+    this.seriesName,
+    this.status = DownloadStatus.queued,
     this.totalBytes = 0,
-    this.networkSpeed,
-    this.lastUpdateTimeMs,
+    this.type,
   });
 
   factory DownloadItem.fromJson(Map<String, dynamic> json) {
     return DownloadItem(
+      downloadUrl: json['downloadUrl'] as String,
       id: json['id'] as String,
-      name: json['name'] as String,
-      overview: json['overview'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      indexNumber: json['indexNumber'] as int?,
+      lastUpdateTimeMs: json['lastUpdateTimeMs'] as int?,
+      localPath: json['localPath'] as String,
+      name: json['name'] as String,
+      networkSpeed: (json['networkSpeed'] as num?)?.toDouble(),
+      overview: json['overview'] as String?,
+      parentIndexNumber: json['parentIndexNumber'] as int?,
+      productionYear: json['productionYear'] as String?,
+      progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
+      receivedBytes: (json['receivedBytes'] as int?) ?? 0,
+      seriesName: json['seriesName'] as String?,
+      status: DownloadStatus.values[(json['status'] as int?) ?? 0],
+      totalBytes: (json['totalBytes'] as int?) ?? 0,
       type: json['type'] != null
           ? MediaItemType.fromString(json['type'] as String)
           : null,
-      productionYear: json['productionYear'] as String?,
-      seriesName: json['seriesName'] as String?,
-      indexNumber: json['indexNumber'] as int?,
-      parentIndexNumber: json['parentIndexNumber'] as int?,
-      downloadUrl: json['downloadUrl'] as String,
-      localPath: json['localPath'] as String,
-      status: DownloadStatus.values[(json['status'] as int?) ?? 0],
-      progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
-      receivedBytes: (json['receivedBytes'] as int?) ?? 0,
-      totalBytes: (json['totalBytes'] as int?) ?? 0,
-      networkSpeed: (json['networkSpeed'] as num?)?.toDouble(),
-      lastUpdateTimeMs: json['lastUpdateTimeMs'] as int?,
     );
   }
-  final String id;
-  final String name;
-  final String? overview;
-  final String? imageUrl;
-  final MediaItemType? type;
-  final String? productionYear;
-  final String? seriesName;
-  final int? indexNumber;
-  final int? parentIndexNumber;
   final String downloadUrl;
+  final String id;
+  final String? imageUrl;
+  final int? indexNumber;
+  final int? lastUpdateTimeMs;
   final String localPath;
-  final DownloadStatus status;
+  final String name;
+  final double? networkSpeed;
+  final String? overview;
+  final int? parentIndexNumber;
+  final String? productionYear;
   final double progress; // 0.0 to 1.0
   final int receivedBytes;
+  final String? seriesName;
+  final DownloadStatus status;
   final int totalBytes;
-  final double? networkSpeed; // bytes per second
-  final int? lastUpdateTimeMs;
+  final MediaItemType? type;
 
   DownloadItem copyWith({
-    String? name,
-    String? overview,
-    String? imageUrl,
-    MediaItemType? type,
-    String? productionYear,
-    String? seriesName,
-    int? indexNumber,
-    int? parentIndexNumber,
     String? downloadUrl,
+    String? imageUrl,
+    int? indexNumber,
+    int? lastUpdateTimeMs,
     String? localPath,
-    DownloadStatus? status,
+    String? name,
+    double? networkSpeed,
+    String? overview,
+    int? parentIndexNumber,
+    String? productionYear,
     double? progress,
     int? receivedBytes,
+    String? seriesName,
+    DownloadStatus? status,
     int? totalBytes,
-    double? networkSpeed,
-    int? lastUpdateTimeMs,
+    MediaItemType? type,
   }) {
     return DownloadItem(
-      id: id,
-      name: name ?? this.name,
-      overview: overview ?? this.overview,
-      imageUrl: imageUrl ?? this.imageUrl,
-      type: type ?? this.type,
-      productionYear: productionYear ?? this.productionYear,
-      seriesName: seriesName ?? this.seriesName,
-      indexNumber: indexNumber ?? this.indexNumber,
-      parentIndexNumber: parentIndexNumber ?? this.parentIndexNumber,
       downloadUrl: downloadUrl ?? this.downloadUrl,
+      id: id,
+      imageUrl: imageUrl ?? this.imageUrl,
+      indexNumber: indexNumber ?? this.indexNumber,
+      lastUpdateTimeMs: lastUpdateTimeMs ?? this.lastUpdateTimeMs,
       localPath: localPath ?? this.localPath,
-      status: status ?? this.status,
+      name: name ?? this.name,
+      networkSpeed: networkSpeed ?? this.networkSpeed,
+      overview: overview ?? this.overview,
+      parentIndexNumber: parentIndexNumber ?? this.parentIndexNumber,
+      productionYear: productionYear ?? this.productionYear,
       progress: progress ?? this.progress,
       receivedBytes: receivedBytes ?? this.receivedBytes,
+      seriesName: seriesName ?? this.seriesName,
+      status: status ?? this.status,
       totalBytes: totalBytes ?? this.totalBytes,
-      networkSpeed: networkSpeed ?? this.networkSpeed,
-      lastUpdateTimeMs: lastUpdateTimeMs ?? this.lastUpdateTimeMs,
+      type: type ?? this.type,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
-      'overview': overview,
-      'imageUrl': imageUrl,
-      'type': type?.name,
-      'productionYear': productionYear,
-      'seriesName': seriesName,
-      'indexNumber': indexNumber,
-      'parentIndexNumber': parentIndexNumber,
       'downloadUrl': downloadUrl,
+      'id': id,
+      'imageUrl': imageUrl,
+      'indexNumber': indexNumber,
+      'lastUpdateTimeMs': lastUpdateTimeMs,
       'localPath': localPath,
-      'status': status.index,
+      'name': name,
+      'networkSpeed': networkSpeed,
+      'overview': overview,
+      'parentIndexNumber': parentIndexNumber,
+      'productionYear': productionYear,
       'progress': progress,
       'receivedBytes': receivedBytes,
+      'seriesName': seriesName,
+      'status': status.index,
       'totalBytes': totalBytes,
-      'networkSpeed': networkSpeed,
-      'lastUpdateTimeMs': lastUpdateTimeMs,
+      'type': type?.name,
     };
   }
 
@@ -136,22 +136,22 @@ class DownloadItem extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    name,
-    overview,
-    imageUrl,
-    type,
-    productionYear,
-    seriesName,
-    indexNumber,
-    parentIndexNumber,
     downloadUrl,
+    id,
+    imageUrl,
+    indexNumber,
+    lastUpdateTimeMs,
     localPath,
-    status,
+    name,
+    networkSpeed,
+    overview,
+    parentIndexNumber,
+    productionYear,
     progress,
     receivedBytes,
+    seriesName,
+    status,
     totalBytes,
-    networkSpeed,
-    lastUpdateTimeMs,
+    type,
   ];
 }

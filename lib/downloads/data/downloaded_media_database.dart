@@ -11,13 +11,13 @@ import 'package:playcado/media/models/media_item.dart';
 part 'downloaded_media_database.g.dart';
 
 class DownloadedMediaTable extends Table {
-  TextColumn get id => text()();
-  TextColumn get mediaJson => text()();
-  TextColumn get localPath => text()();
-  IntColumn get totalBytes => integer()();
-  DateTimeColumn get downloadedAt => dateTime()();
-  TextColumn get posterPath => text().nullable()();
   TextColumn get backdropPath => text().nullable()();
+  DateTimeColumn get downloadedAt => dateTime()();
+  TextColumn get id => text()();
+  TextColumn get localPath => text()();
+  TextColumn get mediaJson => text()();
+  TextColumn get posterPath => text().nullable()();
+  IntColumn get totalBytes => integer()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -36,44 +36,32 @@ class DownloadedMediaDatabase extends _$DownloadedMediaDatabase {
       if (from == 1) {
         await migrator.addColumn(
           downloadedMediaTable,
-          downloadedMediaTable.posterPath,
+          downloadedMediaTable.backdropPath,
         );
         await migrator.addColumn(
           downloadedMediaTable,
-          downloadedMediaTable.backdropPath,
+          downloadedMediaTable.posterPath,
         );
       }
     },
   );
 
-  Stream<List<DownloadedMediaItem>> watchOfflineLibrary() {
-    return select(downloadedMediaTable).watch().map((rows) {
-      return rows.map((row) {
-        return DownloadedMediaItem(
-          media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
-          localPath: row.localPath,
-          totalBytes: row.totalBytes,
-          downloadedAt: row.downloadedAt,
-          localPosterPath: row.posterPath,
-          localBackdropPath: row.backdropPath,
-        );
-      }).toList();
-    });
+  Future<void> clearAllMedia() {
+    return delete(downloadedMediaTable).go();
   }
 
-  Future<void> saveOfflineMedia(DownloadedMediaItem item) {
-    return into(downloadedMediaTable).insert(
-      DownloadedMediaTableCompanion.insert(
-        id: item.id,
-        mediaJson: jsonEncode(item.media.toJson()),
-        localPath: item.localPath,
-        totalBytes: item.totalBytes,
-        downloadedAt: item.downloadedAt,
-        posterPath: Value(item.localPosterPath),
-        backdropPath: Value(item.localBackdropPath),
-      ),
-      mode: InsertMode.insertOrReplace,
-    );
+  Future<List<DownloadedMediaItem>> getAllOfflineMedia() async {
+    final rows = await select(downloadedMediaTable).get();
+    return rows.map((row) {
+      return DownloadedMediaItem(
+        downloadedAt: row.downloadedAt,
+        localBackdropPath: row.backdropPath,
+        localPath: row.localPath,
+        localPosterPath: row.posterPath,
+        media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
+        totalBytes: row.totalBytes,
+      );
+    }).toList();
   }
 
   Future<DownloadedMediaItem?> getOfflineMedia(String id) async {
@@ -83,35 +71,47 @@ class DownloadedMediaDatabase extends _$DownloadedMediaDatabase {
     if (rows.isEmpty) return null;
     final row = rows.first;
     return DownloadedMediaItem(
-      media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
-      localPath: row.localPath,
-      totalBytes: row.totalBytes,
       downloadedAt: row.downloadedAt,
-      localPosterPath: row.posterPath,
       localBackdropPath: row.backdropPath,
+      localPath: row.localPath,
+      localPosterPath: row.posterPath,
+      media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
+      totalBytes: row.totalBytes,
     );
-  }
-
-  Future<List<DownloadedMediaItem>> getAllOfflineMedia() async {
-    final rows = await select(downloadedMediaTable).get();
-    return rows.map((row) {
-      return DownloadedMediaItem(
-        media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
-        localPath: row.localPath,
-        totalBytes: row.totalBytes,
-        downloadedAt: row.downloadedAt,
-        localPosterPath: row.posterPath,
-        localBackdropPath: row.backdropPath,
-      );
-    }).toList();
   }
 
   Future<void> removeOfflineMedia(String id) {
     return (delete(downloadedMediaTable)..where((t) => t.id.equals(id))).go();
   }
 
-  Future<void> clearAllMedia() {
-    return delete(downloadedMediaTable).go();
+  Future<void> saveOfflineMedia(DownloadedMediaItem item) {
+    return into(downloadedMediaTable).insert(
+      DownloadedMediaTableCompanion.insert(
+        backdropPath: Value(item.localBackdropPath),
+        downloadedAt: item.downloadedAt,
+        id: item.id,
+        localPath: item.localPath,
+        mediaJson: jsonEncode(item.media.toJson()),
+        posterPath: Value(item.localPosterPath),
+        totalBytes: item.totalBytes,
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Stream<List<DownloadedMediaItem>> watchOfflineLibrary() {
+    return select(downloadedMediaTable).watch().map((rows) {
+      return rows.map((row) {
+        return DownloadedMediaItem(
+          downloadedAt: row.downloadedAt,
+          localBackdropPath: row.backdropPath,
+          localPath: row.localPath,
+          localPosterPath: row.posterPath,
+          media: MediaItem.fromJson(jsonDecode(row.mediaJson)),
+          totalBytes: row.totalBytes,
+        );
+      }).toList();
+    });
   }
 }
 

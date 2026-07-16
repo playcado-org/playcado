@@ -3,30 +3,30 @@ import 'package:playcado/media/models/media_item.dart';
 
 class DownloadedMediaItem extends Equatable {
   const DownloadedMediaItem({
-    required this.media,
-    required this.localPath,
-    required this.totalBytes,
     required this.downloadedAt,
-    this.localPosterPath,
+    required this.localPath,
+    required this.media,
+    required this.totalBytes,
     this.localBackdropPath,
+    this.localPosterPath,
   });
 
-  final MediaItem media;
-  final String localPath;
-  final int totalBytes;
   final DateTime downloadedAt;
-  final String? localPosterPath;
   final String? localBackdropPath;
+  final String localPath;
+  final String? localPosterPath;
+  final MediaItem media;
+  final int totalBytes;
 
   String get id => media.id;
 
   @override
   List<Object?> get props => [
-    media,
-    localPath,
-    totalBytes,
     downloadedAt,
-    localPosterPath,
     localBackdropPath,
+    localPath,
+    localPosterPath,
+    media,
+    totalBytes,
   ];
 }

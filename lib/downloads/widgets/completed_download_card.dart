@@ -2,11 +2,11 @@ part of '../views/downloads_screen.dart';
 
 class _CompletedDownloadCard extends StatelessWidget {
   const _CompletedDownloadCard({
-    required this.item,
     required this.isOfflineMode,
+    required this.item,
   });
-  final DownloadedMediaItem item;
   final bool isOfflineMode;
+  final DownloadedMediaItem item;
 
   @override
   Widget build(BuildContext context) {

@@ -30,8 +30,8 @@ class DownloadedSeriesDetailsPage extends StatefulWidget {
 
 class _DownloadedSeriesDetailsPageState
     extends State<DownloadedSeriesDetailsPage> {
-  late final ScrollController _scrollController;
   String? _expandedSeasonKey;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {

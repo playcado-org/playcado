@@ -2,6 +2,11 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.6]
+
+### Changed
+- Alphabetized all source files in the downloads directory to match project conventions
+
 ## [1.3.5]
 
 ### Changed

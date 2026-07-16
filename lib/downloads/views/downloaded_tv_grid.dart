@@ -8,10 +8,10 @@ class DownloadedTvGrid extends StatelessWidget {
     final (:List<DownloadedMediaItem> episodes, :bool isLoading) = context
         .select(
           (DownloadsBloc bloc) => (
-            isLoading: bloc.state.isLoading,
             episodes: bloc.state.offlineLibrary
                 .where((d) => d.media.type == MediaItemType.episode)
                 .toList(),
+            isLoading: bloc.state.isLoading,
           ),
         );
 
@@ -92,17 +92,17 @@ class DownloadedTvGrid extends StatelessWidget {
 }
 
 class _SeriesGroup {
-  final String seriesId;
-  final String seriesName;
-  final String? productionYear;
   final List<DownloadedMediaItem> episodes;
   String? localSeriesPosterPath;
+  final String? productionYear;
+  final String seriesId;
+  final String seriesName;
 
   _SeriesGroup({
+    required this.episodes,
     required this.seriesId,
     required this.seriesName,
     this.productionYear,
-    required this.episodes,
   });
 }
 

@@ -5,15 +5,6 @@ abstract class DownloadsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class DownloadsRequested extends DownloadsEvent {
-  DownloadsRequested({required this.item});
-
-  final MediaItem item;
-
-  @override
-  List<Object?> get props => [item];
-}
-
 class DownloadsDeleteRequested extends DownloadsEvent {
   DownloadsDeleteRequested(this.id);
 
@@ -30,6 +21,15 @@ class DownloadsPauseRequested extends DownloadsEvent {
 
   @override
   List<Object?> get props => [id];
+}
+
+class DownloadsRequested extends DownloadsEvent {
+  DownloadsRequested({required this.item});
+
+  final MediaItem item;
+
+  @override
+  List<Object?> get props => [item];
 }
 
 class DownloadsResumeRequested extends DownloadsEvent {
