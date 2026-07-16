@@ -2,6 +2,15 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.2]
+
+### Changed
+- Release workflow now triggers automatically on merge to main (#26)
+- Hardcoded Play Store track to internal, removing manual input (#26)
+
+### Fixed
+- Corrected native debug symbols path for AGP 9.0 compatibility in Google Play upload (#26)
+
 ## [1.3.1]
 
 ### Changed
