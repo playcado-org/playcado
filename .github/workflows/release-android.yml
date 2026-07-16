@@ -1,18 +1,9 @@
 name: Release Android
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      track:
-        description: 'Play Store track'
-        required: true
-        default: internal
-        type: choice
-        options:
-          - internal
-          - alpha
-          - beta
-          - production
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -99,10 +90,10 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.playcado.app
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: ${{ inputs.track }}
+          track: internal
           status: completed
           mappingFile: build/app/outputs/mapping/release/mapping.txt
-          debugSymbols: build/app/intermediates/merged_native_libs/release/out/lib
+          debugSymbols: build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
           whatsNewDirectory: distribution/whatsnew
 
       - name: Create GitHub Release
