@@ -2,6 +2,15 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.3]
+
+### Changed
+- Upgraded CI actions to Node 24-native versions (checkout@v5, setup-java@v5, upload-artifact@v5, action-gh-release@v3)
+- Bumped Java from 17 to 21 for build step
+- Renamed deprecated `track` to `tracks` in upload-google-play action
+- Added `flutter analyze` and `flutter test` steps before the build
+- Added `--strip` flag to remove DWARF debug info from native libraries
+
 ## [1.3.2]
 
 ### Changed
