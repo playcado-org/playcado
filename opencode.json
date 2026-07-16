@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": [".opencode/skills/alphabetize/SKILL.md"],
+  "instructions": [".opencode/skills/version-and-release/SKILL.md"],
   "mcp": {
     "dart-mcp-server": {
       "command": ["dart", "mcp-server"],
