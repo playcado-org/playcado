@@ -102,7 +102,6 @@ jobs:
           track: ${{ inputs.track }}
           status: completed
           mappingFile: build/app/outputs/mapping/release/mapping.txt
-          debugSymbols: build/app/intermediates/merged_native_libs/release/out/lib
           whatsNewDirectory: distribution/whatsnew
 
       - name: Create GitHub Release
