@@ -5,9 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-and-release:
     name: Build & Release Android
@@ -15,7 +12,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -26,10 +23,10 @@ jobs:
           echo "build_name=${VERSION%+*}" >> $GITHUB_OUTPUT
           echo "build_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - uses: subosito/flutter-action@v2
@@ -39,6 +36,12 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
 
       - name: Create secrets file
         run: echo '${{ secrets.SECRETS_JSON }}' > config/secrets.json
@@ -63,16 +66,17 @@ jobs:
             --split-debug-info=build/symbols \
             --build-name=${{ steps.version.outputs.build_name }} \
             --build-number=${{ steps.version.outputs.build_number }} \
+            --strip \
             --dart-define-from-file=config/secrets.json
 
       - name: Upload App Bundle artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: android-release-${{ steps.version.outputs.build_name }}
           path: build/app/outputs/bundle/release/app-release.aab
 
       - name: Upload debug symbols
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: android-symbols-${{ steps.version.outputs.build_name }}
           path: build/symbols/
@@ -90,14 +94,14 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.playcado.app
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: internal
+          tracks: internal
           status: completed
           mappingFile: build/app/outputs/mapping/release/mapping.txt
           debugSymbols: build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
           whatsNewDirectory: distribution/whatsnew
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ steps.version.outputs.build_name }}
