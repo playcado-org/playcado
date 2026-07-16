@@ -2,6 +2,12 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.5]
+
+### Changed
+- Renamed bump-and-release skill to version-and-release
+- Tracked `.opencode/` directory in git by removing it from `.gitignore`
+
 ## [1.3.4]
 
 ### Fixed
