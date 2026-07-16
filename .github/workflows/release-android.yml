@@ -40,9 +40,6 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Run tests
-        run: flutter test
-
       - name: Create secrets file
         run: echo '${{ secrets.SECRETS_JSON }}' > config/secrets.json
 

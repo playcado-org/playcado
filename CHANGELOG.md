@@ -2,6 +2,11 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.4]
+
+### Fixed
+- Removed `flutter test` step from release workflow that failed due to missing `test/` directory
+
 ## [1.3.3]
 
 ### Changed
