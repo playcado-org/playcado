@@ -2,6 +2,11 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.1]
+
+### Changed
+- Upload native debug symbols alongside the App Bundle to resolve Google Play Console warning (#24)
+
 ## [1.3.0]
 
 ### Changed
