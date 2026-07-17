@@ -5,6 +5,7 @@ All notable changes to Playcado will be documented in this file.
 ## [1.3.5]
 
 ### Changed
+- Removed `--strip` flag from Android release workflow to preserve DWARF debug info for crash symbolication
 - Renamed alphabetize skill to version-and-release with improved branch detection and changelog management
 - Tracked `.opencode/` directory in git by removing it from `.gitignore`
 

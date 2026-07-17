@@ -63,7 +63,6 @@ jobs:
             --split-debug-info=build/symbols \
             --build-name=${{ steps.version.outputs.build_name }} \
             --build-number=${{ steps.version.outputs.build_number }} \
-            --strip \
             --dart-define-from-file=config/secrets.json
 
       - name: Upload App Bundle artifact
