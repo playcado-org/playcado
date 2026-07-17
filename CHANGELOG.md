@@ -14,6 +14,8 @@ All notable changes to Playcado will be documented in this file.
 
 ### Changed
 - Alphabetized `pubspec.yaml` dependencies
+- Stopped CI pipeline from running on direct pushes to `main`
+- Made Android release notes blank on Google Play Store
 
 ## [1.3.5]
 
