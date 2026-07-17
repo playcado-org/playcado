@@ -2,6 +2,19 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.6]
+
+### Performance
+- Eliminated O(N) offline poster lookup from grid items by pre-computing a poster map from downloads state
+- Removed synchronous `File.existsSync()` checks from downloaded TV grid and media poster widget
+- Added `droppable()` transformer to pagination events to prevent concurrent page fetches during rapid scrolling
+- Added image compression query parameters (`maxWidth`, `maxHeight`, `quality`) to the media URL service
+- Stripped heavy API fields from list-fetching queries across library and search repositories to reduce payload size
+- Delegated image dimension and quality control from downloads manager to the URL service layer
+
+### Changed
+- Alphabetized `pubspec.yaml` dependencies
+
 ## [1.3.5]
 
 ### Changed
