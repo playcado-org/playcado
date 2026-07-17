@@ -19,15 +19,33 @@ class JellyfinUrlService implements MediaUrlService {
   }
 
   @override
-  String getImageUrl(String itemId) {
+  String getImageUrl(
+    String itemId, {
+    int? maxWidth,
+    int? maxHeight,
+    int? quality,
+  }) {
     if (!_jellyfinClientService.hasSession) return '';
-    return '$_baseUrl/Items/$itemId/Images/Primary';
+    var url = '$_baseUrl/Items/$itemId/Images/Primary?tag=0';
+    if (maxWidth != null) url += '&maxWidth=$maxWidth';
+    if (maxHeight != null) url += '&maxHeight=$maxHeight';
+    if (quality != null) url += '&quality=$quality';
+    return url;
   }
 
   @override
-  String getBackdropUrl(String itemId) {
+  String getBackdropUrl(
+    String itemId, {
+    int? maxWidth,
+    int? maxHeight,
+    int? quality,
+  }) {
     if (!_jellyfinClientService.hasSession) return '';
-    return '$_baseUrl/Items/$itemId/Images/Backdrop/0';
+    var url = '$_baseUrl/Items/$itemId/Images/Backdrop/0?tag=0';
+    if (maxWidth != null) url += '&maxWidth=$maxWidth';
+    if (maxHeight != null) url += '&maxHeight=$maxHeight';
+    if (quality != null) url += '&quality=$quality';
+    return url;
   }
 
   @override

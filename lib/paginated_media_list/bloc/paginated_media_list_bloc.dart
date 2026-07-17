@@ -64,6 +64,7 @@ class PaginatedMediaListBloc
     if (state.hasReachedMax || state.items.isLoading) return;
 
     final currentItems = state.items.value ?? [];
+    emit(state.copyWith(items: StatusLoading(previousValue: currentItems)));
     try {
       final newItems = await _fetcher(
         startIndex: currentItems.length,
@@ -83,6 +84,7 @@ class PaginatedMediaListBloc
       }
     } on Exception catch (error) {
       LoggerService.media.severe('Failed to load more items', error);
+      emit(state.copyWith(items: StatusSuccess(currentItems)));
     }
   }
 

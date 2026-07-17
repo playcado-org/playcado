@@ -58,6 +58,8 @@ class MediaPoster extends StatelessWidget {
     final imgUrl = urlGenerator.getItemImageUrl(
       mediaItem,
       isLandscape: isLandscape,
+      maxWidth: customCacheWidth ?? (isLandscape ? 800 : 400),
+      quality: 80,
     );
 
     final localPosterPath = _findLocalPosterPath(context, mediaItem);

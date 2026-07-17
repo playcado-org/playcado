@@ -27,7 +27,6 @@ class SearchRepository {
           limit: 50,
           recursive: true,
           includeItemTypes: [BaseItemKind.movie, BaseItemKind.series],
-          fields: [ItemFields.overview, ItemFields.mediaSources],
         ),
         _dataSource.fetchItems(
           userId: userId,
@@ -35,7 +34,6 @@ class SearchRepository {
           limit: 50,
           recursive: true,
           includeItemTypes: [BaseItemKind.episode],
-          fields: [ItemFields.overview, ItemFields.mediaSources],
         ),
       ]);
 

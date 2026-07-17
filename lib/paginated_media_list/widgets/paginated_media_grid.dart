@@ -61,7 +61,7 @@ class _PaginatedMediaGridState extends State<PaginatedMediaGrid> {
   }
 
   void _onScroll() {
-    if (_isBottom) {
+    if (_isBottom && !widget.isLoading && !widget.hasReachedMax) {
       widget.onLoadMore();
     }
   }
