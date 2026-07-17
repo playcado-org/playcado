@@ -77,12 +77,8 @@ jobs:
           name: android-symbols-${{ steps.version.outputs.build_name }}
           path: build/symbols/
 
-      - name: Extract release notes
-        run: |
-          mkdir -p distribution/whatsnew
-          awk -v ver="[${{ steps.version.outputs.build_name }}]" \
-            '/^## /{if (found) exit} found{print} index($0, "## " ver) == 1{found=1}' \
-            CHANGELOG.md > distribution/whatsnew/whatsnew-en-US || true
+      - name: Create empty release notes
+        run: mkdir -p distribution/whatsnew && touch distribution/whatsnew/whatsnew-en-US
 
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
