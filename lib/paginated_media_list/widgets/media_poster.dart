@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/app_router/app_router.dart';
-import 'package:playcado/downloads/bloc/downloads_bloc.dart';
-import 'package:playcado/downloads/models/downloaded_media_item.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/services/media_url/media_url_service.dart';
 import 'package:playcado/widgets/widgets.dart';
@@ -22,6 +19,7 @@ class MediaPoster extends StatelessWidget {
     this.customCacheWidth,
     this.customCacheHeight,
     this.isLoading = false,
+    this.localPosterPath,
     this.onTap,
     this.width,
   }) : assert(
@@ -34,6 +32,7 @@ class MediaPoster extends StatelessWidget {
   final int? customCacheWidth;
   final int? customCacheHeight;
   final bool isLoading;
+  final String? localPosterPath;
   final VoidCallback? onTap;
   final double? width;
 
@@ -61,8 +60,6 @@ class MediaPoster extends StatelessWidget {
       maxWidth: customCacheWidth ?? (isLandscape ? 800 : 400),
       quality: 80,
     );
-
-    final localPosterPath = _findLocalPosterPath(context, mediaItem);
 
     return Semantics(
       button: true,
@@ -156,22 +153,6 @@ class MediaPoster extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String? _findLocalPosterPath(BuildContext context, MediaItem item) {
-    try {
-      final match = context
-          .read<DownloadsBloc>()
-          .state
-          .offlineLibrary
-          .cast<DownloadedMediaItem?>()
-          .firstWhere((d) => d?.media.id == item.id, orElse: () => null);
-      if (match?.localPosterPath case final path?
-          when File(path).existsSync()) {
-        return path;
-      }
-    } catch (_) {}
-    return null;
   }
 
   Widget _buildSkeleton(BuildContext context) {
