@@ -96,10 +96,9 @@ class DownloadsManagerService {
     String? localBackdropPath;
     try {
       localPosterPath = await _downloadImage(
-        url: _urlService.getItemImageUrl(fullItem),
+        url: _urlService.getItemImageUrl(fullItem, maxWidth: 600, quality: 80),
         itemId: fullItem.id,
         suffix: 'poster',
-        width: 600,
       );
     } catch (e) {
       LoggerService.downloads.warning(
@@ -108,10 +107,13 @@ class DownloadsManagerService {
     }
     try {
       localBackdropPath = await _downloadImage(
-        url: _urlService.getItemBackdropUrl(fullItem),
+        url: _urlService.getItemBackdropUrl(
+          fullItem,
+          maxWidth: 1280,
+          quality: 80,
+        ),
         itemId: fullItem.id,
         suffix: 'backdrop',
-        width: 1280,
       );
     } catch (e) {
       LoggerService.downloads.warning(
@@ -122,10 +124,9 @@ class DownloadsManagerService {
       final seriesId = fullItem.seriesId;
       if (seriesId != null && seriesId.isNotEmpty) {
         await _downloadImage(
-          url: _urlService.getImageUrl(seriesId),
+          url: _urlService.getImageUrl(seriesId, maxWidth: 600, quality: 80),
           itemId: seriesId,
           suffix: 'series_poster',
-          width: 600,
         );
       }
     } catch (e) {
@@ -137,10 +138,9 @@ class DownloadsManagerService {
       for (final person in people) {
         try {
           await _downloadImage(
-            url: _urlService.getImageUrl(person.id),
+            url: _urlService.getImageUrl(person.id, maxWidth: 200, quality: 80),
             itemId: person.id,
             suffix: 'cast',
-            width: 200,
           );
         } catch (e) {
           LoggerService.downloads.warning(
@@ -203,10 +203,13 @@ class DownloadsManagerService {
         if (localPosterPath == null) {
           try {
             localPosterPath = await _downloadImage(
-              url: _urlService.getItemImageUrl(media),
+              url: _urlService.getItemImageUrl(
+                media,
+                maxWidth: 600,
+                quality: 80,
+              ),
               itemId: media.id,
               suffix: 'poster',
-              width: 600,
             );
           } catch (e) {
             LoggerService.downloads.warning(
@@ -217,10 +220,13 @@ class DownloadsManagerService {
         if (localBackdropPath == null) {
           try {
             localBackdropPath = await _downloadImage(
-              url: _urlService.getItemBackdropUrl(media),
+              url: _urlService.getItemBackdropUrl(
+                media,
+                maxWidth: 1280,
+                quality: 80,
+              ),
               itemId: media.id,
               suffix: 'backdrop',
-              width: 1280,
             );
           } catch (e) {
             LoggerService.downloads.warning(
@@ -233,10 +239,13 @@ class DownloadsManagerService {
           final seriesId = media.seriesId;
           if (seriesId != null && seriesId.isNotEmpty) {
             await _downloadImage(
-              url: _urlService.getImageUrl(seriesId),
+              url: _urlService.getImageUrl(
+                seriesId,
+                maxWidth: 600,
+                quality: 80,
+              ),
               itemId: seriesId,
               suffix: 'series_poster',
-              width: 600,
             );
           }
         } catch (e) {
@@ -249,10 +258,13 @@ class DownloadsManagerService {
           for (final person in people) {
             try {
               await _downloadImage(
-                url: _urlService.getImageUrl(person.id),
+                url: _urlService.getImageUrl(
+                  person.id,
+                  maxWidth: 200,
+                  quality: 80,
+                ),
                 itemId: person.id,
                 suffix: 'cast',
-                width: 200,
               );
             } catch (e) {
               LoggerService.downloads.warning(
@@ -394,7 +406,6 @@ class DownloadsManagerService {
     required String url,
     required String itemId,
     required String suffix,
-    int? width,
   }) async {
     if (url.isEmpty) throw Exception('Image URL is empty');
     final client = _jellyfinClient.client;
@@ -407,14 +418,8 @@ class DownloadsManagerService {
 
     if (await file.exists()) return filePath;
 
-    String imageUrl = url;
-    if (width != null) {
-      final separator = url.contains('?') ? '&' : '?';
-      imageUrl = '$url${separator}width=$width&quality=80';
-    }
-
     final response = await client.dio.get(
-      imageUrl,
+      url,
       options: Options(responseType: ResponseType.bytes),
     );
 

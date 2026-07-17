@@ -6,13 +6,23 @@ class DemoUrlService implements MediaUrlService {
       'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
   @override
-  String getImageUrl(String itemId) {
+  String getImageUrl(
+    String itemId, {
+    int? maxWidth,
+    int? maxHeight,
+    int? quality,
+  }) {
     // 600x900: Standard Portrait
     return '$_imgBase/$itemId/600/900';
   }
 
   @override
-  String getBackdropUrl(String itemId) {
+  String getBackdropUrl(
+    String itemId, {
+    int? maxWidth,
+    int? maxHeight,
+    int? quality,
+  }) {
     // 1280x720: Standard Landscape (16:9)
     // Append 'backdrop' to seed to differentiate from poster
     return '$_imgBase/${itemId}backdrop/1280/720';

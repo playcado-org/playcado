@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playcado/core/status_wrapper.dart';
@@ -21,7 +22,10 @@ class PaginatedMediaListBloc
     : _fetcher = fetcher,
       super(const PaginatedMediaListState()) {
     on<PaginatedMediaListItemsFetched>(_onFetchItems);
-    on<PaginatedMediaListMoreItemsFetched>(_onLoadMoreItems);
+    on<PaginatedMediaListMoreItemsFetched>(
+      _onLoadMoreItems,
+      transformer: droppable(),
+    );
     on<PaginatedMediaListSortChanged>(_onChangeSort);
   }
   final PaginatedMediaFetcher _fetcher;
@@ -64,6 +68,7 @@ class PaginatedMediaListBloc
     if (state.hasReachedMax || state.items.isLoading) return;
 
     final currentItems = state.items.value ?? [];
+    emit(state.copyWith(items: StatusLoading(previousValue: currentItems)));
     try {
       final newItems = await _fetcher(
         startIndex: currentItems.length,
@@ -83,6 +88,7 @@ class PaginatedMediaListBloc
       }
     } on Exception catch (error) {
       LoggerService.media.severe('Failed to load more items', error);
+      emit(state.copyWith(items: StatusSuccess(currentItems)));
     }
   }
 

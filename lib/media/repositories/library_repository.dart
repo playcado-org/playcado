@@ -39,7 +39,6 @@ class LibraryRepository {
           else
             SortOrder.descending,
         ],
-        fields: [ItemFields.overview, ItemFields.mediaSources],
       );
       LoggerService.api.info('Fetched ${items.length} movies');
       return items;
@@ -99,11 +98,7 @@ class LibraryRepository {
           else
             SortOrder.descending,
         ],
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.childCount,
-        ],
+        fields: [ItemFields.childCount],
       );
       LoggerService.api.info('Fetched ${items.length} TV shows');
       return items;
@@ -122,11 +117,7 @@ class LibraryRepository {
         userId: currentUserId,
         limit: 20,
         includeItemTypes: [BaseItemKind.series],
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.childCount,
-        ],
+        fields: [ItemFields.childCount],
       );
       LoggerService.api.info('Fetched ${items.length} latest TV shows');
       return items;
@@ -145,11 +136,7 @@ class LibraryRepository {
         userId: currentUserId,
         limit: 20,
         includeItemTypes: [BaseItemKind.movie],
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.childCount,
-        ],
+        fields: [ItemFields.childCount],
       );
       LoggerService.api.info('Fetched ${items.length} latest movies');
       return items;
@@ -172,12 +159,6 @@ class LibraryRepository {
         sortBy: [ItemSortBy.datePlayed],
         sortOrder: [SortOrder.descending],
         includeItemTypes: [BaseItemKind.movie, BaseItemKind.episode],
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.people,
-          ItemFields.chapters,
-        ],
       );
       LoggerService.api.info('Fetched ${items.length} resume items');
       return items;
@@ -195,13 +176,7 @@ class LibraryRepository {
       final items = await _dataSource.fetchNextUp(
         userId: currentUserId,
         limit: 20,
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.people,
-          ItemFields.chapters,
-          ItemFields.childCount,
-        ],
+        fields: [ItemFields.childCount],
       );
 
       LoggerService.api.info('Fetched ${items.length} next up items');
@@ -288,7 +263,6 @@ class LibraryRepository {
       final items = await _dataSource.fetchSeasons(
         userId: currentUserId,
         seriesId: seriesId,
-        fields: [ItemFields.overview],
       );
       LoggerService.api.info('Fetched ${items.length} seasons');
       return items;
@@ -312,12 +286,7 @@ class LibraryRepository {
         userId: currentUserId,
         seriesId: seriesId,
         seasonId: seasonId,
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.people,
-          ItemFields.chapters,
-        ],
+        fields: [ItemFields.overview, ItemFields.chapters],
       );
       LoggerService.api.info('Fetched ${items.length} episodes');
       return items;
@@ -368,11 +337,7 @@ class LibraryRepository {
           else
             SortOrder.descending,
         ],
-        fields: [
-          ItemFields.overview,
-          ItemFields.mediaSources,
-          ItemFields.childCount,
-        ],
+        fields: [ItemFields.childCount],
       );
 
       final filteredItems = items

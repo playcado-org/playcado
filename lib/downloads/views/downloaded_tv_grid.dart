@@ -47,11 +47,8 @@ class DownloadedTvGrid extends StatelessWidget {
       final firstEp = group.episodes.firstOrNull;
       if (firstEp?.localPosterPath case final posterPath?) {
         final dir = Directory(posterPath).parent;
-        final seriesPosterPath =
+        group.localSeriesPosterPath =
             '${dir.path}/${group.seriesId}_series_poster.jpg';
-        if (File(seriesPosterPath).existsSync()) {
-          group.localSeriesPosterPath = seriesPosterPath;
-        }
       }
     }
 

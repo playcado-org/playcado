@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:playcado/core/extensions.dart';
+import 'package:playcado/downloads/bloc/downloads_bloc.dart';
 import 'package:playcado/media/models/media_item.dart';
 import 'package:playcado/paginated_media_list/widgets/media_poster.dart';
 import 'package:playcado/player/bloc/player_bloc.dart';
@@ -61,7 +62,7 @@ class _PaginatedMediaGridState extends State<PaginatedMediaGrid> {
   }
 
   void _onScroll() {
-    if (_isBottom) {
+    if (_isBottom && !widget.isLoading && !widget.hasReachedMax) {
       widget.onLoadMore();
     }
   }
@@ -126,6 +127,12 @@ class _PaginatedMediaGridState extends State<PaginatedMediaGrid> {
 
     final items = widget.items ?? [];
 
+    final offlineLibrary = context.read<DownloadsBloc>().state.offlineLibrary;
+    final offlinePosters = {
+      for (final d in offlineLibrary)
+        if (d.localPosterPath != null) d.media.id: d.localPosterPath!,
+    };
+
     final playerActive = context.select<PlayerBloc, bool>(
       (bloc) => bloc.state.isActive,
     );
@@ -164,6 +171,9 @@ class _PaginatedMediaGridState extends State<PaginatedMediaGrid> {
                     return MediaPoster(
                       item: item,
                       isLoading: item == null,
+                      localPosterPath: item != null
+                          ? offlinePosters[item.id]
+                          : null,
                       width: 160,
                       customCacheWidth: posterCacheWidth,
                       customCacheHeight: posterCacheHeight,
