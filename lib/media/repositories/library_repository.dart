@@ -286,6 +286,7 @@ class LibraryRepository {
         userId: currentUserId,
         seriesId: seriesId,
         seasonId: seasonId,
+        fields: [ItemFields.overview, ItemFields.chapters],
       );
       LoggerService.api.info('Fetched ${items.length} episodes');
       return items;
