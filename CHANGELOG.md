@@ -2,6 +2,11 @@
 
 All notable changes to Playcado will be documented in this file.
 
+## [1.3.7]
+
+### Changed
+- Narrowed Android R8 proguard keep rules to improve optimization, obfuscation, and shrinking rates
+
 ## [1.3.6]
 
 ### Performance
